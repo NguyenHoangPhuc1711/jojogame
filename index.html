@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#12090d" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>JOJO Bizarre Arena 2D — Beta v2</title>
+  <link rel="stylesheet" href="style.css?v=6" />
+</head>
+<body>
+  <div id="game-wrapper">
+    <!-- Top HUD (Includes compact skill pills so arena fills full bottom) -->
+    <header id="hud">
+      <div class="fighter-hud left">
+        <div class="avatar-box jotaro-theme" id="p1-avatar-box">
+          <img id="p1-avatar-img" src="Jotaro/Jotaro_with_stand.png" alt="Player" />
+        </div>
+        <div class="hp-section">
+          <div class="name-row">
+            <span class="fighter-name" id="p1-name">JOTARO KUJO <small>(BẠN)</small></span>
+
+            <!-- Ultra-compact Skill Bar inline between Name & HP% -->
+            <div id="skill-bar">
+              <button class="skill-btn" id="btn-q" data-key="Q">
+                <span class="key-badge">Q</span>
+                <span class="skill-name" id="skill-name-q">Ulti</span>
+                <div class="cd-overlay" id="cd-q"></div>
+                <span class="cd-text" id="cd-text-q"></span>
+              </button>
+
+              <button class="skill-btn key-only" id="btn-e" data-key="E">
+                <span class="key-badge">E</span>
+                <span class="skill-name hidden" id="skill-name-e"></span>
+                <div class="cd-overlay" id="cd-e"></div>
+                <span class="cd-text" id="cd-text-e"></span>
+              </button>
+
+              <button class="skill-btn key-only" id="btn-r" data-key="R">
+                <span class="key-badge">R</span>
+                <span class="skill-name hidden" id="skill-name-r"></span>
+                <div class="cd-overlay" id="cd-r"></div>
+                <span class="cd-text" id="cd-text-r"></span>
+              </button>
+
+              <button class="skill-btn key-only hidden" id="btn-t" data-key="T" title="Kích nổ First Bomb">
+                <span class="key-badge">T</span>
+                <span class="skill-name hidden" id="skill-name-t"></span>
+                <div class="cd-overlay" id="cd-t"></div>
+                <span class="cd-text" id="cd-text-t"></span>
+              </button>
+
+              <button class="skill-btn guard-btn" id="btn-f" data-key="F" title="Giữ F để phòng thủ (tối đa 20 DMG)">
+                <span class="key-badge">F</span>
+                <span class="skill-name" id="guard-desc-f">Block</span>
+              </button>
+
+              <button class="skill-btn dash-btn" id="btn-dash" data-key="Shift" title="Bấm Shift để lướt nhanh (CD 5s)">
+                <span class="key-badge wide-badge">Shift</span>
+                <span class="skill-name">Dash</span>
+                <div class="cd-overlay" id="cd-dash"></div>
+                <span class="cd-text" id="cd-text-dash"></span>
+              </button>
+            </div>
+
+            <span class="hp-text" id="p1-hp-text">100%</span>
+          </div>
+          <div class="hp-bar-outer">
+            <div class="hp-bar-trail" id="p1-hp-trail"></div>
+            <div class="hp-bar-fill jotaro-fill" id="p1-hp-fill"></div>
+          </div>
+          <div class="guard-bar-outer" title="Thanh phòng thủ (F) — Tối đa đỡ 20 DMG">
+            <div class="guard-bar-fill" id="p1-guard-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="center-hud">
+        <div class="vs-badge">VS</div>
+        <div id="timestop-banner" class="hidden">
+          <span id="timestop-label">ZA WARUDO!</span>
+          <span id="timestop-timer">5.0s</span>
+        </div>
+        <div class="hud-actions">
+          <button id="mute-btn" title="Bật / Tắt toàn bộ âm thanh">🔊</button>
+          <button id="settings-btn" title="Cài đặt âm lượng">⚙️</button>
+          <button id="menu-btn" title="Về Menu chính">🏠</button>
+        </div>
+      </div>
+
+      <div class="fighter-hud right">
+        <div class="hp-section">
+          <div class="name-row">
+            <span class="hp-text" id="p2-hp-text">100%</span>
+            <span class="fighter-name" id="p2-name">DIO BRANDO <small>(AI)</small></span>
+          </div>
+          <div class="hp-bar-outer">
+            <div class="hp-bar-trail" id="p2-hp-trail"></div>
+            <div class="hp-bar-fill dio-fill" id="p2-hp-fill"></div>
+          </div>
+          <div class="guard-bar-outer" title="Thanh phòng thủ AI">
+            <div class="guard-bar-fill" id="p2-guard-fill"></div>
+          </div>
+        </div>
+        <div class="avatar-box dio-theme" id="p2-avatar-box">
+          <img id="p2-avatar-img" src="Dio/dio_with_stand.png" alt="AI" />
+        </div>
+      </div>
+    </header>
+
+    <!-- Arena Canvas (Full height to bottom of screen) -->
+    <main id="arena-container">
+      <canvas id="arena" width="1680" height="780"></canvas>
+      <div id="menacing-overlay" aria-hidden="true">ゴ ゴ ゴ ゴ</div>
+
+      <!-- VS Intro Splash Overlay -->
+      <div id="vs-intro-overlay" class="hidden">
+        <div class="vs-top-names">
+          <span class="vs-p1-name" id="vs-p1-name">JOTARO KUJO</span>
+          <span class="vs-p2-name" id="vs-p2-name">DIO BRANDO</span>
+        </div>
+        <div class="vs-fighters-stage">
+          <div class="vs-fighter-side left">
+            <img id="vs-p1-img" src="Jotaro/Jotaro_with_stand.png" alt="P1" />
+          </div>
+          <div class="vs-bolt-center">
+            <div class="lightning-bolt">⚡</div>
+            <div class="vs-clash-text"><span class="vs-red">V</span><span class="vs-blue">S</span></div>
+          </div>
+          <div class="vs-fighter-side right">
+            <img id="vs-p2-img" src="Dio/dio_with_stand.png" alt="P2" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Victory / Defeat Banner -->
+      <div id="result-banner" class="hidden">
+        <div id="result-banner-text">VICTORY!</div>
+        <div id="result-banner-sub">TO BE CONTINUED...</div>
+      </div>
+
+      <!-- Mobile Touch Controls Overlay (Joystick Left + Liên Quân Arc Skills Right) -->
+      <div id="mobile-controls" class="hidden">
+        <div id="touch-joystick-zone">
+          <div class="joystick-base" id="joystick-base">
+            <span class="joy-dir up">▲</span>
+            <span class="joy-dir right">▶</span>
+            <span class="joy-dir down">▼</span>
+            <span class="joy-dir left">◀</span>
+            <div class="joystick-knob" id="joystick-knob"></div>
+          </div>
+        </div>
+
+        <div id="touch-skills-zone">
+          <button type="button" class="m-skill-btn ulti" id="m-btn-q" data-skill="q">
+            <span class="m-key">Q</span>
+            <span class="m-sub">Ulti</span>
+            <span class="m-cd" id="m-cd-q"></span>
+          </button>
+
+          <button type="button" class="m-skill-btn skill-r" id="m-btn-r" data-skill="r">
+            <span class="m-key">R</span>
+            <span class="m-sub">Chiêu R</span>
+            <span class="m-cd" id="m-cd-r"></span>
+          </button>
+
+          <button type="button" class="m-skill-btn skill-e" id="m-btn-e" data-skill="e">
+            <span class="m-key">E</span>
+            <span class="m-sub">Chiêu E</span>
+            <span class="m-cd" id="m-cd-e"></span>
+          </button>
+
+          <button type="button" class="m-skill-btn dash" id="m-btn-dash">
+            <span class="m-key">⚡</span>
+            <span class="m-sub">Dash</span>
+            <span class="m-cd" id="m-cd-dash"></span>
+          </button>
+
+          <button type="button" class="m-skill-btn guard" id="m-btn-f">
+            <span class="m-key">🛡️</span>
+            <span class="m-sub" id="m-guard-sub">Block</span>
+          </button>
+
+          <button type="button" class="m-skill-btn kira-t hidden" id="m-btn-t" data-skill="t">
+            <span class="m-key">T</span>
+            <span class="m-sub">Nổ</span>
+            <span class="m-cd" id="m-cd-t"></span>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Main Menu Overlay -->
+    <div id="main-menu-overlay">
+      <div class="main-menu-bg-menacing">ゴ ゴ ゴ ゴ ゴ</div>
+      <div class="main-menu-stage">
+        <div class="menu-fighter left-side">
+          <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro Kujo" />
+          <div class="menu-fighter-label jotaro">JOTARO KUJO</div>
+        </div>
+
+        <div class="menu-center-panel">
+          <div class="version-pill">BETA v2.0</div>
+          <h1 class="game-logo">JOJO<br /><span>BIZARRE ARENA 2D</span></h1>
+          <p class="menu-tagline">Chiến trường Stand — Định đoạt số phận bằng nắm đấm & thời gian!</p>
+          <div class="menu-buttons">
+            <button id="goto-select-btn" class="primary-cta">⚔️ CHỌN NHÂN VẬT & ĐẤU</button>
+            <button id="menu-settings-btn" class="secondary-cta">⚙️ CÀI ĐẶT ÂM THANH</button>
+          </div>
+          <div class="controls-hint">
+            <span><b>WASD</b> Di chuyển</span>
+            <span><b>Shift</b> Lướt</span>
+            <span><b>F</b> Phòng thủ</span>
+            <span><b>Q E R T</b> Kỹ năng</span>
+          </div>
+        </div>
+
+        <div class="menu-fighter right-side">
+          <img src="Dio/dio_with_stand.png" alt="DIO Brando" />
+          <div class="menu-fighter-label dio">DIO BRANDO</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Character & Opponent Select Overlay -->
+    <div id="select-overlay" class="hidden">
+      <div class="modal-card wide">
+        <h2>CHỌN CHIẾN BINH</h2>
+        <div class="select-columns">
+          <div class="select-col">
+            <div class="col-header player">NHÂN VẬT CỦA BẠN</div>
+            <div class="char-grid" id="player-char-grid">
+              <button type="button" class="char-card selected" data-char="jotaro">
+                <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" />
+                <div class="char-title">JOTARO KUJO</div>
+                <div class="char-skills">
+                  <span><b>Q</b> Za Warudo (5s / 40s)</span>
+                  <span><b>E</b> Star Finger (15 DMG / Choáng 0.5s)</span>
+                  <span><b>R</b> ORA Barrage (45 DMG / 8s)</span>
+                </div>
+              </button>
+              <button type="button" class="char-card" data-char="dio">
+                <img src="Dio/dio_with_stand.png" alt="DIO" />
+                <div class="char-title">DIO BRANDO</div>
+                <div class="char-skills">
+                  <span><b>Q</b> Za Warudo (6s / 35s)</span>
+                  <span><b>E</b> MUDA Barrage (35 DMG)</span>
+                  <span><b>R</b> ROAD ROLLER (40 DMG / Đánh bay)</span>
+                </div>
+              </button>
+              <button type="button" class="char-card" data-char="kira">
+                <img src="killerqueen/kira_with_stand.png" alt="Kira" />
+                <div class="char-title">YOSHIKAGE KIRA</div>
+                <div class="char-skills">
+                  <span><b>Q</b> Bite The Dust (CD 60s)</span>
+                  <span><b>E</b> Killer Barrage (30 DMG)</span>
+                  <span><b>R / T</b> First Bomb (8s / OHKO!)</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="select-col">
+            <div class="col-header ai" id="ai-col-header">ĐỐI THỦ (AI KHÓ)</div>
+            <div class="ai-diff-bar" id="ai-diff-bar">
+              <button type="button" class="diff-btn" data-diff="easy">DỄ</button>
+              <button type="button" class="diff-btn" data-diff="medium">TRUNG BÌNH</button>
+              <button type="button" class="diff-btn selected" data-diff="hard">KHÓ</button>
+              <button type="button" class="diff-btn super" data-diff="super">🔥 SIÊU KHÓ</button>
+            </div>
+            <div class="ai-diff-desc" id="ai-diff-desc">Kỹ năng cao, phản xạ nhanh • +50 Máu AI</div>
+            <div class="char-grid ai-grid" id="ai-char-grid">
+              <button type="button" class="char-card" data-ai="jotaro">
+                <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" />
+                <div class="char-title">JOTARO KUJO</div>
+              </button>
+              <button type="button" class="char-card selected" data-ai="dio">
+                <img src="Dio/dio_with_stand.png" alt="DIO" />
+                <div class="char-title">DIO BRANDO</div>
+              </button>
+              <button type="button" class="char-card" data-ai="kira">
+                <img src="killerqueen/kira_with_stand.png" alt="Kira" />
+                <div class="char-title">YOSHIKAGE KIRA</div>
+              </button>
+              <button type="button" class="char-card random-card" data-ai="random">
+                <div class="random-icon">🎲</div>
+                <div class="char-title">NGẪU NHIÊN</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="back-to-menu-btn" class="secondary-cta">← MENU CHÍNH</button>
+          <button id="start-btn" class="primary-cta">BẮT ĐẦU TRẬN ĐẤU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- End Match Overlay -->
+    <div id="end-overlay" class="hidden">
+      <div class="modal-card">
+        <h2 id="end-title">TRẬN ĐẤU KẾT THÚC</h2>
+        <p id="end-subtitle">Kết quả trận đấu</p>
+        <div class="modal-actions">
+          <button id="end-menu-btn" class="secondary-cta">🏠 MAIN MENU</button>
+          <button id="end-replay-btn" class="primary-cta">🔄 CHƠI LẠI</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Overlay -->
+    <div id="settings-overlay" class="hidden">
+      <div class="modal-card">
+        <h2>⚙️ CÀI ĐẶT ÂM THANH</h2>
+
+        <div class="setting-row">
+          <div class="setting-header">
+            <label for="sfx-volume">Âm lượng Kỹ năng (SFX)</label>
+            <button type="button" id="toggle-sfx-btn" class="toggle-pill on">🔊 BẬT</button>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="sfx-volume" min="0" max="100" value="30" />
+            <span id="sfx-volume-val">30%</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-header">
+            <label for="bgm-volume">Nhạc nền (Sound Battle)</label>
+            <button type="button" id="toggle-bgm-btn" class="toggle-pill on">🎵 BẬT</button>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="bgm-volume" min="0" max="100" value="20" />
+            <span id="bgm-volume-val">20%</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-header">
+            <label>Điều khiển cảm ứng (Mobile)</label>
+            <button type="button" id="toggle-touch-btn" class="toggle-pill">📱 TỰ ĐỘNG</button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="close-settings-btn" class="primary-cta">XONG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Portrait Rotate Prompt Overlay (outside game-wrapper, hidden in landscape) -->
+  <div id="rotate-overlay" aria-hidden="true">
+    <div class="rotate-card">
+      <div class="rotate-phone-icon">📱</div>
+      <h2>XOAY NGANG MÀN HÌNH</h2>
+      <p>Vui lòng xoay ngang điện thoại để chơi <b>JOJO Bizarre Arena 2D</b> với đầy đủ Joystick và bộ kỹ năng.</p>
+    </div>
+  </div>
+
+  <script src="characters/jotaro.js?v=6"></script>
+  <script src="characters/dio.js?v=6"></script>
+  <script src="characters/kira.js?v=6"></script>
+  <script src="game.js?v=6"></script>
+</body>
+</html>
