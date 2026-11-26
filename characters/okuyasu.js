@@ -17,13 +17,13 @@ window.JOJO_CHARS.okuyasu = {
   skills: {
     q: {
       name: "SPACE ERASE",
-      desc: "Quẹt 3 lần liên tiếp + Choáng 0.2s",
+      desc: "Quẹt 3 lần cách nhau 0.3s + Choáng 0.3s",
       cd: 20,
       swipes: 3,
-      interval: 0.2,
-      damagePerSwipe: 12,
-      lastSwipeDamage: 16, // 12 + 12 + 16 = 40 DMG
-      stunDuration: 0.2,
+      interval: 0.3,
+      damagePerSwipe: 17,
+      lastSwipeDamage: 16, // 17 + 17 + 16 = 50 DMG
+      stunDuration: 0.3,
       range: 205,
       soundKey: "okuyasuNoise",
       callout: "ZA HANDO GA KESU!",

@@ -24,6 +24,41 @@ let ARENA_CY = WORLD_H / 2;
 let state = null;
 let arenaFloorCache = null;
 let arenaFloorCacheDirty = true;
+let targetFrameInterval = 1000 / 60;
+let lastRenderTime = 0;
+const ARENA_MAP_PATHS = Array.from({ length: 15 }, (_, index) => `Map/${index + 1}.png`);
+let currentArenaMapPath = null;
+let arenaMapImage = null;
+let arenaMapRequestId = 0;
+
+function selectRandomArenaMap() {
+  const choices = ARENA_MAP_PATHS.filter((path) => path !== currentArenaMapPath);
+  const selectedPath = choices[Math.floor(Math.random() * choices.length)] || ARENA_MAP_PATHS[0];
+  const requestId = ++arenaMapRequestId;
+  currentArenaMapPath = selectedPath;
+  arenaMapImage = null;
+  arenaFloorCacheDirty = true;
+
+  if (arenaMapLabel) {
+    const mapNumber = selectedPath.match(/(\d+)\.png$/)?.[1] || "1";
+    arenaMapLabel.textContent = `BATTLEFIELD ${mapNumber.padStart(2, "0")}`;
+  }
+
+  const image = new Image();
+  image.decoding = "async";
+  image.onload = () => {
+    if (requestId !== arenaMapRequestId) return;
+    arenaMapImage = image;
+    arenaFloorCacheDirty = true;
+  };
+  image.onerror = () => {
+    if (requestId !== arenaMapRequestId) return;
+    console.error(`Unable to load arena map: ${selectedPath}`);
+    arenaFloorCacheDirty = true;
+  };
+  image.src = encodeURI(selectedPath);
+  return selectedPath;
+}
 
 function isTouchDeviceOrSmallScreen() {
   return (
@@ -46,6 +81,11 @@ function syncArenaSize() {
   cssH = Math.max(200, cssH);
   const aspect = cssW / cssH;
   const isMobile = isTouchDeviceOrSmallScreen();
+  const hardwareThreads = navigator.hardwareConcurrency || 8;
+  const deviceMemory = navigator.deviceMemory || 8;
+  targetFrameInterval = isMobile || hardwareThreads <= 4 || deviceMemory <= 4
+    ? 1000 / 45
+    : 1000 / 60;
 
   // Slightly larger character-to-map ratio on mobile screens so fighters are crisp & balanced
   let worldH = isMobile ? 560 : BASE_WORLD_H;
@@ -57,10 +97,14 @@ function syncArenaSize() {
   }
 
   const dpr = isMobile
-    ? Math.min(window.devicePixelRatio || 1, 1.5)
-    : Math.min(window.devicePixelRatio || 1, 2);
-  const backingW = Math.max(480, Math.round(cssW * dpr));
-  const backingH = Math.max(260, Math.round(cssH * dpr));
+    ? Math.min(window.devicePixelRatio || 1, 1.35)
+    : Math.min(window.devicePixelRatio || 1, 1.75);
+  const maxCanvasPixels = isMobile ? 1800000 : 6000000;
+  const requestedW = cssW * dpr;
+  const requestedH = cssH * dpr;
+  const pixelScale = Math.min(1, Math.sqrt(maxCanvasPixels / (requestedW * requestedH)));
+  const backingW = Math.max(480, Math.round(requestedW * pixelScale));
+  const backingH = Math.max(260, Math.round(requestedH * pixelScale));
 
   if (
     canvas.width !== backingW ||
@@ -106,10 +150,10 @@ if (typeof ResizeObserver !== "undefined" && arenaContainer) {
 syncArenaSize();
 
 const MAX_HP = 300;
-const MAX_GUARD_POOL = 20; // Shield blocks up to 20 DMG total
-const GUARD_FULL_RECHARGE_SECONDS = 25; // 25s to recharge from 0 to 20
+const MAX_GUARD_POOL = 25;
+const GUARD_FULL_RECHARGE_SECONDS = 40;
 const GUARD_LOCK_SECONDS = 4; // 4s lock on shield break
-const DASH_COOLDOWN = 5;
+const DASH_COOLDOWN = 4;
 
 const AI_DIFFICULTIES = {
   easy: {
@@ -126,6 +170,8 @@ const AI_DIFFICULTIES = {
     guardChance: 0.2,
     dashChance: 0.2,
     skillChance: 0.55,
+    reflexChance: 0.2,
+    comboChance: 0.18,
     leadAim: 0,
     startDelayQ: 11,
     startDelayE: 3.5,
@@ -145,6 +191,8 @@ const AI_DIFFICULTIES = {
     guardChance: 0.55,
     dashChance: 0.6,
     skillChance: 0.8,
+    reflexChance: 0.45,
+    comboChance: 0.38,
     leadAim: 0.14,
     startDelayQ: 9,
     startDelayE: 2.5,
@@ -164,6 +212,8 @@ const AI_DIFFICULTIES = {
     guardChance: 0.85,
     dashChance: 0.9,
     skillChance: 0.95,
+    reflexChance: 0.72,
+    comboChance: 0.62,
     leadAim: 0.22,
     startDelayQ: 7,
     startDelayE: 2.0,
@@ -183,6 +233,8 @@ const AI_DIFFICULTIES = {
     guardChance: 1.0,
     dashChance: 1.0,
     skillChance: 1.0,
+    reflexChance: 1.0,
+    comboChance: 1.0,
     leadAim: 0.3,
     startDelayQ: 4.5,
     startDelayE: 1.0,
@@ -256,7 +308,7 @@ const SOUNDS = {
   jotaroStarFinger: { file: "Jotaro/jotaro star_finger.mp3", gain: 1.35 },
   jotaroZaWarudo: { file: "Jotaro/jotaro_zawarudo.mp3", gain: 1.85 },
   dioBarrage: { file: "Dio/dio Barrage.mp3", gain: 0.9 },
-  dioRoadRoller: { file: "Dio/ROAD ROLLER DA!!!.mp3", gain: 1.85 },
+  dioRoadRoller: { file: "Dio/ROAD ROLLER DA!!!.mp3", gain: 4.8 },
   dioTimeStop: { file: "Dio/Dio_time_stop.mp3", gain: 1.0 },
   dioLaugh: { file: "Dio/Dio Laughing.mp3", gain: 0.65 },
   dioGreatestHigh: { file: "Dio/THIS IS THE GREATEST HIGH (Dio.mp3", gain: 0.65 },
@@ -265,10 +317,11 @@ const SOUNDS = {
   kiraSwitch: { file: "killerqueen/Killer Queen First Bomb Switch.mp3", gain: 1.3 },
   kiraBiteTheDust: { file: "killerqueen/KillerQueen_BiteTheDust.mp3", gain: 1.85 },
   kiraExploded: { file: "killerqueen/EXPLODED.mp3", gain: 1.45 },
-  diavoloBarrage: { file: "Diavolo/Diavolo_skill R.mp3", gain: 1.35 },
-  diavoloTimeSkip: { file: "Diavolo/Kingcrimson_skill E.mp3", gain: 1.35 },
-  diavoloEpitaph: { file: "Diavolo/Diavolo_skillQ.mp3", gain: 1.65 },
+  diavoloBarrage: { file: "Diavolo/Diavolo_skill R.mp3", gain: 3.6 },
+  diavoloTimeSkip: { file: "Diavolo/Kingcrimson_skill E.mp3", gain: 3.6 },
+  diavoloEpitaph: { file: "Diavolo/Diavolo_skillQ.mp3", gain: 4.2 },
   okuyasuBarrage: { file: "The hand/The_hand_barrage.mp3", gain: 1.35 },
+  okuyasuBarrage7Page: { file: "The hand/7-page-erase-okuyasu.mp3", gain: 1.35 },
   okuyasuSkillE: { file: "The hand/thehand.mp3", gain: 1.4 },
   okuyasuNoise: { file: "The hand/the-hand-noise.mp3", gain: 1.35 },
   okuyasuVoice: { file: "The hand/okoyasu voice.mp3", gain: 1.0 },
@@ -279,11 +332,11 @@ const SOUNDS = {
   polnareffBarrage: { file: "Polnareff/Sword_barrage.mp3", gain: 1.35 },
   polnareffSkillR: { file: "Polnareff/Sword_fly.mp3", gain: 1.35 },
   polnareffSkillQ: { file: "Polnareff/silver_chariot.mp3", gain: 1.55 },
-  jolyneBarrage: { file: "Jolyne/stone-free-short-ora-barrage_6FevhFF.mp3", gain: 1.35 },
-  jolyneSkillR: { file: "Jolyne/stone free.mp3", gain: 1.35 },
+  jolyneBarrage: { file: "Jolyne/stone-free-short-ora-barrage_6FevhFF.mp3", gain: 2.7 },
+  jolyneSkillR: { file: "Jolyne/stone free.mp3", gain: 2.7 },
   jolyneSkillQHit: { file: "Jolyne/jolyne-sfx.mp3", gain: 1.55 },
   jolyneVoice: { file: "Jolyne/tmpnueglj1t.mp3", gain: 1.0 },
-  lobbyBgm: { file: "Main game sound.mp3", gain: 1.0, isBgm: true },
+  lobbyBgm: { file: "Main game sound.mp3", gain: 1.7, isBgm: true },
   battleBgm: { file: "Sound Battle.mp3", gain: 1.0, isBgm: true },
   victory1: { file: "Victory.mp3", gain: 1.0, isBgm: true },
   victory2: { file: "Victory2.mp3", gain: 1.0, isBgm: true },
@@ -297,7 +350,9 @@ let sfxVolume = 0.3;
 let bgmVolume = 0.2;
 const audioBuffers = new Map();
 const activeVoices = new Set();
+let diavoloImpactNoiseBuffer = null;
 let activeBgm = null;
+let _okuyasuBarrageSoundIndex = 0;
 
 function ensureAudioContext() {
   if (!audioCtx) {
@@ -314,7 +369,7 @@ const CHAR_SOUND_KEYS = {
   dio: ["dioBarrage", "dioRoadRoller", "dioTimeStop", "dioLaugh", "dioGreatestHigh"],
   kira: ["kiraBarrage", "kiraDetonate", "kiraSwitch", "kiraBiteTheDust", "kiraExploded"],
   diavolo: ["diavoloBarrage", "diavoloTimeSkip", "diavoloEpitaph"],
-  okuyasu: ["okuyasuBarrage", "okuyasuSkillE", "okuyasuNoise", "okuyasuVoice"],
+  okuyasu: ["okuyasuBarrage", "okuyasuBarrage7Page", "okuyasuSkillE", "okuyasuNoise", "okuyasuVoice"],
   josuke: ["josukeBarrage", "josukeSkillR", "josukeSkillQ", "josukeVoice"],
   polnareff: ["polnareffBarrage", "polnareffSkillR", "polnareffSkillQ"],
   jolyne: ["jolyneBarrage", "jolyneSkillR", "jolyneSkillQHit", "jolyneVoice"],
@@ -385,6 +440,130 @@ function playSound(key, gainMult = 1.0) {
   return entry;
 }
 
+function playBarragePunchImpact(intensity = 1) {
+  if (isMuted || isSfxMuted || sfxVolume <= 0.001) return;
+  ensureAudioContext();
+  if (!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const impactGain = audioCtx.createGain();
+  impactGain.gain.setValueAtTime(Math.min(1, sfxVolume * 2.35 * intensity), now);
+  impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+  impactGain.connect(audioCtx.destination);
+
+  const bass = audioCtx.createOscillator();
+  const bassFilter = audioCtx.createBiquadFilter();
+  const bassGain = audioCtx.createGain();
+  bass.type = "triangle";
+  bass.frequency.setValueAtTime(112, now);
+  bass.frequency.exponentialRampToValueAtTime(38, now + 0.14);
+  bassFilter.type = "lowpass";
+  bassFilter.frequency.setValueAtTime(240, now);
+  bassFilter.frequency.exponentialRampToValueAtTime(85, now + 0.14);
+  bassGain.gain.setValueAtTime(0.85, now);
+  bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+  bass.connect(bassFilter);
+  bassFilter.connect(bassGain);
+  bassGain.connect(impactGain);
+  bass.start(now);
+  bass.stop(now + 0.15);
+
+  const growl = audioCtx.createOscillator();
+  const growlFilter = audioCtx.createBiquadFilter();
+  const growlGain = audioCtx.createGain();
+  growl.type = "sawtooth";
+  growl.frequency.setValueAtTime(185, now);
+  growl.frequency.exponentialRampToValueAtTime(52, now + 0.13);
+  growlFilter.type = "lowpass";
+  growlFilter.frequency.setValueAtTime(920, now);
+  growlFilter.frequency.exponentialRampToValueAtTime(180, now + 0.15);
+  growlGain.gain.setValueAtTime(0.24, now);
+  growlGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  growl.connect(growlFilter);
+  growlFilter.connect(growlGain);
+  growlGain.connect(impactGain);
+  growl.start(now);
+  growl.stop(now + 0.16);
+
+  if (!diavoloImpactNoiseBuffer) {
+    const sampleCount = Math.floor(audioCtx.sampleRate * 0.16);
+    diavoloImpactNoiseBuffer = audioCtx.createBuffer(1, sampleCount, audioCtx.sampleRate);
+    const samples = diavoloImpactNoiseBuffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) {
+      samples[i] = Math.random() * 2 - 1;
+    }
+  }
+
+  const noise = audioCtx.createBufferSource();
+  const noiseFilter = audioCtx.createBiquadFilter();
+  const noiseGain = audioCtx.createGain();
+  noise.buffer = diavoloImpactNoiseBuffer;
+  noiseFilter.type = "bandpass";
+  noiseFilter.frequency.setValueAtTime(1500, now);
+  noiseFilter.frequency.exponentialRampToValueAtTime(260, now + 0.14);
+  noiseFilter.Q.value = 0.8;
+  noiseGain.gain.setValueAtTime(0.42, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  noise.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(impactGain);
+  noise.start(now);
+  noise.stop(now + 0.16);
+}
+
+function playDiavoloTimeSkipImpact() {
+  if (isMuted || isSfxMuted || sfxVolume <= 0.001) return;
+  ensureAudioContext();
+  if (!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const master = audioCtx.createGain();
+  master.gain.setValueAtTime(Math.min(1, sfxVolume * 2.7), now);
+  master.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  master.connect(audioCtx.destination);
+
+  const thump = audioCtx.createOscillator();
+  const thumpFilter = audioCtx.createBiquadFilter();
+  const thumpGain = audioCtx.createGain();
+  thump.type = "sine";
+  thump.frequency.setValueAtTime(104, now);
+  thump.frequency.exponentialRampToValueAtTime(34, now + 0.15);
+  thumpFilter.type = "lowpass";
+  thumpFilter.frequency.setValueAtTime(300, now);
+  thumpFilter.frequency.exponentialRampToValueAtTime(90, now + 0.16);
+  thumpGain.gain.setValueAtTime(0.95, now);
+  thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+  thump.connect(thumpFilter);
+  thumpFilter.connect(thumpGain);
+  thumpGain.connect(master);
+  thump.start(now);
+  thump.stop(now + 0.18);
+
+  if (!diavoloImpactNoiseBuffer) {
+    const sampleCount = Math.floor(audioCtx.sampleRate * 0.16);
+    diavoloImpactNoiseBuffer = audioCtx.createBuffer(1, sampleCount, audioCtx.sampleRate);
+    const samples = diavoloImpactNoiseBuffer.getChannelData(0);
+    for (let i = 0; i < samples.length; i++) {
+      samples[i] = Math.random() * 2 - 1;
+    }
+  }
+
+  const crack = audioCtx.createBufferSource();
+  const crackFilter = audioCtx.createBiquadFilter();
+  const crackGain = audioCtx.createGain();
+  crack.buffer = diavoloImpactNoiseBuffer;
+  crackFilter.type = "lowpass";
+  crackFilter.frequency.setValueAtTime(1600, now);
+  crackFilter.frequency.exponentialRampToValueAtTime(240, now + 0.09);
+  crackGain.gain.setValueAtTime(0.75, now);
+  crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  crack.connect(crackFilter);
+  crackFilter.connect(crackGain);
+  crackGain.connect(master);
+  crack.start(now);
+  crack.stop(now + 0.11);
+}
+
 let _lobbyBgmEl = null;
 let _battleBgmEl = null;
 let _victoryBgmEl = null;
@@ -438,7 +617,7 @@ function startLobbyBgm() {
   }
   ensureAudioContext();
   const el = getOrCreateBgmEl("lobby");
-  el.volume = Math.min(1, bgmVolume);
+  el.volume = Math.min(1, bgmVolume * SOUNDS.lobbyBgm.gain);
   if (el.paused) {
     el.play().catch(() => {});
   }
@@ -484,15 +663,15 @@ function ensureDesiredBgmPlaying() {
     activeBgm = { type: "html", mode: "battle", audio: el };
   } else if (_desiredBgmMode === "lobby" && (!state || !state.running)) {
     const el = getOrCreateBgmEl("lobby");
-    el.volume = Math.min(1, bgmVolume);
+    el.volume = Math.min(1, bgmVolume * SOUNDS.lobbyBgm.gain);
     if (el.paused) el.play().catch(() => {});
     activeBgm = { type: "html", mode: "lobby", audio: el };
   }
 }
 
 function updateBgmVolumeLive() {
-  const effectiveVol = isMuted || isBgmMuted ? 0 : bgmVolume;
-  if (effectiveVol <= 0.001) {
+  const isSilent = isMuted || isBgmMuted || bgmVolume <= 0.001;
+  if (isSilent) {
     stopAllBgmEls();
     return;
   }
@@ -500,6 +679,10 @@ function updateBgmVolumeLive() {
     ensureDesiredBgmPlaying();
     return;
   }
+  const effectiveVol = Math.min(
+    1,
+    bgmVolume * (activeBgm.mode === "lobby" ? SOUNDS.lobbyBgm.gain : 1)
+  );
   if (activeBgm.type === "buffer" && audioCtx) {
     activeBgm.gainNode.gain.setValueAtTime(effectiveVol, audioCtx.currentTime);
   } else if (activeBgm.audio) {
@@ -590,8 +773,11 @@ const resultBannerSub = document.getElementById("result-banner-sub");
 
 const mainMenuOverlay = document.getElementById("main-menu-overlay");
 const selectOverlay = document.getElementById("select-overlay");
+const mainMenuVideo = document.getElementById("main-menu-video");
+const characterPreviewVideo = document.getElementById("character-preview-video");
 const aiColHeader = document.getElementById("ai-col-header");
 const aiDiffDesc = document.getElementById("ai-diff-desc");
+const arenaMapLabel = document.getElementById("arena-map-label");
 const endOverlay = document.getElementById("end-overlay");
 const endTitle = document.getElementById("end-title");
 const endSubtitle = document.getElementById("end-subtitle");
@@ -653,6 +839,16 @@ const CHAR_CONFIG = Object.fromEntries(
     },
   ])
 );
+const CHARACTER_PREVIEW_VIDEOS = {
+  jotaro: "Jotaro/jotaro.mp4",
+  dio: "Dio/Dio.mp4",
+  kira: "killerqueen/Kira.mp4",
+  diavolo: "Diavolo/diavolo.mp4",
+  okuyasu: "The hand/Okuyasu.mp4",
+  josuke: "Josuke/Josuke.mp4",
+  polnareff: "Polnareff/Polnareff.mp4",
+  jolyne: "Jolyne/Jolyne.mp4",
+};
 
 const _charAssetCache = {};
 function loadOrGetCharacterAsset(path) {
@@ -665,9 +861,11 @@ function loadOrGetCharacterAsset(path) {
 let selectedPlayerChar = "jotaro";
 let selectedAiChar = "dio";
 let selectedAiDifficulty = "hard";
+let activeSelectionSide = "p1";
 let lastTime = 0;
 let vsTimerHandle = null;
 let endTimerHandle = null;
+let characterPreviewSwitchTimer = null;
 const keysPressed = new Set();
 const touchInput = { x: 0, y: 0, guarding: false };
 let touchMode = "auto"; // "auto" | "on" | "off"
@@ -709,13 +907,15 @@ function createFighter(slot, charId, x, y, vx, vy) {
     dashTimer: 0,
     dashVx: 0,
     dashVy: 0,
+    dashEchoTimer: 0,
     stunTimer: 0,
+    barrageStunSlot: null,
     sealedTimer: 0,
     epitaphTimer: 0,
     armorOffTimer: 0,
     jolynePoseTimer: 0,
     lastAttackerSlot: null,
-    voiceTimer: 18 + Math.random() * 7,
+    voiceTimer: charId === "okuyasu" ? 25 : 18 + Math.random() * 7,
     knockbackTimer: 0,
     isChargingTimeStop: false,
     timeStopCharge: 0,
@@ -782,6 +982,9 @@ function startMatchWithIntro() {
     screen.orientation.lock("landscape").catch(() => {});
   }
   syncArenaSize();
+  selectRandomArenaMap();
+  releaseSceneVideo(mainMenuVideo);
+  releaseSceneVideo(characterPreviewVideo);
   stopAllSounds();
   _desiredBgmMode = "battle";
   if (vsTimerHandle) clearTimeout(vsTimerHandle);
@@ -805,11 +1008,14 @@ function startMatchWithIntro() {
 
   initGameState(p1Char, p2Char);
   state.running = false;
+  syncMobileControlsVisibility();
 
   vsTimerHandle = setTimeout(() => {
     vsIntroOverlay.classList.add("hidden");
     if (state && !state.gameOver) {
       state.running = true;
+      syncMobileControlsVisibility();
+      lastTime = performance.now();
       startBattleBgm();
     }
   }, 1900);
@@ -848,8 +1054,8 @@ function initGameState(p1Char, p2Char) {
     p1,
     p2,
     cooldowns: {
-      p1: { q: 0, e: 0, r: 0, dash: 0 },
-      p2: { q: 0, e: 0, r: 0, dash: 0 },
+      p1: { q: 0, e: 0, r: 0, dash: 0, dashMax: DASH_COOLDOWN },
+      p2: { q: 0, e: 0, r: 0, dash: 0, dashMax: DASH_COOLDOWN },
     },
     collisionDamageCooldown: 0,
     timeStop: {
@@ -871,6 +1077,10 @@ function initGameState(p1Char, p2Char) {
       safetyTimer: 0,
     },
     firstBombs: [],
+    epitaphCounter: null,
+    epitaphFists: [],
+    mobiusCounter: null,
+    mobiusFists: [],
     pendingOhkos: [], // { targetSlot, timer } — waits for explosion VFX before finishing target
     explosions: [],
     barrageClashes: [],
@@ -882,8 +1092,11 @@ function initGameState(p1Char, p2Char) {
     angeloPunches: [],
     swordProjectiles: [],
     polnareffClones: [],
+    dashAfterimages: [],
     stringFingers: [],
     mobiusWebs: [],
+    diavoloTimeSkipZones: [],
+    diavoloImpales: [],
     punches: [],
     particles: [],
     floatingTexts: [],
@@ -891,6 +1104,11 @@ function initGameState(p1Char, p2Char) {
     uiSyncTimer: 0,
     dioTauntTimer: 10 + Math.random() * 5,
     aiDecisionTimer: 0.45,
+    aiTargetSlot: "p1",
+    aiTargetTimer: 0,
+    aiTargetRoster: "p1",
+    polnareffCloneSerial: 0,
+    aiReflexTimer: 0,
     aiGuardTimer: 0,
     aiStrafeDir: 1,
     aiStrafeSwitchTimer: 1.2,
@@ -910,11 +1128,56 @@ function initGameState(p1Char, p2Char) {
 
 // ── Helpers ─────────────────────────────────────────────────
 function getFighter(slot) {
-  return slot === "p1" ? state.p1 : state.p2;
+  if (!state) return null;
+  if (slot === "p1") return state.p1;
+  if (slot === "p2") return state.p2;
+  return state.polnareffClones.find((clone) => clone.slot === slot) || null;
 }
 
 function getOpponent(slot) {
-  return slot === "p1" ? state.p2 : state.p1;
+  if (slot === "p1") return state.p2;
+  if (slot === "p2") {
+    const target = getFighter(state.aiTargetSlot);
+    return target && !target.hidden && target.hp > 0 ? target : state.p1;
+  }
+  const fighter = getFighter(slot);
+  const ownerSlot = fighter?.ownerSlot ||
+    (typeof slot === "string" && slot.startsWith("polnareff-clone-p1-")
+      ? "p1"
+      : typeof slot === "string" && slot.startsWith("polnareff-clone-p2-")
+        ? "p2"
+        : null);
+  return ownerSlot === "p1" ? state.p2 : state.p1;
+}
+
+function chooseAiTarget(dt) {
+  const candidates = [
+    state.p1,
+    ...state.polnareffClones.filter((clone) => clone.ownerSlot === "p1" && !clone.hidden && clone.hp > 0),
+  ];
+  const roster = candidates.map((target) => target.slot).join("|");
+  const currentTarget = candidates.find((target) => target.slot === state.aiTargetSlot);
+  state.aiTargetTimer -= dt;
+
+  if (state.aiCombo && currentTarget) return currentTarget;
+  if (roster !== state.aiTargetRoster || !currentTarget || state.aiTargetTimer <= 0) {
+    const target = candidates[Math.floor(Math.random() * candidates.length)];
+    state.aiTargetSlot = target.slot;
+    state.aiTargetRoster = roster;
+    state.aiTargetTimer = 0.35 + Math.random() * 0.55;
+    return target;
+  }
+  return currentTarget;
+}
+
+function getActiveBarrageStunner(fighter) {
+  if (!fighter.barrageStunSlot) return null;
+  const source = getFighter(fighter.barrageStunSlot);
+  if (!source || !source.barrageQueue || fighter.barrageQueue) {
+    fighter.barrageStunSlot = null;
+    return null;
+  }
+  return source;
 }
 
 function isFrozen(slot) {
@@ -1058,6 +1321,17 @@ function applyDamage(target, amount, color = "#ff4d4f", isHeavy = false) {
   );
   updateHpUI();
 
+  if (target.isPolnareffClone) {
+    if (target.hp <= 0) {
+      target.hidden = true;
+      target.life = 0;
+      target.barrageQueue = null;
+      spawnFloatingText(target.x, target.y - target.radius - 24, "PHÂN THÂN BỊ HẠ!", "#e2e8f0", 18);
+      if (state.aiTargetSlot === target.slot) state.aiTargetTimer = 0;
+    }
+    return;
+  }
+
   if (target.hp <= 0) {
     endGame(target.slot === "p2" ? "p1" : "p2");
   }
@@ -1066,6 +1340,11 @@ function applyDamage(target, amount, color = "#ff4d4f", isHeavy = false) {
 function endGame(winnerSlot) {
   state.gameOver = true;
   state.running = false;
+  syncMobileControlsVisibility();
+  state.epitaphCounter = null;
+  state.epitaphFists.length = 0;
+  state.mobiusCounter = null;
+  state.mobiusFists.length = 0;
   state.timeStop.active = false;
   state.p1.timeStopPendingDmg = 0;
   state.p2.timeStopPendingDmg = 0;
@@ -1097,7 +1376,24 @@ function endGame(winnerSlot) {
   }, 2000);
 }
 
-// ── Dash (Shift, CD 5s) ─────────────────────────────────────
+// ── Dash (Shift, CD 4s) ─────────────────────────────────────
+function spawnDashAfterimage(fighter) {
+  const image =
+    fighter.charId === "polnareff" && fighter.armorOffTimer > 0
+      ? ASSETS.polnareffArmorOff
+      : fighter.img;
+  state.dashAfterimages.push({
+    x: fighter.x,
+    y: fighter.y,
+    img: image,
+    charId: fighter.charId,
+    facing: fighter.facing,
+    radius: fighter.radius,
+    life: 0.24,
+    maxLife: 0.24,
+  });
+}
+
 function triggerDash(fighter, dirX = null, dirY = null) {
   if (!state || !state.running) return;
   if (fighter.hidden || isFrozen(fighter.slot) || fighter.biteTheDustCharge > 0 || fighter.stunTimer > 0 || fighter.sealedTimer > 0 || fighter.isChargingTimeStop) return;
@@ -1134,11 +1430,14 @@ function triggerDash(fighter, dirX = null, dirY = null) {
       ? CHAR_CONFIG.polnareff.skills.q.dashCd || 2.0
       : DASH_COOLDOWN;
   state.cooldowns[fighter.slot].dash = dashCd;
-  fighter.dashTimer = 0.16;
-  fighter.dashVx = dx * 700;
-  fighter.dashVy = dy * 700;
-  fighter.vx = dx * 210;
-  fighter.vy = dy * 210;
+  state.cooldowns[fighter.slot].dashMax = dashCd;
+  fighter.dashTimer = 0.18;
+  fighter.dashVx = dx * 760;
+  fighter.dashVy = dy * 760;
+  fighter.vx = dx * 230;
+  fighter.vy = dy * 230;
+  fighter.dashEchoTimer = 0.035;
+  spawnDashAfterimage(fighter);
 
   spawnParticles(fighter.x, fighter.y, CHAR_CONFIG[fighter.charId].color, 14, 240);
   spawnFloatingText(fighter.x, fighter.y - fighter.radius - 10, "DASH!", "#4ade80", 16);
@@ -1190,19 +1489,23 @@ function castSkill(casterSlot, key) {
   if (!state || !state.running) return;
   const caster = getFighter(casterSlot);
   const opponent = getOpponent(casterSlot);
+  const barrageStunner = getActiveBarrageStunner(caster);
   if (
     caster.hidden ||
     isFrozen(casterSlot) ||
     caster.biteTheDustCharge > 0 ||
-    caster.stunTimer > 0 ||
+    (caster.stunTimer > 0 && !barrageStunner) ||
     caster.sealedTimer > 0 ||
-    caster.isChargingTimeStop
+    caster.isChargingTimeStop ||
+    caster.barrageQueue?.rooted ||
+    state.epitaphCounter?.casterSlot === casterSlot ||
+    state.mobiusCounter?.casterSlot === casterSlot
   ) {
     return;
   }
 
   if (key === "t") {
-    if (caster.charId !== "kira") return;
+    if (caster.charId !== "kira" || barrageStunner) return;
     detonateFirstBomb(casterSlot);
     return;
   }
@@ -1210,16 +1513,26 @@ function castSkill(casterSlot, key) {
   if (state.cooldowns[casterSlot][key] > 0) return;
   const charModule = CHAR_CONFIG[caster.charId];
   if (!charModule || !charModule.skills[key]) return;
+  const skillCfg = charModule.skills[key];
+  if (barrageStunner && !skillCfg.isBarrage) return;
   if (key === "q" && caster.charId !== "kira" && charModule.skills.q?.chargeTime > 0) {
     startTimeStopCharge(casterSlot);
     return;
   }
 
-  const skillCfg = charModule.skills[key];
   if (skillCfg.isBarrage) {
     if (caster.barrageQueue) return; // Already holding barrage
+    state.cooldowns[casterSlot][key] = skillCfg.cd;
   } else {
     state.cooldowns[casterSlot][key] = skillCfg.cd;
+  }
+
+  if (barrageStunner) {
+    caster.barrageStunSlot = null;
+    caster.stunTimer = 0;
+    caster.knockbackTimer = 0;
+    caster.vx = 0;
+    caster.vy = 0;
   }
 
   charModule.castSkill(
@@ -1337,7 +1650,12 @@ function detonateFirstBomb(casterSlot) {
 function startBarrage(caster, barrageCfg, skillKey = null, cdMax = 0, locked = false) {
   const cfg = barrageCfg || CHAR_CONFIG[caster.charId].barrage;
   const totalPunches = cfg.totalPunches;
-  const audioEntry = cfg.soundKey ? playSound(cfg.soundKey) : null;
+  let soundKey = cfg.soundKey;
+  if (caster.charId === "okuyasu") {
+    soundKey = _okuyasuBarrageSoundIndex === 0 ? "okuyasuBarrage" : "okuyasuBarrage7Page";
+    _okuyasuBarrageSoundIndex = 1 - _okuyasuBarrageSoundIndex;
+  }
+  const audioEntry = soundKey ? playSound(soundKey) : null;
 
   let totalDuration = 2.15;
   if (audioEntry && Number.isFinite(audioEntry.duration) && audioEntry.duration > 0.6) {
@@ -1359,10 +1677,11 @@ function startBarrage(caster, barrageCfg, skillKey = null, cdMax = 0, locked = f
 
 function releaseBarrage(fighter) {
   if (!fighter || !fighter.barrageQueue || fighter.barrageQueue.locked) return;
-  const bq = fighter.barrageQueue;
-  fadeOutAndStopAudio(bq.audioEntry, 120);
-  if (bq.skillKey && bq.cdMax > 0 && state?.cooldowns?.[fighter.slot]) {
-    state.cooldowns[fighter.slot][bq.skillKey] = bq.cdMax;
+  fadeOutAndStopAudio(fighter.barrageQueue.audioEntry, 120);
+  if (fighter.charId === "polnareff") {
+    for (const clone of state.polnareffClones) {
+      if (clone.ownerSlot === fighter.slot) clone.barrageQueue = null;
+    }
   }
   fighter.barrageQueue = null;
 }
@@ -1404,6 +1723,62 @@ function triggerTimeSkip(caster, opponent, cfg) {
   spawnParticles(caster.x, caster.y, "#dc2626", 20, 260);
   spawnFloatingText(caster.x, caster.y - 84, cfg.callout || "TIME SKIP!", "#ef4444", 24);
   state.screenShake = Math.max(state.screenShake, 5);
+
+  const radius = cfg.impactRadius || 35;
+  const zoneLife = 0.26;
+  const hit = !(caster.slot === "p2" && state.aiDifficulty === "super") &&
+    !opponent.hidden &&
+    Math.hypot(opponent.x - caster.x, opponent.y - caster.y) <= radius + opponent.radius * 0.25;
+  state.diavoloTimeSkipZones.push({
+    casterSlot: caster.slot,
+    x: caster.x,
+    y: caster.y,
+    radius,
+    life: zoneLife,
+    maxLife: zoneLife,
+    hit,
+  });
+  if (!hit) return;
+
+  const facing = caster.facing || 1;
+  const wallX = clampArenaX(facing > 0 ? ARENA_RIGHT : ARENA_LEFT, opponent.radius);
+  const flightSpeed = 3600;
+  const distanceToWall = Math.abs(wallX - opponent.x);
+  const alreadyAtWall = distanceToWall <= 1;
+  const strikeDuration = 0.12;
+  applyAttackDamage(caster.slot, opponent, cfg.impactDamage || 30, "#ef4444", true);
+  playDiavoloTimeSkipImpact();
+  opponent.barrageStunSlot = null;
+  opponent.isGuarding = false;
+  opponent.vx = 0;
+  opponent.vy = 0;
+  opponent.dashTimer = 0;
+  opponent.knockbackTimer = 0;
+  opponent.stunTimer = Math.max(
+    opponent.stunTimer,
+    alreadyAtWall ? (cfg.wallStunDuration || 0.5) : strikeDuration
+  );
+  if (opponent.barrageQueue) {
+    fadeOutAndStopAudio(opponent.barrageQueue.audioEntry);
+    opponent.barrageQueue = null;
+  }
+  state.diavoloImpales.push({
+    casterSlot: caster.slot,
+    targetSlot: opponent.slot,
+    facing,
+    wallX,
+    phase: alreadyAtWall ? "pin" : "strike",
+    timer: alreadyAtWall ? (cfg.wallStunDuration || 0.5) : strikeDuration,
+    armTimer: 0.2,
+    flightSpeed,
+    pinDuration: cfg.wallStunDuration || 0.5,
+  });
+  if (alreadyAtWall) {
+    opponent.x = wallX;
+    opponent.stunTimer = Math.max(opponent.stunTimer, cfg.wallStunDuration || 0.5);
+  }
+  spawnParticles(opponent.x, opponent.y, "#ef4444", 14, 240);
+  spawnFloatingText(opponent.x, opponent.y - 72, "KING CRIMSON: IMPALED!", "#ef4444", 19);
 }
 
 function activateEpitaph(caster, cfg) {
@@ -1417,6 +1792,7 @@ function triggerEpitaphCounter(diavolo) {
   const attacker = getOpponent(diavolo.slot);
   diavolo.epitaphTimer = 0;
   playSound(qCfg.soundKey);
+  playSound("diavoloBarrage", 0.65);
   spawnParticles(diavolo.x, diavolo.y, "#ef4444", 18, 250);
 
   // Teleport right in front of attacker
@@ -1425,12 +1801,102 @@ function triggerEpitaphCounter(diavolo) {
   diavolo.y = clampArenaY(attacker.y, diavolo.radius);
   diavolo.facing = attacker.x >= diavolo.x ? 1 : -1;
 
-  attacker.stunTimer = Math.max(attacker.stunTimer, qCfg.stunDuration || 2.0);
+  const stunDuration = qCfg.stunDuration || 3.0;
+  attacker.stunTimer = Math.max(attacker.stunTimer, stunDuration);
+  attacker.barrageStunSlot = null;
   attacker.isGuarding = false;
+  attacker.vx = 0;
+  attacker.vy = 0;
+  attacker.dashTimer = 0;
+  attacker.knockbackTimer = 0;
+  if (attacker.barrageQueue) {
+    fadeOutAndStopAudio(attacker.barrageQueue.audioEntry);
+    attacker.barrageQueue = null;
+  }
   spawnParticles(attacker.x, attacker.y, "#dc2626", 22, 280);
   state.screenShake = Math.max(state.screenShake, 10);
+  diavolo.vx = 0;
+  diavolo.vy = 0;
+  diavolo.dashTimer = 0;
+  diavolo.knockbackTimer = 0;
 
-  startBarrage(diavolo, CHAR_CONFIG.diavolo.epitaphBarrage, null, 0, true);
+  state.epitaphCounter = {
+    casterSlot: diavolo.slot,
+    targetSlot: attacker.slot,
+    charId: "diavolo",
+    color: "#dc2626",
+    duration: stunDuration,
+    remaining: stunDuration,
+    damage: qCfg.damage || 50,
+    punchTimer: 0,
+    punchInterval: stunDuration / (CHAR_CONFIG.diavolo.epitaphBarrage.totalPunches || 42),
+    punchesSpawned: 0,
+    totalPunches: CHAR_CONFIG.diavolo.epitaphBarrage.totalPunches || 42,
+  };
+}
+
+function updateScriptedBarrageCounter(counterKey, fistsKey, dt) {
+  const counter = state[counterKey];
+  if (!counter) return;
+
+  counter.remaining = Math.max(0, counter.remaining - dt);
+  counter.punchTimer -= dt;
+  const caster = getFighter(counter.casterSlot);
+  const target = getFighter(counter.targetSlot);
+  if (!caster || !target || caster.hidden || target.hidden) {
+    state[counterKey] = null;
+    state[fistsKey].length = 0;
+    return;
+  }
+  target.stunTimer = Math.max(target.stunTimer, counter.remaining);
+  const baseAngle = Math.atan2(target.y - caster.y, target.x - caster.x);
+  const charConfig = CHAR_CONFIG[counter.charId];
+
+  while (counter.punchTimer <= 0 && counter.punchesSpawned < counter.totalPunches) {
+    const angle = baseAngle + (Math.random() - 0.5) * 0.9;
+    const offset = 16 + Math.random() * 42;
+    if (counter.charId === "diavolo") {
+      playBarragePunchImpact(counter.punchesSpawned === counter.totalPunches - 1 ? 1.45 : 1);
+    }
+    state[fistsKey].push({
+      x: target.x - Math.cos(angle) * offset,
+      y: target.y - Math.sin(angle) * offset,
+      originX: target.x,
+      originY: target.y,
+      charId: counter.charId,
+      vx: 0,
+      vy: 0,
+      angle,
+      ownerSlot: caster.slot,
+      color: charConfig.color,
+      img: charConfig.armAsset(),
+      life: counter.duration,
+      maxLife: counter.duration,
+      hit: false,
+      suspended: true,
+      isVisualOnly: true,
+      isJolyneMobiusFist: counter.charId === "jolyne",
+      damage: 0,
+      scale: 1.0 + Math.random() * 0.25,
+    });
+    counter.punchesSpawned += 1;
+    counter.punchTimer += counter.punchInterval;
+  }
+
+  if (counter.remaining > 0) return;
+
+  state[counterKey] = null;
+  state[fistsKey].length = 0;
+  target.stunTimer = 0;
+  applyAttackDamage(counter.casterSlot, target, counter.damage, counter.color, true);
+}
+
+function updateEpitaphCounter(dt) {
+  updateScriptedBarrageCounter("epitaphCounter", "epitaphFists", dt);
+}
+
+function updateMobiusCounter(dt) {
+  updateScriptedBarrageCounter("mobiusCounter", "mobiusFists", dt);
 }
 
 function spawnTheHandSwipeVfx(caster, angle) {
@@ -1455,8 +1921,8 @@ function castTheHandPull(caster, opponent, cfg) {
       spawnFloatingText(opponent.x, opponent.y - 72, "NÉ ĐƯỢC!", "#4ade80", 20);
       return;
     }
-    const pullX = clampArenaX(caster.x + Math.cos(angle) * (caster.radius + opponent.radius + 14), opponent.radius);
-    const pullY = clampArenaY(caster.y + Math.sin(angle) * (caster.radius + opponent.radius + 14), opponent.radius);
+    const pullX = clampArenaX(caster.x + Math.cos(angle) * (caster.radius + opponent.radius + 2), opponent.radius);
+    const pullY = clampArenaY(caster.y + Math.sin(angle) * (caster.radius + opponent.radius + 2), opponent.radius);
     if (opponent.sealedTimer <= 0) {
       opponent.x = pullX;
       opponent.y = pullY;
@@ -1509,11 +1975,12 @@ function castJosukeRock(caster, opponent, cfg) {
     originX: crackX,
     originY: crackY,
     angle,
-    speed: 680,
+    speed: cfg.speed || 430,
     maxRange: cfg.maxRange || 340,
     damage: cfg.damage || 15,
-    phase: "out", // "out" | "pull"
-    pullTimer: 0.28,
+    phase: "out",
+    hit: false,
+    targetSlot: null,
     radius: 26,
   });
 }
@@ -1536,8 +2003,8 @@ function castJosukeAngelo(caster, opponent, cfg) {
   });
 }
 
-function castPolnareffSword(caster, opponent, cfg, isVisualOnly = false) {
-  if (!isVisualOnly) {
+function castPolnareffSword(caster, opponent, cfg, isVisualOnly = false, damageMultiplier = 1, silent = isVisualOnly) {
+  if (!silent) {
     playSound(cfg.soundKey);
     spawnFloatingText(caster.x, caster.y - 84, cfg.callout, "#e2e8f0", 22);
   }
@@ -1550,7 +2017,8 @@ function castPolnareffSword(caster, opponent, cfg, isVisualOnly = false) {
     vx: Math.cos(angle) * speed,
     vy: Math.sin(angle) * speed,
     angle,
-    damage: isVisualOnly ? 0 : (cfg.damage || 10),
+    damage: isVisualOnly ? 0 : (cfg.damage || 10) * damageMultiplier,
+    drawSize: cfg.projectileSize || 155,
     isVisualOnly,
     life: 1.4,
   });
@@ -1562,20 +2030,40 @@ function activatePolnareffArmorOff(caster, cfg) {
   spawnParticles(caster.x, caster.y, "#e2e8f0", 24, 280);
   spawnFloatingText(caster.x, caster.y - 90, cfg.callout || "ARMOR OFF!", "#f8fafc", 25);
 
-  // Spawn 2 independent AI clones that mirror skills visually (no damage)
+  // Spawn two afterimages for the full Armor Off duration.
   state.polnareffClones = state.polnareffClones.filter((c) => c.ownerSlot !== caster.slot);
   for (let i = 0; i < 2; i++) {
     const ang = (i === 0 ? -1 : 1) * 1.1;
+    const cloneHp = Math.max(25, Math.round(caster.maxHp * 0.35));
     state.polnareffClones.push({
       ownerSlot: caster.slot,
+      slot: `polnareff-clone-${caster.slot}-${++state.polnareffCloneSerial}`,
+      isPolnareffClone: true,
+      charId: "polnareff",
+      img: caster.img,
       x: clampArenaX(caster.x + Math.cos(ang) * 90, caster.radius),
       y: clampArenaY(caster.y + Math.sin(ang) * 90, caster.radius),
       vx: (Math.random() - 0.5) * 200,
       vy: (Math.random() - 0.5) * 200,
       facing: caster.facing,
       radius: caster.radius,
+      hp: cloneHp,
+      maxHp: cloneHp,
+      hitFlash: 0,
+      guardPool: 0,
+      isGuarding: false,
+      stunTimer: 0,
+      sealedTimer: 0,
+      dashTimer: 0,
+      knockbackTimer: 0,
+      barrageStunSlot: null,
+      timeStopPendingDmg: 0,
+      timeStopPendingColor: "#ff4d4f",
+      timeStopPendingHeavy: false,
+      timeStopPendingKnockback: null,
+      hidden: false,
       life: cfg.duration || 10,
-      aiTimer: 0.2 + i * 0.15,
+      side: i === 0 ? -1 : 1,
       barrageQueue: null,
     });
   }
@@ -1583,18 +2071,31 @@ function activatePolnareffArmorOff(caster, cfg) {
 
 function triggerCloneSkill(caster, opponent, key) {
   if (caster.charId !== "polnareff" || caster.armorOffTimer <= 0) return;
+
   for (const clone of state.polnareffClones) {
     if (clone.ownerSlot !== caster.slot) continue;
+
     if (key === "e") {
-      const cfg = CHAR_CONFIG.polnareff.barrage;
+      const barrage = CHAR_CONFIG.polnareff.barrage;
       clone.barrageQueue = {
-        remaining: 16,
+        remaining: barrage.totalPunches,
         timer: 0,
-        interval: 0.08,
-        cfg: { ...cfg, punchDamage: 0, lastPunchDamage: 0 },
+        interval: caster.barrageQueue?.interval || 2.15 / barrage.totalPunches,
+        cfg: {
+          ...barrage,
+          punchDamage: barrage.punchDamage * 0.1,
+          lastPunchDamage: barrage.lastPunchDamage * 0.1,
+        },
       };
     } else if (key === "r") {
-      castPolnareffSword(clone, opponent, CHAR_CONFIG.polnareff.skills.r, true);
+      castPolnareffSword(
+        clone,
+        opponent,
+        CHAR_CONFIG.polnareff.skills.r,
+        false,
+        0.1,
+        true
+      );
     }
   }
 }
@@ -1612,6 +2113,7 @@ function castJolyneStringFinger(caster, opponent, cfg) {
     life: cfg.life || 0.38,
     maxLife: cfg.life || 0.38,
     damage: cfg.damage || 10,
+    stunDuration: cfg.stunDuration || 0.5,
     hitDone: false,
   });
   spawnFloatingText(caster.x, caster.y - 84, cfg.callout, "#22d3ee", 22);
@@ -1620,7 +2122,7 @@ function castJolyneStringFinger(caster, opponent, cfg) {
 function castJolyneMobiusWeb(caster, opponent, cfg) {
   caster.jolynePoseTimer = 0.45;
   const angle = Math.atan2(opponent.y - caster.y, opponent.x - caster.x);
-  const dist = Math.min(280, Math.hypot(opponent.x - caster.x, opponent.y - caster.y));
+  const dist = Math.min(cfg.range || 250, Math.hypot(opponent.x - caster.x, opponent.y - caster.y));
   const tx = clampArenaX(caster.x + Math.cos(angle) * dist, 70);
   const ty = clampArenaY(caster.y + Math.sin(angle) * dist, 70);
   state.mobiusWebs.push({
@@ -1629,7 +2131,7 @@ function castJolyneMobiusWeb(caster, opponent, cfg) {
     y: caster.y,
     targetX: tx,
     targetY: ty,
-    speed: 780,
+    speed: cfg.projectileSpeed || 546,
     radius: cfg.webRadius || 88,
     damage: cfg.damage || 40,
     life: cfg.webDuration || 2.0,
@@ -1637,6 +2139,41 @@ function castJolyneMobiusWeb(caster, opponent, cfg) {
     triggered: false,
   });
   spawnFloatingText(caster.x, caster.y - 88, cfg.callout, "#22d3ee", 24);
+}
+
+function startMobiusCounter(caster, target, cfg) {
+  const duration = 2.15;
+  const totalPunches = 40;
+  target.stunTimer = duration;
+  target.barrageStunSlot = null;
+  target.isGuarding = false;
+  target.vx = 0;
+  target.vy = 0;
+  target.dashTimer = 0;
+  target.knockbackTimer = 0;
+  if (target.barrageQueue) {
+    fadeOutAndStopAudio(target.barrageQueue.audioEntry);
+    target.barrageQueue = null;
+  }
+
+  caster.vx = 0;
+  caster.vy = 0;
+  caster.dashTimer = 0;
+  caster.knockbackTimer = 0;
+  spawnFloatingText(caster.x, caster.y - 84, "ORA ORA ORA!", "#22d3ee", 24);
+  state.mobiusCounter = {
+    casterSlot: caster.slot,
+    targetSlot: target.slot,
+    charId: "jolyne",
+    color: "#22d3ee",
+    duration,
+    remaining: duration,
+    damage: cfg.damage || 40,
+    punchTimer: 0,
+    punchInterval: duration / totalPunches,
+    punchesSpawned: 0,
+    totalPunches,
+  };
 }
 
 function activateTimeStop(casterSlot, duration) {
@@ -1675,7 +2212,8 @@ function releaseSuspendedTimeStopPunches() {
 }
 
 function releaseTimeStopDamage(casterSlot) {
-  const order = casterSlot ? [getOpponent(casterSlot), getFighter(casterSlot)] : [state.p1, state.p2];
+  const priority = casterSlot ? [getOpponent(casterSlot), getFighter(casterSlot)] : [];
+  const order = [...new Set([...priority, state.p1, state.p2, ...state.polnareffClones])].filter(Boolean);
   let anyReleased = false;
 
   for (const f of order) {
@@ -1702,7 +2240,12 @@ function releaseTimeStopDamage(casterSlot) {
   if (anyReleased) {
     updateHpUI();
     for (const f of order) {
-      if (f && f.hp <= 0 && !state.gameOver) {
+      if (f?.isPolnareffClone && f.hp <= 0) {
+        f.hidden = true;
+        f.life = 0;
+        continue;
+      }
+      if (f && !f.isPolnareffClone && f.hp <= 0 && !state.gameOver) {
         endGame(f.slot === "p2" ? "p1" : "p2");
         break;
       }
@@ -1728,6 +2271,9 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
 
   const barrageCfg = overrideCfg || fighter.barrageQueue?.cfg || CHAR_CONFIG[fighter.charId].barrage;
   const punchDmg = isLastPunch ? barrageCfg.lastPunchDamage : barrageCfg.punchDamage;
+  if (fighter.charId === "diavolo" || fighter.charId === "okuyasu") {
+    playBarragePunchImpact(isLastPunch ? 1.45 : 1);
+  }
 
   if (barrageCfg.isFanSword) {
     // Polnareff Silver Chariot: tight horizontal fan (±20px vertical, ±5°) for anime hundred-thrust look
@@ -1761,6 +2307,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
           suspended: false,
           isVisualOnly,
           damage: isVisualOnly ? 0 : punchDmg,
+          charId: fighter.charId,
           scale: 1.05 + Math.random() * 0.2,
         });
       }
@@ -1802,6 +2349,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
         suspended: false,
         isVisualOnly,
         damage: isVisualOnly ? 0 : punchDmg,
+        charId: fighter.charId,
         scale: (isVisualOnly ? 1.0 : 1.2) + Math.random() * 0.28,
       });
     }
@@ -1853,7 +2401,7 @@ function updateFighterPhysics(f, dt) {
     }
   }
 
-  // Guard state & slow regen (max 20 DMG pool, 4s lock when broken, 25s full recharge)
+  // Guard state & gradual recharge (25 damage pool, 4s lock when broken, 40s full recharge)
   const wantsGuard =
     f.slot === "p1" ? keysPressed.has("f") || touchInput.guarding : state.aiGuardTimer > 0;
   if (
@@ -1909,8 +2457,17 @@ function updateFighterPhysics(f, dt) {
     return;
   }
 
-  // Heavy Knockback flight (e.g. DIO Road Roller impact) overrides normal steering briefly
-  if (f.knockbackTimer > 0) {
+  const isRooted =
+    f.barrageQueue?.rooted ||
+    state.epitaphCounter?.casterSlot === f.slot ||
+    state.mobiusCounter?.casterSlot === f.slot ||
+    Boolean(getActiveBarrageStunner(f));
+  if (isRooted) {
+    f.vx = 0;
+    f.vy = 0;
+    f.dashTimer = 0;
+    f.knockbackTimer = 0;
+  } else if (f.knockbackTimer > 0) {
     f.knockbackTimer = Math.max(0, f.knockbackTimer - dt);
     const drag = Math.max(0, 1 - dt * 3.4);
     f.vx *= drag;
@@ -1922,6 +2479,11 @@ function updateFighterPhysics(f, dt) {
     }
   } else if (f.dashTimer > 0) {
     f.dashTimer = Math.max(0, f.dashTimer - dt);
+    f.dashEchoTimer -= dt;
+    if (f.dashEchoTimer <= 0) {
+      spawnDashAfterimage(f);
+      f.dashEchoTimer = 0.035;
+    }
     f.x += f.dashVx * dt;
     f.y += f.dashVy * dt;
   } else if (f.isChargingTimeStop) {
@@ -2071,7 +2633,7 @@ function updateFighterPhysics(f, dt) {
 
 function applyAiSteering(ai, dt) {
   const diff = getActiveAiDiff();
-  const player = state.p1;
+  const player = getOpponent("p2");
   const lead = diff.leadAim || 0;
   const aimX = Math.max(ARENA_LEFT + player.radius, Math.min(ARENA_RIGHT - player.radius, player.x + player.vx * lead));
   const aimY = Math.max(ARENA_TOP + player.radius, Math.min(ARENA_BOTTOM - player.radius, player.y + player.vy * lead));
@@ -2228,6 +2790,7 @@ function handleFighterCollision() {
   const a = state.p1;
   const b = state.p2;
   if (a.hidden || b.hidden) return;
+  if (getActiveBarrageStunner(a) || getActiveBarrageStunner(b)) return;
 
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -2312,14 +2875,6 @@ function updateBarrageQueue(fighter, opponent, dt) {
     fighter.barrageQueue.remaining -= 1;
     if (fighter.barrageQueue.remaining <= 0) {
       fadeOutAndStopAudio(fighter.barrageQueue.audioEntry, 180);
-      if (
-        !fighter.barrageQueue.locked &&
-        fighter.barrageQueue.skillKey &&
-        fighter.barrageQueue.cdMax > 0 &&
-        state?.cooldowns?.[fighter.slot]
-      ) {
-        state.cooldowns[fighter.slot][fighter.barrageQueue.skillKey] = fighter.barrageQueue.cdMax;
-      }
       fighter.barrageQueue = null;
     } else {
       fighter.barrageQueue.timer += fighter.barrageQueue.interval;
@@ -2350,6 +2905,12 @@ function updatePunches(dt) {
     const p = state.punches[i];
     if (isFrozen(p.ownerSlot) || p.suspended) continue;
 
+    if (p.hit) {
+      p.life -= dt;
+      if (p.life <= 0) state.punches.splice(i, 1);
+      continue;
+    }
+
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.life -= dt;
@@ -2364,8 +2925,6 @@ function updatePunches(dt) {
         const cdy = p.y - other.y;
         if (cdy > 52 || cdy < -52) continue;
         if (cdx * cdx + cdy * cdy <= 2704) {
-          p.hit = true;
-          other.hit = true;
           spawnBarrageClash((p.x + other.x) * 0.5, (p.y + other.y) * 0.5, p.angle);
           break;
         }
@@ -2394,16 +2953,26 @@ function updatePunches(dt) {
         const hitR = target.radius + 34;
         if (distSq <= hitR * hitR) {
           p.hit = true;
+          p.life = Math.max(p.life, 0.09);
           if (!p.isVisualOnly && p.damage > 0) {
             applyAttackDamage(p.ownerSlot, target, p.damage, p.color, false);
             spawnParticles(p.x, p.y, p.color, 2, 110);
+            const attacker = getFighter(p.ownerSlot);
+            if (attacker?.barrageQueue && !target.barrageQueue) {
+              target.barrageStunSlot = p.ownerSlot;
+              target.isGuarding = false;
+              target.dashTimer = 0;
+              target.knockbackTimer = 0;
+              target.vx = 0;
+              target.vy = 0;
+            }
           }
         }
       }
     }
 
     const travelDist = Math.hypot(p.x - p.originX, p.y - p.originY);
-    if (p.life <= 0 || p.hit || travelDist > 125) {
+    if (p.life <= 0 || (!p.hit && travelDist > 125)) {
       state.punches.splice(i, 1);
     }
   }
@@ -2539,8 +3108,8 @@ function updateRoadRoller(dt) {
       spawnBombExplosion(rr.targetX, rr.targetY, rr.impactRadius, "orange", 13);
 
       // Hit and knock back ALL enemies within Road Roller AoE radius
-      for (const fighter of [state.p1, state.p2]) {
-        if (fighter.slot === rr.casterSlot || fighter.hidden) continue;
+      for (const fighter of [state.p1, state.p2, ...state.polnareffClones]) {
+        if (fighter.slot === rr.casterSlot || fighter.ownerSlot === rr.casterSlot || fighter.hidden) continue;
         const dist = Math.hypot(fighter.x - rr.targetX, fighter.y - rr.targetY);
         if (dist <= rr.impactRadius + fighter.radius * 0.5) {
           applyAttackDamage(rr.casterSlot, fighter, rr.damage || 40, "#facc15", true);
@@ -2568,8 +3137,12 @@ function updateFirstBombs(dt) {
     }
     if (b.attachedSlot) {
       const t = getFighter(b.attachedSlot);
-      b.x = t.x;
-      b.y = t.y;
+      if (t && !t.hidden) {
+        b.x = t.x;
+        b.y = t.y;
+      } else {
+        b.attachedSlot = null;
+      }
     }
     if (b.life <= 0) {
       state.firstBombs.splice(i, 1);
@@ -2582,12 +3155,12 @@ function updateFirstBombs(dt) {
     if (p.timer <= 0) {
       state.pendingOhkos.splice(i, 1);
       const target = getFighter(p.targetSlot);
-      applyDamage(target, target.maxHp, "#ef4444", true);
+      if (target && !target.hidden) applyDamage(target, target.maxHp, "#ef4444", true);
     }
   }
 }
 
-function checkSuperAiReflexes(ai, player, cds, dist) {
+function checkAiReflexes(ai, player, cds, dist) {
   // 1. Instant Star Finger dodge or shield
   for (const beam of state.starFingerBeams) {
     if (beam.casterSlot !== "p1" || beam.hitDone) continue;
@@ -2604,6 +3177,7 @@ function checkSuperAiReflexes(ai, player, cds, dist) {
       }
       if (ai.guardPool > 8 && ai.guardBrokenTimer <= 0) {
         state.aiGuardTimer = 0.25;
+        return true;
       }
     }
   }
@@ -2634,6 +3208,7 @@ function checkSuperAiReflexes(ai, player, cds, dist) {
   if (player.barrageQueue && dist < 175) {
     if (ai.guardBrokenTimer <= 0 && ai.guardPool > 7) {
       state.aiGuardTimer = 0.22;
+      return true;
     } else if (cds.dash <= 0) {
       triggerDash(ai, ai.x - player.x, ai.y - player.y);
       return true;
@@ -2652,6 +3227,86 @@ function checkSuperAiReflexes(ai, player, cds, dist) {
         return true;
       }
     }
+  }
+
+  const projectiles = [];
+  for (const rock of state.josukeRocks) {
+    if (rock.casterSlot === "p1" && rock.phase === "out") {
+      projectiles.push({
+        x: rock.x,
+        y: rock.y,
+        vx: Math.cos(rock.angle) * rock.speed,
+        vy: Math.sin(rock.angle) * rock.speed,
+      });
+    }
+  }
+  for (const punch of state.angeloPunches) {
+    if (punch.casterSlot === "p1" && !punch.hit) {
+      projectiles.push({
+        x: punch.x,
+        y: punch.y,
+        vx: Math.cos(punch.angle) * punch.speed,
+        vy: Math.sin(punch.angle) * punch.speed,
+      });
+    }
+  }
+  for (const sword of state.swordProjectiles) {
+    if (sword.casterSlot === "p1" && !sword.isVisualOnly) {
+      projectiles.push({ x: sword.x, y: sword.y, vx: sword.vx, vy: sword.vy });
+    }
+  }
+  for (const punch of state.punches) {
+    if (punch.ownerSlot === "p1" && !punch.hit && !punch.suspended) {
+      projectiles.push({ x: punch.x, y: punch.y, vx: punch.vx, vy: punch.vy });
+    }
+  }
+
+  for (const projectile of projectiles) {
+    const endX = projectile.x + projectile.vx * 0.18;
+    const endY = projectile.y + projectile.vy * 0.18;
+    if (pointToSegmentDist(ai.x, ai.y, projectile.x, projectile.y, endX, endY) > ai.radius + 32) continue;
+    if (cds.dash <= 0) {
+      triggerDash(ai, -projectile.vy, projectile.vx);
+      return true;
+    }
+    if (ai.guardPool > 2 && ai.guardBrokenTimer <= 0) {
+      state.aiGuardTimer = 0.24;
+      return true;
+    }
+  }
+
+  for (const finger of state.stringFingers) {
+    if (finger.casterSlot !== "p1" || finger.hitDone) continue;
+    const endX = finger.x1 + Math.cos(finger.angle) * finger.length;
+    const endY = finger.y1 + Math.sin(finger.angle) * finger.length;
+    if (pointToSegmentDist(ai.x, ai.y, finger.x1, finger.y1, endX, endY) > ai.radius + 16) continue;
+    if (cds.dash <= 0) {
+      triggerDash(ai, -Math.sin(finger.angle), Math.cos(finger.angle));
+      return true;
+    }
+    if (ai.guardPool > 2 && ai.guardBrokenTimer <= 0) {
+      state.aiGuardTimer = 0.24;
+      return true;
+    }
+  }
+
+  for (const web of state.mobiusWebs) {
+    if (web.casterSlot !== "p1" || web.triggered) continue;
+    if (Math.hypot(ai.x - web.targetX, ai.y - web.targetY) > web.radius + ai.radius * 0.45 + 24) continue;
+    if (cds.dash <= 0) {
+      triggerDash(ai, ai.x - web.x, ai.y - web.y);
+      return true;
+    }
+  }
+
+  if (
+    player.charId === "okuyasu" &&
+    state.theHandQueue.some((swipe) => swipe.casterSlot === "p1") &&
+    dist <= CHAR_CONFIG.okuyasu.skills.q.range + ai.radius &&
+    cds.dash <= 0
+  ) {
+    triggerDash(ai, ai.x - player.x, ai.y - player.y);
+    return true;
   }
 
   return false;
@@ -2788,13 +3443,89 @@ function tryStartSuperAiCombo(ai, player, cds, dist) {
   return false;
 }
 
+function tryStartNewCharacterAiCombo(ai, player, cds, dist) {
+  if (state.aiCombo || state.timeStop.active) return false;
+
+  if (ai.charId === "diavolo" && cds.e <= 0 && cds.r <= 0 && dist >= 150 && dist <= 350) {
+    state.aiCombo = {
+      steps: [
+        { type: "skill", key: "e", delay: 0 },
+        { type: "skill", key: "r", delay: 0.22, maxDist: 205 },
+      ],
+      index: 0,
+      timer: 0,
+    };
+  } else if (ai.charId === "okuyasu" && cds.e <= 0 && cds.r <= 0 && dist > 120 && dist <= 230) {
+    const steps = [{ type: "skill", key: "e", delay: 0 }];
+    if (cds.q <= 0) steps.push({ type: "skill", key: "q", delay: 0.16, maxDist: 210 });
+    steps.push({ type: "skill", key: "r", delay: 0.18, maxDist: 180 });
+    state.aiCombo = { steps, index: 0, timer: 0 };
+  } else if (ai.charId === "josuke" && cds.r <= 0 && cds.q <= 0 && dist <= 310) {
+    state.aiCombo = {
+      steps: [
+        { type: "skill", key: "r", delay: 0 },
+        { type: "skill", key: "q", delay: 0.3, maxDist: 285 },
+      ],
+      index: 0,
+      timer: 0,
+    };
+  } else if (ai.charId === "polnareff" && cds.q <= 0 && cds.e <= 0 && dist <= 350) {
+    const steps = [{ type: "skill", key: "q", delay: 0 }];
+    if (dist > 180 && cds.dash <= 0) {
+      steps.push({ type: "dash_in", delay: 0.25, lead: 0.12, minDist: 150 });
+    }
+    steps.push({ type: "skill", key: "e", delay: 0.2, maxDist: 190 });
+    state.aiCombo = { steps, index: 0, timer: 0 };
+  } else if (ai.charId === "jolyne" && cds.r <= 0 && cds.e <= 0 && dist >= 120 && dist <= 255) {
+    state.aiCombo = {
+      steps: [
+        { type: "skill", key: "r", delay: 0 },
+        { type: "skill", key: "e", delay: 0.18, maxDist: 185 },
+      ],
+      index: 0,
+      timer: 0,
+    };
+  }
+
+  return Boolean(state.aiCombo);
+}
+
+function tryStartAiCombo(ai, player, cds, dist, diff) {
+  if (state.aiCombo) return false;
+  if (diff.id === "super" && tryStartSuperAiCombo(ai, player, cds, dist)) return true;
+  if (Math.random() > diff.comboChance) return false;
+  return tryStartNewCharacterAiCombo(ai, player, cds, dist);
+}
+
 function updateAI(dt) {
   const ai = state.p2;
-  const player = state.p1;
-  if (ai.hidden || isFrozen("p2") || ai.biteTheDustCharge > 0 || ai.stunTimer > 0 || ai.isChargingTimeStop) return;
+  const player = chooseAiTarget(dt);
+  const cds = state.cooldowns.p2;
+  const barrageStunner = getActiveBarrageStunner(ai);
+  if (
+    ai.hidden ||
+    isFrozen("p2") ||
+    ai.biteTheDustCharge > 0 ||
+    (ai.stunTimer > 0 && !barrageStunner) ||
+    ai.isChargingTimeStop ||
+    ai.barrageQueue?.rooted ||
+    state.epitaphCounter?.casterSlot === "p2" ||
+    state.mobiusCounter?.casterSlot === "p2"
+  ) return;
+
+  if (barrageStunner) {
+    const barrageSkill = Object.entries(CHAR_CONFIG[ai.charId].skills).find(([, skill]) => skill.isBarrage);
+    if (barrageSkill && cds[barrageSkill[0]] <= 0) {
+      castSkill("p2", barrageSkill[0]);
+    }
+    return;
+  }
 
   if (state.aiGuardTimer > 0) {
     state.aiGuardTimer = Math.max(0, state.aiGuardTimer - dt);
+  }
+  if (state.aiReflexTimer > 0) {
+    state.aiReflexTimer = Math.max(0, state.aiReflexTimer - dt);
   }
 
   if (ai.charId === "dio" && !ai.hidden) {
@@ -2807,25 +3538,26 @@ function updateAI(dt) {
 
   const diff = getActiveAiDiff();
   const dist = Math.hypot(player.x - ai.x, player.y - ai.y);
-  const cds = state.cooldowns.p2;
 
-  // Per-frame veteran reflex layer for Super Hard AI (emergency dodges cancel active combo)
-  if (diff.id === "super" && checkSuperAiReflexes(ai, player, cds, dist)) {
+  if (
+    state.aiReflexTimer <= 0 &&
+    Math.random() < diff.reflexChance &&
+    checkAiReflexes(ai, player, cds, dist)
+  ) {
+    state.aiReflexTimer = diff.id === "easy" ? 0.75 : diff.id === "medium" ? 0.5 : diff.id === "hard" ? 0.32 : 0.2;
     if (player.biteTheDustCharge > 0 || (state.roadRoller.active && state.roadRoller.casterSlot === "p1")) {
       state.aiCombo = null;
     }
     return;
   }
 
-  if (diff.id === "super" && runAiCombo(ai, player, cds, dist, dt)) {
-    return;
-  }
+  if (runAiCombo(ai, player, cds, dist, dt)) return;
 
   state.aiDecisionTimer -= dt;
   if (state.aiDecisionTimer > 0) return;
   state.aiDecisionTimer = diff.decisionMin + Math.random() * (diff.decisionMax - diff.decisionMin);
 
-  if (diff.id === "super" && tryStartSuperAiCombo(ai, player, cds, dist)) {
+  if (tryStartAiCombo(ai, player, cds, dist, diff)) {
     runAiCombo(ai, player, cds, dist, 0);
     return;
   }
@@ -3012,6 +3744,74 @@ function updateAI(dt) {
 }
 
 function updateNewCharacterSkills(dt) {
+  for (let i = state.dashAfterimages.length - 1; i >= 0; i--) {
+    const afterimage = state.dashAfterimages[i];
+    afterimage.life -= dt;
+    if (afterimage.life <= 0) state.dashAfterimages.splice(i, 1);
+  }
+
+  for (let i = state.diavoloTimeSkipZones.length - 1; i >= 0; i--) {
+    const zone = state.diavoloTimeSkipZones[i];
+    if (isFrozen(zone.casterSlot)) continue;
+    zone.life -= dt;
+    if (zone.life <= 0) state.diavoloTimeSkipZones.splice(i, 1);
+  }
+  for (let i = state.diavoloImpales.length - 1; i >= 0; i--) {
+    const impale = state.diavoloImpales[i];
+    if (isFrozen(impale.casterSlot) || isFrozen(impale.targetSlot)) continue;
+    const target = getFighter(impale.targetSlot);
+    if (!target || target.hidden) {
+      state.diavoloImpales.splice(i, 1);
+      continue;
+    }
+
+    impale.armTimer = Math.max(0, impale.armTimer - dt);
+    if (impale.phase === "strike") {
+      impale.timer -= dt;
+      target.vx = 0;
+      target.vy = 0;
+      target.dashTimer = 0;
+      target.knockbackTimer = 0;
+      target.stunTimer = Math.max(target.stunTimer, Math.max(0, impale.timer));
+      if (impale.timer <= 0) {
+        impale.phase = "flight";
+        const distanceToWall = Math.abs(impale.wallX - target.x);
+        target.vx = impale.facing * impale.flightSpeed;
+        target.knockbackTimer = Math.max(0.35, distanceToWall / impale.flightSpeed + 0.2);
+      }
+    } else if (impale.phase === "flight") {
+      const reachedWall =
+        impale.facing > 0 ? target.x >= impale.wallX - 1 : target.x <= impale.wallX + 1;
+      if (reachedWall) {
+        target.x = impale.wallX;
+        impale.phase = "pin";
+        impale.timer = impale.pinDuration;
+        target.vx = 0;
+        target.vy = 0;
+        target.knockbackTimer = 0;
+        target.stunTimer = Math.max(target.stunTimer, impale.pinDuration);
+        spawnParticles(target.x, target.y, "#ef4444", 18, 250);
+        spawnFloatingText(target.x, target.y - target.radius - 24, "GHIM TƯỜNG!", "#f87171", 20);
+      } else {
+        target.vx = impale.facing * impale.flightSpeed;
+        target.vy = 0;
+        target.dashTimer = 0;
+        target.knockbackTimer = Math.max(
+          target.knockbackTimer,
+          Math.abs(impale.wallX - target.x) / impale.flightSpeed + 0.2
+        );
+      }
+    } else {
+      impale.timer -= dt;
+      target.x = impale.wallX;
+      target.vx = 0;
+      target.vy = 0;
+      target.knockbackTimer = 0;
+      target.stunTimer = Math.max(target.stunTimer, Math.max(0, impale.timer));
+      if (impale.timer <= 0) state.diavoloImpales.splice(i, 1);
+    }
+  }
+
   // 1. The Hand erase VFX & 3-swipe Space Erase queue
   for (let i = state.eraseSwipes.length - 1; i >= 0; i--) {
     state.eraseSwipes[i].life -= dt;
@@ -3027,7 +3827,7 @@ function updateNewCharacterSkills(dt) {
       const opp = getOpponent(item.casterSlot);
       const angle = Math.atan2(opp.y - caster.y, opp.x - caster.x);
       spawnTheHandSwipeVfx(caster, angle);
-      playSound(item.soundKey, item.isLast ? 1.65 : 1.0);
+      playSound(item.soundKey, item.isLast ? 1.9 : 1.0);
       const dist = Math.hypot(opp.x - caster.x, opp.y - caster.y);
       if (!opp.hidden && dist <= item.range + opp.radius) {
         opp.stunTimer = Math.max(opp.stunTimer, item.stunDuration);
@@ -3051,26 +3851,48 @@ function updateNewCharacterSkills(dt) {
     if (rock.phase === "out") {
       rock.x += Math.cos(rock.angle) * rock.speed * dt;
       rock.y += Math.sin(rock.angle) * rock.speed * dt;
-      if (!opp.hidden && Math.hypot(opp.x - rock.x, opp.y - rock.y) <= rock.radius + opp.radius) {
+      if (!rock.hit && !opp.hidden && Math.hypot(opp.x - rock.x, opp.y - rock.y) <= rock.radius + opp.radius) {
+        rock.hit = true;
+        rock.targetSlot = opp.slot;
         applyAttackDamage(rock.casterSlot, opp, rock.damage, "#f472b6", false);
+        applyRadialKnockback(opp, rock.originX, rock.originY, 460, 0.32);
         spawnParticles(opp.x, opp.y, "#f472b6", 16, 220);
-        spawnFloatingText(opp.x, opp.y - 70, "KÉO VỀ!", "#f472b6", 20);
-        rock.phase = "pull";
-        rock.pullTimer = 0.28;
-      } else if (Math.hypot(rock.x - rock.originX, rock.y - rock.originY) >= rock.maxRange) {
-        state.josukeRocks.splice(i, 1);
+        spawnFloatingText(opp.x, opp.y - 70, "ĐẨY LÙI!", "#f472b6", 20);
       }
-    } else if (rock.phase === "pull") {
-      rock.pullTimer -= dt;
-      const toCasterAngle = Math.atan2(caster.y - rock.y, caster.x - rock.x);
-      const pullStep = 820 * dt;
-      rock.x += Math.cos(toCasterAngle) * pullStep;
-      rock.y += Math.sin(toCasterAngle) * pullStep;
-      if (opp.sealedTimer <= 0 && !opp.hidden) {
-        opp.x = clampArenaX(rock.x, opp.radius);
-        opp.y = clampArenaY(rock.y, opp.radius);
+
+      if (Math.hypot(rock.x - rock.originX, rock.y - rock.originY) >= rock.maxRange) {
+        if (rock.hit) {
+          rock.phase = "return";
+          spawnFloatingText(rock.x, rock.y - 42, "TẢNG ĐÁ QUAY VỀ!", "#f472b6", 17);
+        } else {
+          state.josukeRocks.splice(i, 1);
+        }
       }
-      if (rock.pullTimer <= 0 || Math.hypot(caster.x - rock.x, caster.y - rock.y) <= caster.radius + 32) {
+    } else if (rock.phase === "return") {
+      const toCasterX = caster.x - rock.x;
+      const toCasterY = caster.y - rock.y;
+      const toCasterDist = Math.hypot(toCasterX, toCasterY) || 1;
+      const returnStep = Math.min(toCasterDist, 520 * dt);
+      rock.x += (toCasterX / toCasterDist) * returnStep;
+      rock.y += (toCasterY / toCasterDist) * returnStep;
+
+      const target = getFighter(rock.targetSlot);
+      if (
+        target &&
+        target.knockbackTimer <= 0 &&
+        target.dashTimer <= 0 &&
+        target.sealedTimer <= 0 &&
+        !target.hidden
+      ) {
+        const pullX = rock.x - target.x;
+        const pullY = rock.y - target.y;
+        const pullDist = Math.hypot(pullX, pullY) || 1;
+        const pullStep = Math.min(pullDist, 620 * dt);
+        target.x = clampArenaX(target.x + (pullX / pullDist) * pullStep, target.radius);
+        target.y = clampArenaY(target.y + (pullY / pullDist) * pullStep, target.radius);
+      }
+
+      if (toCasterDist <= caster.radius + 32) {
         state.josukeRocks.splice(i, 1);
       }
     }
@@ -3120,27 +3942,48 @@ function updateNewCharacterSkills(dt) {
     const cl = state.polnareffClones[i];
     if (isFrozen(cl.ownerSlot)) continue;
     cl.life -= dt;
-    if (cl.life <= 0) {
+    if (cl.hidden || cl.life <= 0) {
       state.polnareffClones.splice(i, 1);
       continue;
     }
     const opp = getOpponent(cl.ownerSlot);
-    cl.aiTimer -= dt;
-    if (cl.aiTimer <= 0) {
-      cl.aiTimer = 0.25 + Math.random() * 0.35;
-      const ang = Math.atan2(opp.y - cl.y, opp.x - cl.x) + (Math.random() - 0.5) * 1.4;
-      const spd = 290;
-      cl.vx = Math.cos(ang) * spd;
-      cl.vy = Math.sin(ang) * spd;
-      cl.facing = opp.x >= cl.x ? 1 : -1;
+    const owner = getFighter(cl.ownerSlot);
+    const sideX = -owner.facing * cl.side * 72;
+    let targetX = owner.x - owner.facing * 155 + sideX;
+    let targetY = owner.y + cl.side * 90;
+    let awayX = targetX - opp.x;
+    let awayY = targetY - opp.y;
+    let awayDist = Math.hypot(awayX, awayY) || 1;
+    if (awayDist < 220) {
+      targetX = opp.x + (awayX / awayDist) * 220;
+      targetY = opp.y + (awayY / awayDist) * 220;
     }
-    cl.x = clampArenaX(cl.x + cl.vx * dt, cl.radius);
-    cl.y = clampArenaY(cl.y + cl.vy * dt, cl.radius);
+    targetX = clampArenaX(targetX, cl.radius);
+    targetY = clampArenaY(targetY, cl.radius);
+
+    const dx = targetX - cl.x;
+    const dy = targetY - cl.y;
+    const distance = Math.hypot(dx, dy);
+    const ownerSpeedMultiplier =
+      owner.armorOffTimer > 0 ? (CHAR_CONFIG.polnareff.skills.q.speedMult || 1.5) : 1;
+    const ownerSpeed = (owner.isGuarding ? 165 : 250) * ownerSpeedMultiplier;
+    const moveDistance = Math.min(distance, ownerSpeed * 0.6 * dt);
+    if (distance > 0) {
+      cl.vx = (dx / distance) * ownerSpeed * 0.6;
+      cl.vy = (dy / distance) * ownerSpeed * 0.6;
+      cl.x = clampArenaX(cl.x + (dx / distance) * moveDistance, cl.radius);
+      cl.y = clampArenaY(cl.y + (dy / distance) * moveDistance, cl.radius);
+    } else {
+      cl.vx = 0;
+      cl.vy = 0;
+    }
+    cl.facing = owner.facing;
 
     if (cl.barrageQueue) {
       cl.barrageQueue.timer -= dt;
       while (cl.barrageQueue && cl.barrageQueue.timer <= 0) {
-        spawnBarragePunch({ ...cl, charId: "polnareff", slot: cl.ownerSlot }, opp, false, cl.barrageQueue.cfg);
+        const isLast = cl.barrageQueue.remaining === 1;
+        spawnBarragePunch({ ...cl, charId: "polnareff" }, opp, isLast, cl.barrageQueue.cfg);
         cl.barrageQueue.remaining -= 1;
         if (cl.barrageQueue.remaining <= 0) cl.barrageQueue = null;
         else cl.barrageQueue.timer += cl.barrageQueue.interval;
@@ -3170,6 +4013,17 @@ function updateNewCharacterSkills(dt) {
           opp.y = clampArenaY(caster.y + Math.sin(sf.angle) * (caster.radius + opp.radius + 18), opp.radius);
         }
         spawnParticles(opp.x, opp.y, "#22d3ee", 14, 210);
+        opp.stunTimer = Math.max(opp.stunTimer, sf.stunDuration || 0.5);
+        opp.barrageStunSlot = null;
+        opp.isGuarding = false;
+        opp.vx = 0;
+        opp.vy = 0;
+        opp.dashTimer = 0;
+        opp.knockbackTimer = 0;
+        if (opp.barrageQueue) {
+          fadeOutAndStopAudio(opp.barrageQueue.audioEntry);
+          opp.barrageQueue = null;
+        }
         spawnFloatingText(opp.x, opp.y - 72, "TƠ KÉO!", "#22d3ee", 20);
       }
     }
@@ -3207,26 +4061,14 @@ function updateNewCharacterSkills(dt) {
         opp.x = web.x;
         opp.y = web.y;
       }
-      opp.stunTimer = Math.max(opp.stunTimer, 1.65);
-      opp.isGuarding = false;
-      caster.x = clampArenaX(web.x + (caster.x < web.x ? -82 : 82), caster.radius);
+      caster.x = clampArenaX(
+        web.x + (caster.x < web.x ? -1 : 1) * (caster.radius + opp.radius + 8),
+        caster.radius
+      );
       caster.y = clampArenaY(web.y, caster.radius);
       caster.facing = web.x >= caster.x ? 1 : -1;
       spawnFloatingText(web.x, web.y - 84, "TRÓI CHẶT!", "#22d3ee", 24);
-      startBarrage(
-        caster,
-        {
-          totalPunches: 40,
-          punchDamage: 1.0,
-          lastPunchDamage: 1.0,
-          soundKey: null,
-          callout: "ORA ORA ORA!",
-          color: "#22d3ee",
-        },
-        null,
-        0,
-        true
-      );
+      startMobiusCounter(caster, opp, CHAR_CONFIG.jolyne.skills.q);
     }
 
     if (web.life <= 0) state.mobiusWebs.splice(i, 1);
@@ -3275,13 +4117,15 @@ function update(dt) {
   handleFighterCollision();
 
   updateBarrageQueue(state.p1, state.p2, dt);
-  updateBarrageQueue(state.p2, state.p1, dt);
+  updateBarrageQueue(state.p2, getOpponent("p2"), dt);
   updatePunches(dt);
   updateStarFinger(dt);
   updateRoadRoller(dt);
   updateFirstBombs(dt);
   updateNewCharacterSkills(dt);
   updateAI(dt);
+  updateEpitaphCounter(dt);
+  updateMobiusCounter(dt);
 
   for (let i = state.explosions.length - 1; i >= 0; i--) {
     state.explosions[i].life -= dt;
@@ -3372,21 +4216,14 @@ function draw() {
     ctx.restore();
   }
 
-  if (state && state.p1.epitaphTimer > 0) {
-    ctx.save();
-    ctx.fillStyle = "rgba(220, 38, 38, 0.16)";
-    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
-    ctx.strokeStyle = "rgba(239, 68, 68, 0.65)";
-    ctx.lineWidth = 10;
-    ctx.strokeRect(4, 4, WORLD_W - 8, WORLD_H - 8);
-    ctx.restore();
-  }
-
   if (!state) {
     ctx.restore();
     return;
   }
 
+  for (const zone of state.diavoloTimeSkipZones) {
+    drawDiavoloTimeSkipZone(zone);
+  }
   for (const crack of state.groundCracks) {
     drawGroundCrack(crack);
   }
@@ -3410,10 +4247,16 @@ function draw() {
   for (const cl of state.polnareffClones) {
     drawPolnareffClone(cl);
   }
+  for (const afterimage of state.dashAfterimages) {
+    drawDashAfterimage(afterimage);
+  }
 
   if (!state.p2.hidden) drawFighter(state.p2);
   if (!state.p1.hidden) drawFighter(state.p1);
 
+  for (const impale of state.diavoloImpales) {
+    drawDiavoloImpale(impale);
+  }
   for (const rock of state.josukeRocks) {
     drawSpriteProjectile(ASSETS.josukeRock, rock.x, rock.y, 64, rock.angle * 0.2);
   }
@@ -3421,13 +4264,19 @@ function draw() {
     drawSpriteProjectile(CHAR_CONFIG.josuke.armAsset(), ap.x, ap.y, 110, ap.angle);
   }
   for (const sw of state.swordProjectiles) {
-    drawSpriteProjectile(ASSETS.polnareffSwordProj, sw.x, sw.y, 110, sw.angle);
+    drawSpriteProjectile(ASSETS.polnareffSwordProj, sw.x, sw.y, sw.drawSize || 155, sw.angle);
   }
   for (const swipe of state.eraseSwipes) {
     drawEraseSwipe(swipe);
   }
 
   for (const p of state.punches) {
+    drawPunch(p);
+  }
+  for (const p of state.epitaphFists) {
+    drawPunch(p);
+  }
+  for (const p of state.mobiusFists) {
     drawPunch(p);
   }
 
@@ -3480,6 +4329,17 @@ function draw() {
     ctx.restore();
   }
 
+  if (
+    state.p1.charId === "diavolo" &&
+    (state.p1.epitaphTimer > 0 || state.epitaphCounter?.casterSlot === "p1")
+  ) {
+    ctx.fillStyle = "rgba(239, 68, 68, 0.10)";
+    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    ctx.strokeStyle = "rgba(239, 68, 68, 0.45)";
+    ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, WORLD_W - 6, WORLD_H - 6);
+  }
+
   ctx.restore();
 }
 
@@ -3494,59 +4354,74 @@ function buildArenaFloorCache() {
   fctx.clearRect(0, 0, arenaFloorCache.width, arenaFloorCache.height);
   fctx.setTransform(canvas.width / WORLD_W, 0, 0, canvas.height / WORLD_H, 0, 0);
 
-  const grad = fctx.createRadialGradient(ARENA_CX, ARENA_CY, 90, ARENA_CX, ARENA_CY, ARENA_W * 0.65);
-  grad.addColorStop(0, "#3b2621");
-  grad.addColorStop(0.6, "#27171a");
-  grad.addColorStop(1, "#160b12");
-
+  const hasMap = Boolean(arenaMapImage?.complete && arenaMapImage.naturalWidth);
   fctx.beginPath();
   roundedRectPath(fctx, ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
-  fctx.fillStyle = grad;
-  fctx.fill();
-
   fctx.save();
-  fctx.beginPath();
-  roundedRectPath(fctx, ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
   fctx.clip();
 
-  fctx.strokeStyle = "rgba(250, 204, 21, 0.08)";
-  fctx.lineWidth = 1.5;
-  const tileSize = 78;
-  fctx.beginPath();
-  for (let x = ARENA_LEFT; x < ARENA_RIGHT; x += tileSize) {
-    fctx.moveTo(x, ARENA_TOP);
-    fctx.lineTo(x, ARENA_BOTTOM);
-  }
-  for (let y = ARENA_TOP; y < ARENA_BOTTOM; y += tileSize) {
-    fctx.moveTo(ARENA_LEFT, y);
-    fctx.lineTo(ARENA_RIGHT, y);
-  }
-  fctx.stroke();
+  if (hasMap) {
+    const scale = Math.max(ARENA_W / arenaMapImage.naturalWidth, ARENA_H / arenaMapImage.naturalHeight);
+    const width = arenaMapImage.naturalWidth * scale;
+    const height = arenaMapImage.naturalHeight * scale;
+    fctx.imageSmoothingEnabled = true;
+    fctx.imageSmoothingQuality = "high";
+    fctx.drawImage(arenaMapImage, ARENA_CX - width / 2, ARENA_CY - height / 2, width, height);
+    fctx.fillStyle = "rgba(7, 6, 15, 0.2)";
+    fctx.fillRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H);
+    const mapShade = fctx.createLinearGradient(ARENA_LEFT, 0, ARENA_RIGHT, 0);
+    mapShade.addColorStop(0, "rgba(5, 5, 13, 0.28)");
+    mapShade.addColorStop(0.5, "rgba(5, 5, 13, 0.03)");
+    mapShade.addColorStop(1, "rgba(5, 5, 13, 0.19)");
+    fctx.fillStyle = mapShade;
+    fctx.fillRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H);
+  } else {
+    const grad = fctx.createRadialGradient(ARENA_CX, ARENA_CY, 90, ARENA_CX, ARENA_CY, ARENA_W * 0.65);
+    grad.addColorStop(0, "#3b2621");
+    grad.addColorStop(0.6, "#27171a");
+    grad.addColorStop(1, "#160b12");
+    fctx.fillStyle = grad;
+    fctx.fillRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H);
 
-  fctx.strokeStyle = "rgba(250, 204, 21, 0.14)";
-  fctx.lineWidth = 3;
-  fctx.beginPath();
-  fctx.arc(ARENA_CX, ARENA_CY, 160, 0, Math.PI * 2);
-  fctx.stroke();
+    fctx.strokeStyle = "rgba(250, 204, 21, 0.08)";
+    fctx.lineWidth = 1.5;
+    const tileSize = 78;
+    fctx.beginPath();
+    for (let x = ARENA_LEFT; x < ARENA_RIGHT; x += tileSize) {
+      fctx.moveTo(x, ARENA_TOP);
+      fctx.lineTo(x, ARENA_BOTTOM);
+    }
+    for (let y = ARENA_TOP; y < ARENA_BOTTOM; y += tileSize) {
+      fctx.moveTo(ARENA_LEFT, y);
+      fctx.lineTo(ARENA_RIGHT, y);
+    }
+    fctx.stroke();
 
-  fctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const r = i % 2 === 0 ? 110 : 48;
-    const a = (i * Math.PI) / 5 - Math.PI / 2;
-    const px = ARENA_CX + Math.cos(a) * r;
-    const py = ARENA_CY + Math.sin(a) * r;
-    if (i === 0) fctx.moveTo(px, py);
-    else fctx.lineTo(px, py);
+    fctx.strokeStyle = "rgba(250, 204, 21, 0.14)";
+    fctx.lineWidth = 3;
+    fctx.beginPath();
+    fctx.arc(ARENA_CX, ARENA_CY, 160, 0, Math.PI * 2);
+    fctx.stroke();
+
+    fctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const r = i % 2 === 0 ? 110 : 48;
+      const a = (i * Math.PI) / 5 - Math.PI / 2;
+      const px = ARENA_CX + Math.cos(a) * r;
+      const py = ARENA_CY + Math.sin(a) * r;
+      if (i === 0) fctx.moveTo(px, py);
+      else fctx.lineTo(px, py);
+    }
+    fctx.closePath();
+    fctx.fillStyle = "rgba(250, 204, 21, 0.05)";
+    fctx.fill();
+    fctx.stroke();
+
+    fctx.fillStyle = "rgba(250, 204, 21, 0.07)";
+    fctx.font = "900 44px sans-serif";
+    fctx.fillText("ゴ", ARENA_LEFT + 32, ARENA_TOP + 64);
+    fctx.fillText("ゴ", ARENA_RIGHT - 74, ARENA_BOTTOM - 34);
   }
-  fctx.closePath();
-  fctx.fillStyle = "rgba(250, 204, 21, 0.05)";
-  fctx.fill();
-  fctx.stroke();
-
-  fctx.fillStyle = "rgba(250, 204, 21, 0.07)";
-  fctx.font = "900 44px sans-serif";
-  fctx.fillText("ゴ", ARENA_LEFT + 32, ARENA_TOP + 64);
-  fctx.fillText("ゴ", ARENA_RIGHT - 74, ARENA_BOTTOM - 34);
 
   fctx.restore();
 
@@ -3683,8 +4558,8 @@ function drawFighter(f) {
 
   ctx.restore();
 
-  // Spinning golden stars halo above stunned enemy's head (Star Finger 0.5s stun)
-  if (f.stunTimer > 0) {
+  // Spinning golden stars mark fighters who are stunned, sealed, or barrage-pinned.
+  if (f.stunTimer > 0 || f.sealedTimer > 0 || getActiveBarrageStunner(f)) {
     ctx.save();
     ctx.translate(f.x, f.y - f.radius - 26);
     const rot = _frameNow * 0.0085;
@@ -3865,8 +4740,11 @@ function drawPunch(p) {
   const alpha = p.suspended ? 0.95 : Math.min(1, p.life / (p.maxLife * 0.45));
   ctx.globalAlpha = p.isVisualOnly ? alpha * 0.78 : alpha;
 
-  const w = 78 * p.scale;
-  const h = 40 * p.scale;
+  const isHeavyFist =
+    p.charId === "diavolo" || p.charId === "okuyasu" || p.charId === "polnareff";
+  const jolyneMobiusFist = p.isJolyneMobiusFist;
+  const w = 78 * p.scale * (jolyneMobiusFist ? 1.16 : isHeavyFist ? 1.1 : 1);
+  const h = 40 * p.scale * (jolyneMobiusFist ? 1.38 : isHeavyFist ? 1.25 : 1);
 
   // High-velocity speed streaks behind the fist (hidden during Time Stop so fists don't look spiked)
   if (!state?.timeStop?.active && !p.suspended) {
@@ -4102,11 +4980,14 @@ function drawMobiusWeb(web) {
 }
 
 function drawPolnareffClone(cl) {
-  const sprite = getMipSprite(ASSETS.polnareffArmorOff, 200);
+  if (cl.hidden) return;
+  const owner = getFighter(cl.ownerSlot);
+  const activeImg = owner.armorOffTimer > 0 ? ASSETS.polnareffArmorOff : owner.img;
+  const sprite = getMipSprite(activeImg, 200);
   if (!sprite) return;
   ctx.save();
   ctx.translate(cl.x, cl.y);
-  ctx.globalAlpha = 0.52;
+  ctx.globalAlpha = 0.72;
   const scale = CHAR_CONFIG.polnareff.spriteScale || 1.08;
   const targetH = cl.radius * 2.35 * scale;
   const sw = sprite.width;
@@ -4120,6 +5001,39 @@ function drawPolnareffClone(cl) {
     h = maxW / aspect;
   }
   ctx.scale(cl.facing, 1);
+  ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+  ctx.restore();
+
+  const barWidth = 56;
+  const barHeight = 7;
+  const barX = cl.x - barWidth / 2;
+  const barY = cl.y - cl.radius - 14;
+  const healthRatio = Math.max(0, cl.hp / cl.maxHp);
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+  ctx.fillRect(barX, barY, barWidth, barHeight);
+  ctx.fillStyle = healthRatio > 0.35 ? "#4ade80" : "#f87171";
+  ctx.fillRect(barX + 1, barY + 1, (barWidth - 2) * healthRatio, barHeight - 2);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX, barY, barWidth, barHeight);
+  ctx.restore();
+}
+
+function drawDashAfterimage(afterimage) {
+  const sprite = getMipSprite(afterimage.img, 180);
+  if (!sprite) return;
+  const scale = CHAR_CONFIG[afterimage.charId].spriteScale || 1;
+  const targetH = afterimage.radius * 2.35 * scale;
+  const aspect = sprite.width / sprite.height;
+  const h = Math.min(targetH, (afterimage.radius * 2.85 * scale) / aspect);
+  const w = h * aspect;
+
+  ctx.save();
+  ctx.translate(afterimage.x, afterimage.y);
+  ctx.globalAlpha = 0.3 * (afterimage.life / afterimage.maxLife);
+  ctx.scale(afterimage.facing, 1);
   ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
   ctx.restore();
 }
@@ -4137,13 +5051,36 @@ function drawSpriteProjectile(img, x, y, drawSize, angle) {
   ctx.restore();
 }
 
+function drawDiavoloTimeSkipZone(zone) {
+  const progress = 1 - zone.life / zone.maxLife;
+  const radius = zone.radius * (0.82 + progress * 0.18);
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, 1 - progress);
+  ctx.fillStyle = zone.hit ? "rgba(239, 68, 68, 0.24)" : "rgba(239, 68, 68, 0.14)";
+  ctx.strokeStyle = "rgba(248, 113, 113, 0.9)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(zone.x, zone.y, radius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDiavoloImpale(impale) {
+  if (impale.phase === "pin" || impale.armTimer <= 0) return;
+  const target = getFighter(impale.targetSlot);
+  if (target.hidden) return;
+  const x = target.x - impale.facing * target.radius * 0.35;
+  drawSpriteProjectile(CHAR_CONFIG.diavolo.armAsset(), x, target.y, 150, impale.facing > 0 ? 0 : Math.PI);
+}
+
 function drawEraseSwipe(swipe) {
   const sprite = getMipSprite(ASSETS.theHandEraseVfx, 220);
   if (!sprite) return;
   const prog = 1 - swipe.life / swipe.maxLife;
   ctx.save();
   ctx.translate(swipe.x, swipe.y);
-  ctx.rotate(swipe.angle);
+  ctx.rotate(swipe.angle + Math.PI);
   ctx.globalAlpha = Math.max(0, 1 - prog * 0.85);
   const h = 155 + prog * 35;
   const w = h * (sprite.width / sprite.height);
@@ -4252,7 +5189,7 @@ function updateSkillBarUI() {
   if (dashCd > 0) {
     const txt = `${dashCd.toFixed(1)}s`;
     skillBtns.dash.btn.classList.add("on-cooldown");
-    setCachedHeight("ov_dash", skillBtns.dash.overlay, `${((dashCd / DASH_COOLDOWN) * 100).toFixed(1)}%`);
+    setCachedHeight("ov_dash", skillBtns.dash.overlay, `${((dashCd / (cds.dashMax || DASH_COOLDOWN)) * 100).toFixed(1)}%`);
     setCachedText("tx_dash", skillBtns.dash.text, txt);
     if (mDashBtn && mDashCd) {
       mDashBtn.classList.add("on-cooldown");
@@ -4306,21 +5243,23 @@ function updateSkillBarUI() {
 
 // ── Main Loop & Controls ────────────────────────────────────
 function gameLoop(timestamp) {
-  const dt = Math.min(0.05, (timestamp - lastTime) / 1000 || 0);
-  lastTime = timestamp;
-
-  const isMenuCovered =
-    !mainMenuOverlay.classList.contains("hidden") ||
-    !selectOverlay.classList.contains("hidden");
   const isBlocked = document.hidden || document.body.classList.contains("portrait-blocked");
-
-  if (!isBlocked) {
-    update(dt);
-    if (!isMenuCovered) {
-      draw();
-    }
+  if (!state || !state.running || state.gameOver || isBlocked) {
+    lastTime = timestamp;
+    setTimeout(() => requestAnimationFrame(gameLoop), document.hidden ? 500 : 160);
+    return;
   }
 
+  if (timestamp - lastRenderTime < targetFrameInterval) {
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  const dt = Math.min(0.05, (timestamp - lastTime) / 1000 || 0);
+  lastTime = timestamp;
+  lastRenderTime = timestamp;
+  update(dt);
+  draw();
   requestAnimationFrame(gameLoop);
 }
 
@@ -4394,54 +5333,253 @@ function updateSkillPreview(charId) {
   const skillsEl = document.getElementById("preview-char-skills");
   if (nameEl) nameEl.textContent = cfg.name;
   if (skillsEl) {
-    const extraT = charId === "kira" ? `<span><b>T</b> Kích nổ First Bomb</span>` : "";
-    skillsEl.innerHTML =
-      `<span><b>Q</b> ${cfg.skills.q.name}: ${cfg.skills.q.desc}</span>` +
-      `<span><b>E</b> ${cfg.skills.e.name}: ${cfg.skills.e.desc}</span>` +
-      `<span><b>R</b> ${cfg.skills.r.name}: ${cfg.skills.r.desc}</span>` +
-      extraT;
+    skillsEl.replaceChildren();
+    const skillEntries = [
+      ["Q", cfg.skills.q],
+      ["E", cfg.skills.e],
+      ["R", cfg.skills.r],
+    ];
+    for (const [key, skill] of skillEntries) {
+      const item = document.createElement("span");
+      item.title = `${skill.name}: ${skill.desc}`;
+      const badge = document.createElement("b");
+      badge.textContent = key;
+      item.append(badge, document.createTextNode(` ${skill.name}`));
+      const cooldown = document.createElement("small");
+      cooldown.textContent = `CD ${skill.cd}s`;
+      item.append(cooldown);
+      skillsEl.append(item);
+    }
+    if (charId === "kira") {
+      const item = document.createElement("span");
+      item.title = "Kích nổ First Bomb";
+      const badge = document.createElement("b");
+      badge.textContent = "T";
+      item.append(badge, document.createTextNode(" KÍCH NỔ"));
+      skillsEl.append(item);
+    }
   }
 }
 
-// Character & Opponent Select
-document.querySelectorAll("#player-char-grid .char-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    document.querySelectorAll("#player-char-grid .char-card").forEach((c) => c.classList.remove("selected"));
-    card.classList.add("selected");
-    selectedPlayerChar = card.dataset.char;
-    updateSkillPreview(selectedPlayerChar);
-  });
-});
-updateSkillPreview(selectedPlayerChar);
+function shouldSkipSceneVideo() {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  return Boolean(connection?.saveData || reducedMotion);
+}
 
-document.querySelectorAll("#ai-char-grid .char-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    document.querySelectorAll("#ai-char-grid .char-card").forEach((c) => c.classList.remove("selected"));
-    card.classList.add("selected");
-    selectedAiChar = card.dataset.ai;
+function releaseSceneVideo(video) {
+  if (!video) return;
+  video.pause();
+  video.removeAttribute("src");
+  video.dataset.activeAsset = "";
+  video.removeAttribute("data-video-fallback");
+  video.load();
+}
+
+function playSceneVideo(video, asset) {
+  if (!video || !asset || shouldSkipSceneVideo() || document.hidden) return;
+  if (video.dataset.activeAsset !== asset) {
+    releaseSceneVideo(video);
+    video.dataset.activeAsset = asset;
+    video.onerror = () => {
+      video.dataset.videoFallback = "true";
+    };
+    video.onloadeddata = () => {
+      video.removeAttribute("data-video-fallback");
+    };
+    video.src = encodeURI(asset);
+    video.load();
+  }
+  const playRequest = video.play();
+  if (playRequest) {
+    playRequest.catch(() => {
+      video.dataset.videoFallback = "true";
+    });
+  }
+}
+
+function showMainMenuVideo() {
+  const asset = mainMenuVideo?.dataset.src;
+  if (asset && !mainMenuOverlay.classList.contains("hidden")) {
+    playSceneVideo(mainMenuVideo, asset);
+  }
+}
+
+function showCharacterPreviewVideo(charId) {
+  const asset = CHARACTER_PREVIEW_VIDEOS[charId];
+  if (!asset || !characterPreviewVideo) return;
+  const poster = CHAR_CONFIG[charId]?.imgPath;
+  if (poster) characterPreviewVideo.poster = encodeURI(poster);
+  if (characterPreviewSwitchTimer) clearTimeout(characterPreviewSwitchTimer);
+  if (shouldSkipSceneVideo()) {
+    releaseSceneVideo(characterPreviewVideo);
+    return;
+  }
+  characterPreviewSwitchTimer = setTimeout(() => {
+    if (selectOverlay.classList.contains("hidden") || document.hidden) return;
+    playSceneVideo(characterPreviewVideo, asset);
+  }, 140);
+}
+
+function updateCharacterSelectUI() {
+  const p1Cfg = CHAR_CONFIG[selectedPlayerChar];
+  const aiCfg = CHAR_CONFIG[selectedAiChar];
+  const p1Name = p1Cfg?.name || "JOTARO";
+  const aiName = aiCfg?.name || "DIO";
+  const p1NameEl = document.getElementById("p1-selection-name");
+  const p1TabNameEl = document.getElementById("active-p1-name");
+  const aiTabNameEl = document.getElementById("active-ai-name");
+  const sideLabelEl = document.getElementById("preview-side-label");
+
+  if (p1NameEl) p1NameEl.textContent = p1Name;
+  if (p1TabNameEl) p1TabNameEl.textContent = p1Name;
+  if (aiTabNameEl) aiTabNameEl.textContent = aiName;
+  if (aiColHeader) aiColHeader.textContent = aiName;
+  if (sideLabelEl) {
+    sideLabelEl.textContent = activeSelectionSide === "p1"
+      ? "PLAYER 1 · YOUR STAND"
+      : "CPU / AI · OPPONENT STAND";
+  }
+  selectOverlay.dataset.activeSide = activeSelectionSide;
+
+  document.querySelectorAll("#player-char-grid .char-card").forEach((card) => {
+    const charId = card.dataset.char;
+    const isP1 = charId === selectedPlayerChar;
+    const isAi = charId === selectedAiChar;
+    const isActive = charId === (activeSelectionSide === "p1" ? selectedPlayerChar : selectedAiChar);
+    card.classList.toggle("is-p1-selected", isP1);
+    card.classList.toggle("is-ai-selected", isAi);
+    card.classList.toggle("active-choice", isActive);
+    card.classList.toggle("ai-choice", isActive && activeSelectionSide === "ai");
+    card.setAttribute("aria-pressed", String(isActive));
   });
+
+  document.querySelectorAll(".selection-side-btn").forEach((button) => {
+    const isActive = button.dataset.side === activeSelectionSide;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  });
+}
+
+function setActiveSelectionSide(side) {
+  activeSelectionSide = side === "ai" ? "ai" : "p1";
+  const charId = activeSelectionSide === "p1" ? selectedPlayerChar : selectedAiChar;
+  updateCharacterSelectUI();
+  revealRosterSelection(charId);
+  updateSkillPreview(charId);
+  showCharacterPreviewVideo(charId);
+}
+
+// Character & Opponent Select
+document.getElementById("player-char-grid").addEventListener("click", (event) => {
+  const card = event.target.closest(".char-card");
+  if (!card) return;
+  if (activeSelectionSide === "p1") selectedPlayerChar = card.dataset.char;
+  else selectedAiChar = card.dataset.char;
+  updateCharacterSelectUI();
+  const charId = activeSelectionSide === "p1" ? selectedPlayerChar : selectedAiChar;
+  updateSkillPreview(charId);
+  showCharacterPreviewVideo(charId);
+});
+
+document.querySelectorAll(".selection-side-btn").forEach((button) => {
+  button.addEventListener("click", () => setActiveSelectionSide(button.dataset.side));
+});
+
+document.getElementById("random-ai-btn").addEventListener("click", () => {
+  const pool = Object.keys(CHARACTER_PREVIEW_VIDEOS);
+  selectedAiChar = pool[Math.floor(Math.random() * pool.length)];
+  setActiveSelectionSide("ai");
 });
 
 document.querySelectorAll("#ai-diff-bar .diff-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll("#ai-diff-bar .diff-btn").forEach((b) => b.classList.remove("selected"));
     btn.classList.add("selected");
+    document.querySelectorAll("#ai-diff-bar .diff-btn").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b === btn));
+    });
     selectedAiDifficulty = btn.dataset.diff;
     const dCfg = AI_DIFFICULTIES[selectedAiDifficulty] || AI_DIFFICULTIES.hard;
-    if (aiColHeader) aiColHeader.textContent = `ĐỐI THỦ (AI ${dCfg.label})`;
     if (aiDiffDesc) aiDiffDesc.textContent = dCfg.desc;
   });
 });
+updateCharacterSelectUI();
+updateSkillPreview(selectedPlayerChar);
+
+const characterRoster = document.getElementById("player-char-grid");
+const rosterPrevBtn = document.getElementById("roster-prev-btn");
+const rosterNextBtn = document.getElementById("roster-next-btn");
+
+function syncRosterNavigation() {
+  const maxScroll = characterRoster.scrollWidth - characterRoster.clientWidth;
+  rosterPrevBtn.disabled = characterRoster.scrollLeft <= 1;
+  rosterNextBtn.disabled = characterRoster.scrollLeft >= maxScroll - 1;
+}
+
+function revealRosterSelection(charId) {
+  const selectedCard = characterRoster.querySelector(`.char-card[data-char="${charId}"]`);
+  if (!selectedCard) return;
+  const rosterBounds = characterRoster.getBoundingClientRect();
+  const cardBounds = selectedCard.getBoundingClientRect();
+  let scrollDistance = 0;
+  if (cardBounds.left < rosterBounds.left) {
+    scrollDistance = cardBounds.left - rosterBounds.left;
+  } else if (cardBounds.right > rosterBounds.right) {
+    scrollDistance = cardBounds.right - rosterBounds.right;
+  }
+  if (scrollDistance) {
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth";
+    characterRoster.scrollBy({ left: scrollDistance, behavior });
+  }
+}
+
+function scrollCharacterRoster(direction) {
+  const firstCard = characterRoster.querySelector(".char-card");
+  const columnGap = Number.parseFloat(getComputedStyle(characterRoster).columnGap) || 0;
+  const scrollDistance = firstCard
+    ? firstCard.getBoundingClientRect().width + columnGap
+    : characterRoster.clientWidth;
+  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
+  characterRoster.scrollBy({ left: direction * scrollDistance, behavior });
+}
+
+rosterPrevBtn.addEventListener("click", () => scrollCharacterRoster(-1));
+rosterNextBtn.addEventListener("click", () => scrollCharacterRoster(1));
+characterRoster.addEventListener("scroll", syncRosterNavigation, { passive: true });
+window.addEventListener("resize", syncRosterNavigation);
 
 // Navigation & Modals
 document.getElementById("goto-select-btn").addEventListener("click", () => {
+  releaseSceneVideo(mainMenuVideo);
   mainMenuOverlay.classList.add("hidden");
   selectOverlay.classList.remove("hidden");
+  setActiveSelectionSide("p1");
+  requestAnimationFrame(syncRosterNavigation);
 });
 
 document.getElementById("back-to-menu-btn").addEventListener("click", () => {
+  releaseSceneVideo(characterPreviewVideo);
   selectOverlay.classList.add("hidden");
   mainMenuOverlay.classList.remove("hidden");
+  showMainMenuVideo();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    mainMenuVideo?.pause();
+    characterPreviewVideo?.pause();
+    return;
+  }
+  if (!mainMenuOverlay.classList.contains("hidden")) {
+    showMainMenuVideo();
+  } else if (!selectOverlay.classList.contains("hidden")) {
+    showCharacterPreviewVideo(activeSelectionSide === "p1" ? selectedPlayerChar : selectedAiChar);
+  }
 });
 
 document.getElementById("start-btn").addEventListener("click", startMatchWithIntro);
@@ -4451,12 +5589,15 @@ function returnToMainMenu() {
   if (state) state.running = false;
   if (vsTimerHandle) clearTimeout(vsTimerHandle);
   if (endTimerHandle) clearTimeout(endTimerHandle);
+  releaseSceneVideo(characterPreviewVideo);
   stopAllSounds();
   vsIntroOverlay.classList.add("hidden");
   resultBanner.classList.add("hidden");
   endOverlay.classList.add("hidden");
   selectOverlay.classList.add("hidden");
   mainMenuOverlay.classList.remove("hidden");
+  syncMobileControlsVisibility();
+  showMainMenuVideo();
   startLobbyBgm();
 }
 
@@ -4489,12 +5630,14 @@ toggleBgmBtn.addEventListener("click", () => {
 
 function openSettings() {
   settingsOverlay.classList.remove("hidden");
+  mainMenuVideo?.pause();
 }
 
 settingsBtn.addEventListener("click", openSettings);
 document.getElementById("menu-settings-btn").addEventListener("click", openSettings);
 document.getElementById("close-settings-btn").addEventListener("click", () => {
   settingsOverlay.classList.add("hidden");
+  showMainMenuVideo();
 });
 
 sfxSlider.addEventListener("input", () => {
@@ -4518,9 +5661,12 @@ const toggleTouchBtn = document.getElementById("toggle-touch-btn");
 function syncMobileControlsVisibility() {
   const isTouch = isTouchDeviceOrSmallScreen();
   const isPortrait = isTouch && window.innerHeight > window.innerWidth;
-  document.body.classList.toggle("portrait-blocked", isPortrait);
+  const needsLandscape = Boolean(state?.running && isPortrait);
+  document.body.classList.toggle("portrait-blocked", needsLandscape);
   const show =
-    !isPortrait && (touchMode === "on" || (touchMode === "auto" && isTouch));
+    Boolean(state?.running) &&
+    !isPortrait &&
+    (touchMode === "on" || (touchMode === "auto" && isTouch));
   mobileControlsEl.classList.toggle("hidden", !show);
 }
 
@@ -4643,6 +5789,7 @@ if (mGuardBtn) {
   });
 }
 
+showMainMenuVideo();
 draw();
 lastTime = performance.now();
 requestAnimationFrame(gameLoop);

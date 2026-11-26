@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>JOJO Bizarre Arena 2D — Beta v3</title>
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=9" />
 </head>
 <body>
   <div id="game-wrapper">
@@ -51,12 +51,12 @@
                 <span class="cd-text" id="cd-text-t"></span>
               </button>
 
-              <button class="skill-btn guard-btn" id="btn-f" data-key="F" title="Giữ F để phòng thủ (tối đa 20 DMG)">
+              <button class="skill-btn guard-btn" id="btn-f" data-key="F" title="Giữ F để phòng thủ (tối đa 25 DMG)">
                 <span class="key-badge">F</span>
                 <span class="skill-name" id="guard-desc-f">Block</span>
               </button>
 
-              <button class="skill-btn dash-btn" id="btn-dash" data-key="Shift" title="Bấm Shift để lướt nhanh (CD 5s)">
+              <button class="skill-btn dash-btn" id="btn-dash" data-key="Shift" title="Bấm Shift để lướt nhanh (CD 4s)">
                 <span class="key-badge wide-badge">Shift</span>
                 <span class="skill-name">Dash</span>
                 <div class="cd-overlay" id="cd-dash"></div>
@@ -70,7 +70,7 @@
             <div class="hp-bar-trail" id="p1-hp-trail"></div>
             <div class="hp-bar-fill jotaro-fill" id="p1-hp-fill"></div>
           </div>
-          <div class="guard-bar-outer" title="Thanh phòng thủ (F) — Tối đa đỡ 20 DMG">
+          <div class="guard-bar-outer" title="Thanh phòng thủ (F) — Tối đa đỡ 25 DMG">
             <div class="guard-bar-fill" id="p1-guard-fill"></div>
           </div>
         </div>
@@ -113,6 +113,7 @@
     <main id="arena-container">
       <canvas id="arena" width="1680" height="780"></canvas>
       <div id="menacing-overlay" aria-hidden="true">ゴ ゴ ゴ ゴ</div>
+      <div id="arena-map-label" aria-live="polite"></div>
 
       <!-- VS Intro Splash Overlay -->
       <div id="vs-intro-overlay" class="hidden">
@@ -192,142 +193,138 @@
     </main>
 
     <!-- Main Menu Overlay -->
-    <div id="main-menu-overlay">
-      <div class="main-menu-bg-menacing">ゴ ゴ ゴ ゴ ゴ</div>
-      <div class="main-menu-stage">
-        <div class="menu-fighter left-side">
-          <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro Kujo" />
-          <div class="menu-fighter-label jotaro">JOTARO KUJO</div>
-        </div>
+    <div id="main-menu-overlay" class="scene-screen main-menu-screen">
+      <video id="main-menu-video" class="scene-video" autoplay muted loop playsinline preload="none" data-src="Main Menu game.mp4" aria-hidden="true"></video>
+      <div class="scene-shade menu-shade" aria-hidden="true"></div>
+      <div class="main-menu-content">
+        <header class="main-menu-topline">
+          <span class="game-mark"><i>J</i>JOJO <b>ARENA</b></span>
+          <span class="edition-mark">STAND BATTLE <b>•</b> 2D EDITION</span>
+        </header>
 
-        <div class="menu-center-panel">
-          <div class="version-pill">BETA v3.0 • 8 STANDS</div>
-          <h1 class="game-logo">JOJO<br /><span>BIZARRE ARENA 2D</span></h1>
-          <p class="menu-tagline">Chiến trường Stand — Định đoạt số phận bằng nắm đấm & thời gian!</p>
-          <div class="menu-buttons">
-            <button id="goto-select-btn" class="primary-cta">⚔️ CHỌN NHÂN VẬT & ĐẤU</button>
-            <button id="menu-settings-btn" class="secondary-cta">⚙️ CÀI ĐẶT ÂM THANH</button>
+        <main class="menu-hero">
+          <div class="menu-copy">
+            <div class="eyebrow"><span class="eyebrow-line"></span>THE FIGHT FOR FATE</div>
+            <h1 class="menu-title"><span>JOJO</span><strong>BIZARRE<br />ARENA</strong></h1>
+            <p class="menu-tagline">Thời gian ngừng lại. Trận chiến bắt đầu.</p>
+            <div class="menu-buttons">
+              <button id="goto-select-btn" class="primary-cta menu-play-btn">
+                <span class="button-icon">⚔</span><span><small>CHỌN CHIẾN BINH</small>VÀO TRẬN</span><span class="button-arrow">↗</span>
+              </button>
+              <button id="menu-settings-btn" class="secondary-cta menu-settings-btn">⚙ <span>CÀI ĐẶT</span></button>
+            </div>
+            <div class="menu-controls" aria-label="Điều khiển">
+              <span><kbd>WASD</kbd> DI CHUYỂN</span>
+              <span><kbd>SHIFT</kbd> DASH</span>
+              <span><kbd>Q E R</kbd> KỸ NĂNG</span>
+            </div>
           </div>
-          <div class="controls-hint">
-            <span><b>WASD</b> Di chuyển</span>
-            <span><b>Shift</b> Lướt</span>
-            <span><b>F</b> Phòng thủ</span>
-            <span><b>Q E R T</b> Kỹ năng</span>
-          </div>
-        </div>
 
-        <div class="menu-fighter right-side">
-          <img src="Dio/dio_with_stand.png" alt="DIO Brando" />
-          <div class="menu-fighter-label dio">DIO BRANDO</div>
-        </div>
+          <div class="menu-emblem" aria-hidden="true">
+            <div class="emblem-ring"></div>
+            <div class="emblem-star">★</div>
+            <span class="emblem-caption">A BIZARRE<br />DESTINY AWAITS</span>
+          </div>
+        </main>
+
+        <footer class="main-menu-footer">
+          <span>ONE ARENA. EIGHT STANDS. NO SECOND CHANCES.</span>
+          <span class="footer-version">JOJO BIZARRE ARENA <b>•</b> BETA</span>
+        </footer>
       </div>
     </div>
 
-    <!-- Character & Opponent Select Overlay -->
-    <div id="select-overlay" class="hidden">
-      <div class="modal-card wide">
-        <h2>CHỌN CHIẾN BINH</h2>
-        <div class="select-columns">
-          <div class="select-col">
-            <div class="col-header player">NHÂN VẬT CỦA BẠN (8 STAND)</div>
-            <div class="char-grid" id="player-char-grid">
-              <button type="button" class="char-card selected" data-char="jotaro">
-                <div class="char-avatar"><img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" /></div>
-                <div class="char-title">JOTARO</div>
-              </button>
-              <button type="button" class="char-card" data-char="dio">
-                <div class="char-avatar"><img src="Dio/dio_with_stand.png" alt="DIO" /></div>
-                <div class="char-title">DIO</div>
-              </button>
-              <button type="button" class="char-card" data-char="kira">
-                <div class="char-avatar"><img src="killerqueen/kira_with_stand.png" alt="Kira" /></div>
-                <div class="char-title">KIRA</div>
-              </button>
-              <button type="button" class="char-card" data-char="diavolo">
-                <div class="char-avatar"><img src="Diavolo/Diavolo_with_stand.webp" alt="Diavolo" /></div>
-                <div class="char-title">DIAVOLO</div>
-              </button>
-              <button type="button" class="char-card" data-char="okuyasu">
-                <div class="char-avatar"><img src="The hand/Okuyasu_with_stand.webp" alt="Okuyasu" /></div>
-                <div class="char-title">OKUYASU</div>
-              </button>
-              <button type="button" class="char-card" data-char="josuke">
-                <div class="char-avatar"><img src="Josuke/Josuke_with_stand.webp" alt="Josuke" /></div>
-                <div class="char-title">JOSUKE</div>
-              </button>
-              <button type="button" class="char-card" data-char="polnareff">
-                <div class="char-avatar"><img src="Polnareff/Polnareff_with_stand.webp" alt="Polnareff" /></div>
-                <div class="char-title">POLNAREFF</div>
-              </button>
-              <button type="button" class="char-card" data-char="jolyne">
-                <div class="char-avatar"><img src="Jolyne/Jolyne_with_stand.webp" alt="Jolyne" /></div>
-                <div class="char-title">JOLYNE</div>
-              </button>
+    <!-- Character Select -->
+    <div id="select-overlay" class="hidden select-screen">
+      <video id="character-preview-video" class="scene-video character-scene-video" muted loop playsinline preload="none" aria-hidden="true"></video>
+      <div class="scene-shade select-shade" aria-hidden="true"></div>
+      <div class="select-layout">
+        <header class="select-header">
+          <button id="back-to-menu-btn" class="select-back-btn" type="button" aria-label="Về menu chính">← <span>MENU</span></button>
+          <div class="select-heading"><span class="eyebrow-line"></span><span>CHOOSE YOUR FIGHTER</span><span class="eyebrow-line"></span></div>
+          <div class="select-matchup" aria-live="polite">
+            <span class="matchup-player">P1 <b id="p1-selection-name">JOTARO</b></span>
+            <span class="matchup-vs">VS</span>
+            <span class="matchup-ai">CPU <b id="ai-col-header">DIO</b></span>
+          </div>
+        </header>
+
+        <main class="select-main">
+          <section class="select-hero" aria-label="Trình diễn nhân vật">
+            <div class="hero-topline">
+              <span id="preview-side-label" class="active-side-label">PLAYER 1 · YOUR STAND</span>
+              <span class="hero-video-tag"><i></i> CHARACTER SPOTLIGHT</span>
             </div>
-            <div class="selected-skill-preview" id="selected-skill-preview">
-              <div class="preview-name" id="preview-char-name">JOTARO KUJO</div>
-              <div class="preview-skills" id="preview-char-skills">
+            <div class="hero-copy">
+              <div class="hero-eyebrow">THE BATTLE CHOOSES ITS HERO</div>
+              <h2 id="preview-char-name">JOTARO KUJO</h2>
+              <div id="preview-char-skills" class="preview-skills">
                 <span><b>Q</b> Za Warudo (5s / 40s)</span>
                 <span><b>E</b> Star Finger (15 DMG / Choáng 0.5s)</span>
                 <span><b>R</b> ORA Barrage (45 DMG / 8s)</span>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="select-col">
-            <div class="col-header ai" id="ai-col-header">ĐỐI THỦ (AI KHÓ)</div>
-            <div class="ai-diff-bar" id="ai-diff-bar">
-              <button type="button" class="diff-btn" data-diff="easy">DỄ</button>
-              <button type="button" class="diff-btn" data-diff="medium">TRUNG BÌNH</button>
-              <button type="button" class="diff-btn selected" data-diff="hard">KHÓ</button>
-              <button type="button" class="diff-btn super" data-diff="super">🔥 SIÊU KHÓ</button>
+          <section class="selection-dock" aria-label="Chọn nhân vật và độ khó">
+            <div class="selection-toolbar">
+              <div class="selection-side-tabs" role="tablist" aria-label="Chọn bên">
+                <button id="select-side-player" class="selection-side-btn player-side active" type="button" role="tab" aria-selected="true" data-side="p1">
+                  <span class="side-dot"></span><span>PLAYER 1</span><b id="active-p1-name">JOTARO</b>
+                </button>
+                <button id="select-side-ai" class="selection-side-btn ai-side" type="button" role="tab" aria-selected="false" data-side="ai">
+                  <span class="side-dot"></span><span>CPU / AI</span><b id="active-ai-name">DIO</b>
+                </button>
+              </div>
+              <div class="difficulty-controls">
+                <span class="difficulty-label">ĐỘ KHÓ</span>
+                <div class="ai-diff-bar" id="ai-diff-bar" role="group" aria-label="Độ khó AI">
+                  <button type="button" class="diff-btn" data-diff="easy" aria-pressed="false">DỄ</button>
+                  <button type="button" class="diff-btn" data-diff="medium" aria-pressed="false">VỪA</button>
+                  <button type="button" class="diff-btn selected" data-diff="hard" aria-pressed="true">KHÓ</button>
+                  <button type="button" class="diff-btn super" data-diff="super" aria-pressed="false">SIÊU KHÓ</button>
+                </div>
+                <span class="ai-diff-desc" id="ai-diff-desc">Kỹ năng cao, phản xạ nhanh • +50 Máu AI</span>
+                <button id="random-ai-btn" class="random-ai-btn" type="button" title="Chọn ngẫu nhiên nhân vật máy">🎲 RANDOM</button>
+              </div>
             </div>
-            <div class="ai-diff-desc" id="ai-diff-desc">Kỹ năng cao, phản xạ nhanh • +50 Máu AI</div>
-            <div class="char-grid ai-grid" id="ai-char-grid">
-              <button type="button" class="char-card" data-ai="jotaro">
-                <div class="char-avatar"><img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" /></div>
-                <div class="char-title">JOTARO</div>
-              </button>
-              <button type="button" class="char-card selected" data-ai="dio">
-                <div class="char-avatar"><img src="Dio/dio_with_stand.png" alt="DIO" /></div>
-                <div class="char-title">DIO</div>
-              </button>
-              <button type="button" class="char-card" data-ai="kira">
-                <div class="char-avatar"><img src="killerqueen/kira_with_stand.png" alt="Kira" /></div>
-                <div class="char-title">KIRA</div>
-              </button>
-              <button type="button" class="char-card" data-ai="diavolo">
-                <div class="char-avatar"><img src="Diavolo/Diavolo_with_stand.webp" alt="Diavolo" /></div>
-                <div class="char-title">DIAVOLO</div>
-              </button>
-              <button type="button" class="char-card" data-ai="okuyasu">
-                <div class="char-avatar"><img src="The hand/Okuyasu_with_stand.webp" alt="Okuyasu" /></div>
-                <div class="char-title">OKUYASU</div>
-              </button>
-              <button type="button" class="char-card" data-ai="josuke">
-                <div class="char-avatar"><img src="Josuke/Josuke_with_stand.webp" alt="Josuke" /></div>
-                <div class="char-title">JOSUKE</div>
-              </button>
-              <button type="button" class="char-card" data-ai="polnareff">
-                <div class="char-avatar"><img src="Polnareff/Polnareff_with_stand.webp" alt="Polnareff" /></div>
-                <div class="char-title">POLNAREFF</div>
-              </button>
-              <button type="button" class="char-card" data-ai="jolyne">
-                <div class="char-avatar"><img src="Jolyne/Jolyne_with_stand.webp" alt="Jolyne" /></div>
-                <div class="char-title">JOLYNE</div>
-              </button>
-              <button type="button" class="char-card random-card" data-ai="random">
-                <div class="random-icon">🎲</div>
-                <div class="char-title">NGẪU NHIÊN</div>
-              </button>
-            </div>
-          </div>
-        </div>
 
-        <div class="modal-actions">
-          <button id="back-to-menu-btn" class="secondary-cta">← MENU CHÍNH</button>
-          <button id="start-btn" class="primary-cta">BẮT ĐẦU TRẬN ĐẤU</button>
-        </div>
+            <div class="roster-heading"><span>STAND ROSTER</span><span>CHẠM ĐỂ CHỌN <b>•</b> KÉO ĐỂ XEM</span></div>
+            <div class="roster-action-row">
+              <button id="roster-prev-btn" class="roster-nav-btn" type="button" aria-label="Xem nhân vật trước" disabled>‹</button>
+              <div class="roster-viewport">
+                <div class="character-roster" id="player-char-grid" role="list" aria-label="Danh sách nhân vật">
+                  <button type="button" class="char-card" data-char="jotaro" aria-label="Chọn Jotaro">
+                    <span class="char-card-index">01</span><span class="char-avatar"><img loading="lazy" decoding="async" src="Jotaro/Jotaro_with_stand.png" alt="" /></span><span class="char-title">JOTARO</span>
+                  </button>
+                  <button type="button" class="char-card" data-char="dio" aria-label="Chọn Dio">
+                    <span class="char-card-index">02</span><span class="char-avatar"><img loading="lazy" decoding="async" src="Dio/dio_with_stand.png" alt="" /></span><span class="char-title">DIO</span>
+                  </button>
+                  <button type="button" class="char-card" data-char="kira" aria-label="Chọn Kira">
+                    <span class="char-card-index">03</span><span class="char-avatar"><img loading="lazy" decoding="async" src="killerqueen/Kira_with_stand.webp" alt="" /></span><span class="char-title">KIRA</span>
+                  </button>
+                  <button type="button" class="char-card" data-char="diavolo" aria-label="Chọn Diavolo">
+                    <span class="char-card-index">04</span><span class="char-avatar"><img loading="lazy" decoding="async" src="Diavolo/Diavolo_with_stand.webp" alt="" /></span><span class="char-title">DIAVOLO</span>
+                  </button>
+                  <button type="button" class="char-card" data-char="okuyasu" aria-label="Chọn Okuyasu">
+                    <span class="char-card-index">05</span><span class="char-avatar"><img loading="lazy" decoding="async" src="The%20hand/Okuyasu_with_stand.webp" alt="" /></span><span class="char-title">OKUYASU</span>
+                  </button>
+                  <button type="button" class="char-card" data-char="josuke" aria-label="Chọn Josuke">
+                    <span class="char-card-index">06</span><span class="char-avatar"><img loading="lazy" decoding="async" src="Josuke/Josuke_with_stand.webp" alt="" /></span><span class="char-title">JOSUKE</span>
+                  </button>
+                  <button type="button" class="char-card" data-char="polnareff" aria-label="Chọn Polnareff">
+                    <span class="char-card-index">07</span><span class="char-avatar"><img loading="lazy" decoding="async" src="Polnareff/Polnareff_with_stand.webp" alt="" /></span><span class="char-title">POLNAREFF</span>
+                  </button>
+                  <button type="button" class="char-card" data-char="jolyne" aria-label="Chọn Jolyne">
+                    <span class="char-card-index">08</span><span class="char-avatar"><img loading="lazy" decoding="async" src="Jolyne/Jolyne_with_stand.webp" alt="" /></span><span class="char-title">JOLYNE</span>
+                  </button>
+                </div>
+              </div>
+              <button id="roster-next-btn" class="roster-nav-btn" type="button" aria-label="Xem nhân vật tiếp theo">›</button>
+              <button id="start-btn" class="primary-cta start-battle-btn" type="button"><span>BẮT ĐẦU TRẬN ĐẤU</span><b>↗</b></button>
+            </div>
+          </section>
+        </main>
       </div>
     </div>
 
@@ -401,6 +398,6 @@
   <script src="characters/josuke.js?v=7"></script>
   <script src="characters/polnareff.js?v=7"></script>
   <script src="characters/jolyne.js?v=7"></script>
-  <script src="game.js?v=7"></script>
+  <script src="game.js?v=11"></script>
 </body>
 </html>

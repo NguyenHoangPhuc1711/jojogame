@@ -18,9 +18,9 @@ window.JOJO_CHARS.polnareff = {
   skills: {
     q: {
       name: "ARMOR OFF",
-      desc: "10s: 2 phân thân + x1.5 Tốc + Dash 2s",
+      desc: "15s: 2 phân thân hỗ trợ + x1.5 Tốc + Dash 2s",
       cd: 40,
-      duration: 10,
+      duration: 15,
       speedMult: 1.5,
       dashCd: 2.0,
       soundKey: "polnareffSkillQ",
@@ -37,7 +37,8 @@ window.JOJO_CHARS.polnareff = {
       desc: "Phóng lưỡi kiếm (10 DMG)",
       cd: 10,
       damage: 10,
-      speed: 760,
+      speed: 480,
+      projectileSize: 155,
       soundKey: "polnareffSkillR",
       callout: "SILVER CHARIOT!",
     },

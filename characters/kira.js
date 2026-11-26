@@ -17,9 +17,9 @@ window.JOJO_CHARS.kira = {
   skills: {
     q: {
       name: "BITE THE DUST",
-      desc: "50~70 DMG & Hồi 20% HP",
+      desc: "Tụ lực 1s — 50~70 DMG & Hồi 20% HP",
       cd: 60,
-      chargeTime: 2.0,
+      chargeTime: 1.0,
       blastRadius: 310,
       minDmg: 50,
       maxBonusDmg: 20,
