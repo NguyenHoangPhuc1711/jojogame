@@ -39,15 +39,18 @@ function syncArenaSize() {
   const cssW = Math.max(320, Math.floor(rect.width));
   const cssH = Math.max(200, Math.floor(rect.height));
   const aspect = cssW / cssH;
+  const isMobile = isTouchDeviceOrSmallScreen();
 
-  let worldH = BASE_WORLD_H;
+  // Slightly larger character-to-map ratio on mobile screens so fighters are crisp & balanced
+  let worldH = isMobile ? 560 : BASE_WORLD_H;
+  const minW = isMobile ? 980 : MIN_WORLD_W;
   let worldW = Math.round(worldH * aspect);
-  if (worldW < MIN_WORLD_W) {
-    worldW = MIN_WORLD_W;
+  if (worldW < minW) {
+    worldW = minW;
     worldH = Math.round(worldW / aspect);
   }
 
-  const dpr = isTouchDeviceOrSmallScreen()
+  const dpr = isMobile
     ? Math.min(window.devicePixelRatio || 1, 1.5)
     : Math.min(window.devicePixelRatio || 1, 2);
   const backingW = Math.max(480, Math.round(cssW * dpr));
@@ -3506,3 +3509,42 @@ if (mGuardBtn) {
 draw();
 lastTime = performance.now();
 requestAnimationFrame(gameLoop);
+
+// ── Mobile Anti-Zoom & Strict Landscape Lock ────────────────
+let _lastTouchEndTime = 0;
+let _lastTouchTarget = null;
+document.addEventListener(
+  "touchstart",
+  (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+  },
+  { passive: false }
+);
+document.addEventListener(
+  "touchend",
+  (e) => {
+    const now = Date.now();
+    const inGameplay = Boolean(e.target.closest("#mobile-controls, #arena-container"));
+    if (
+      now - _lastTouchEndTime <= 320 &&
+      (inGameplay || e.target === _lastTouchTarget) &&
+      !e.target.closest("input[type='range']")
+    ) {
+      e.preventDefault();
+    }
+    _lastTouchEndTime = now;
+    _lastTouchTarget = e.target;
+  },
+  { passive: false }
+);
+document.addEventListener("dblclick", (e) => e.preventDefault(), { passive: false });
+for (const gev of ["gesturestart", "gesturechange", "gestureend"]) {
+  document.addEventListener(gev, (e) => e.preventDefault(), { passive: false });
+}
+
+function tryLockMobileLandscape() {
+  if (isTouchDeviceOrSmallScreen() && screen.orientation?.lock) {
+    screen.orientation.lock("landscape").catch(() => {});
+  }
+}
+window.addEventListener("pointerdown", tryLockMobileLandscape, { passive: true });
