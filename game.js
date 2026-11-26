@@ -8,34 +8,72 @@ const ctx = canvas.getContext("2d");
 const arenaContainer = document.getElementById("arena-container");
 
 const ARENA_PAD = 12;
+const BASE_WORLD_H = 680;
+const MIN_WORLD_W = 1180;
+let WORLD_W = 1680;
+let WORLD_H = 780;
 let ARENA_LEFT = ARENA_PAD;
 let ARENA_TOP = ARENA_PAD;
-let ARENA_RIGHT = canvas.width - ARENA_PAD;
-let ARENA_BOTTOM = canvas.height - ARENA_PAD;
+let ARENA_RIGHT = WORLD_W - ARENA_PAD;
+let ARENA_BOTTOM = WORLD_H - ARENA_PAD;
 let ARENA_W = ARENA_RIGHT - ARENA_LEFT;
 let ARENA_H = ARENA_BOTTOM - ARENA_TOP;
-let ARENA_CX = canvas.width / 2;
-let ARENA_CY = canvas.height / 2;
+let ARENA_CX = WORLD_W / 2;
+let ARENA_CY = WORLD_H / 2;
 
 let state = null;
+let arenaFloorCache = null;
+let arenaFloorCacheDirty = true;
+
+function isTouchDeviceOrSmallScreen() {
+  return (
+    "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0 ||
+    window.innerWidth <= 960
+  );
+}
 
 function syncArenaSize() {
   if (!arenaContainer) return;
   const rect = arenaContainer.getBoundingClientRect();
-  const w = Math.max(480, Math.floor(rect.width));
-  const h = Math.max(260, Math.floor(rect.height));
-  if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w;
-    canvas.height = h;
+  const cssW = Math.max(320, Math.floor(rect.width));
+  const cssH = Math.max(200, Math.floor(rect.height));
+  const aspect = cssW / cssH;
+
+  let worldH = BASE_WORLD_H;
+  let worldW = Math.round(worldH * aspect);
+  if (worldW < MIN_WORLD_W) {
+    worldW = MIN_WORLD_W;
+    worldH = Math.round(worldW / aspect);
   }
+
+  const dpr = isTouchDeviceOrSmallScreen()
+    ? Math.min(window.devicePixelRatio || 1, 1.5)
+    : Math.min(window.devicePixelRatio || 1, 2);
+  const backingW = Math.max(480, Math.round(cssW * dpr));
+  const backingH = Math.max(260, Math.round(cssH * dpr));
+
+  if (
+    canvas.width !== backingW ||
+    canvas.height !== backingH ||
+    WORLD_W !== worldW ||
+    WORLD_H !== worldH
+  ) {
+    canvas.width = backingW;
+    canvas.height = backingH;
+    WORLD_W = worldW;
+    WORLD_H = worldH;
+    arenaFloorCacheDirty = true;
+  }
+
   ARENA_LEFT = ARENA_PAD;
   ARENA_TOP = ARENA_PAD;
-  ARENA_RIGHT = canvas.width - ARENA_PAD;
-  ARENA_BOTTOM = canvas.height - ARENA_PAD;
+  ARENA_RIGHT = WORLD_W - ARENA_PAD;
+  ARENA_BOTTOM = WORLD_H - ARENA_PAD;
   ARENA_W = ARENA_RIGHT - ARENA_LEFT;
   ARENA_H = ARENA_BOTTOM - ARENA_TOP;
-  ARENA_CX = canvas.width / 2;
-  ARENA_CY = canvas.height / 2;
+  ARENA_CX = WORLD_W / 2;
+  ARENA_CY = WORLD_H / 2;
 
   if (state) {
     for (const f of [state.p1, state.p2]) {
@@ -46,6 +84,12 @@ function syncArenaSize() {
 }
 
 window.addEventListener("resize", syncArenaSize);
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => {
+    if (typeof syncMobileControlsVisibility === "function") syncMobileControlsVisibility();
+    syncArenaSize();
+  }, 120);
+});
 if (typeof ResizeObserver !== "undefined" && arenaContainer) {
   new ResizeObserver(syncArenaSize).observe(arenaContainer);
 }
@@ -150,6 +194,30 @@ function loadImage(path) {
   return img;
 }
 
+const _mipCache = new WeakMap();
+function getMipSprite(img, maxDim) {
+  if (!img || !img.complete || img.naturalWidth <= 0) return null;
+  if (Math.max(img.naturalWidth, img.naturalHeight) <= maxDim) return img;
+  let perSize = _mipCache.get(img);
+  if (!perSize) {
+    perSize = new Map();
+    _mipCache.set(img, perSize);
+  }
+  let cached = perSize.get(maxDim);
+  if (cached) return cached;
+
+  const scale = maxDim / Math.max(img.naturalWidth, img.naturalHeight);
+  const off = document.createElement("canvas");
+  off.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  off.height = Math.max(1, Math.round(img.naturalHeight * scale));
+  const octx = off.getContext("2d");
+  octx.imageSmoothingEnabled = true;
+  octx.imageSmoothingQuality = "high";
+  octx.drawImage(img, 0, 0, off.width, off.height);
+  perSize.set(maxDim, off);
+  return off;
+}
+
 const ASSETS = {
   jotaro: loadImage("Jotaro/Jotaro_with_stand.png"),
   dio: loadImage("Dio/dio_with_stand.png"),
@@ -198,21 +266,35 @@ function ensureAudioContext() {
   }
 }
 
-async function preloadAllSounds() {
+const CHAR_SOUND_KEYS = {
+  jotaro: ["jotaroBarrage", "jotaroStarFinger", "jotaroZaWarudo"],
+  dio: ["dioBarrage", "dioRoadRoller", "dioTimeStop", "dioLaugh", "dioGreatestHigh"],
+  kira: ["kiraBarrage", "kiraDetonate", "kiraSwitch", "kiraBiteTheDust", "kiraExploded"],
+};
+
+async function preloadMatchSounds(charIds = []) {
   ensureAudioContext();
   if (!audioCtx) return;
-  for (const [key, spec] of Object.entries(SOUNDS)) {
-    if (audioBuffers.has(key)) continue;
-    try {
-      const res = await fetch(encodePath(spec.file));
-      if (!res.ok) continue;
-      const buf = await res.arrayBuffer();
-      const decoded = await audioCtx.decodeAudioData(buf);
-      audioBuffers.set(key, decoded);
-    } catch {
-      // Fallback to HTMLAudioElement (e.g. file:// protocol)
-    }
+  const keys = new Set();
+  for (const c of charIds) {
+    for (const k of CHAR_SOUND_KEYS[c] || []) keys.add(k);
   }
+  await Promise.all(
+    [...keys].map(async (key) => {
+      if (audioBuffers.has(key)) return;
+      const spec = SOUNDS[key];
+      if (!spec || spec.isBgm) return;
+      try {
+        const res = await fetch(encodePath(spec.file));
+        if (!res.ok) return;
+        const buf = await res.arrayBuffer();
+        const decoded = await audioCtx.decodeAudioData(buf);
+        audioBuffers.set(key, decoded);
+      } catch {
+        // Fallback to HTMLAudioElement
+      }
+    })
+  );
 }
 
 function playSound(key) {
@@ -255,30 +337,22 @@ function playSound(key) {
   return entry;
 }
 
+let _bgmAudioEl = null;
+
 function startBattleBgm() {
   stopBattleBgm();
   if (isMuted || isBgmMuted || bgmVolume <= 0.001) return;
   ensureAudioContext();
 
-  const buffer = audioBuffers.get("battleBgm");
-  if (audioCtx && buffer) {
-    const src = audioCtx.createBufferSource();
-    src.buffer = buffer;
-    src.loop = true;
-    const gainNode = audioCtx.createGain();
-    gainNode.gain.value = bgmVolume;
-    src.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    src.start(0);
-    activeBgm = { type: "buffer", src, gainNode };
-    return;
+  if (!_bgmAudioEl) {
+    _bgmAudioEl = new Audio(encodePath(SOUNDS.battleBgm.file));
+    _bgmAudioEl.loop = true;
+    _bgmAudioEl.preload = "auto";
   }
-
-  const audio = new Audio(encodePath(SOUNDS.battleBgm.file));
-  audio.loop = true;
-  audio.volume = Math.min(1, bgmVolume);
-  audio.play().catch(() => {});
-  activeBgm = { type: "html", audio };
+  _bgmAudioEl.currentTime = 0;
+  _bgmAudioEl.volume = Math.min(1, bgmVolume);
+  _bgmAudioEl.play().catch(() => {});
+  activeBgm = { type: "html", audio: _bgmAudioEl };
 }
 
 function updateBgmVolumeLive() {
@@ -557,13 +631,13 @@ function startMatchWithIntro() {
     screen.orientation.lock("landscape").catch(() => {});
   }
   syncArenaSize();
-  preloadAllSounds();
   stopAllSounds();
   if (vsTimerHandle) clearTimeout(vsTimerHandle);
   if (endTimerHandle) clearTimeout(endTimerHandle);
 
   const p1Char = selectedPlayerChar;
   const p2Char = resolveAiCharacter();
+  preloadMatchSounds([p1Char, p2Char]);
 
   selectOverlay.classList.add("hidden");
   endOverlay.classList.add("hidden");
@@ -596,10 +670,11 @@ function initGameState(p1Char, p2Char) {
   const a2 = Math.random() * Math.PI * 2;
   const baseSpeed = 180;
 
+  const spawnOffset = Math.min(340, ARENA_W * 0.25);
   const p1 = createFighter(
     "p1",
     p1Char,
-    ARENA_CX - 340,
+    ARENA_CX - spawnOffset,
     ARENA_CY,
     Math.cos(a1) * baseSpeed,
     Math.sin(a1) * baseSpeed
@@ -608,7 +683,7 @@ function initGameState(p1Char, p2Char) {
   const p2 = createFighter(
     "p2",
     p2Char,
-    ARENA_CX + 340,
+    ARENA_CX + spawnOffset,
     ARENA_CY,
     Math.cos(a2) * baseSpeed,
     Math.sin(a2) * baseSpeed
@@ -665,6 +740,7 @@ function initGameState(p1Char, p2Char) {
   state.cooldowns.p2.e = diffCfg.startDelayE;
   state.cooldowns.p2.r = p2Char === "dio" ? Math.max(diffCfg.startDelayR, diffCfg.id === "super" ? 4.5 : 8.5) : diffCfg.startDelayR;
 
+  resetUiCache();
   updateHpUI();
   updateSkillBarUI();
   timestopBanner.classList.add("hidden");
@@ -684,8 +760,9 @@ function isFrozen(slot) {
 }
 
 function spawnParticles(x, y, color, count = 12, speed = 180) {
-  if (state.particles.length >= 110) return;
-  const allowed = Math.min(count, 110 - state.particles.length);
+  const maxParticles = isTouchDeviceOrSmallScreen() ? 64 : 110;
+  if (state.particles.length >= maxParticles) return;
+  const allowed = Math.min(count, maxParticles - state.particles.length);
   for (let i = 0; i < allowed; i++) {
     const a = Math.random() * Math.PI * 2;
     const s = speed * (0.4 + Math.random() * 0.8);
@@ -2333,9 +2410,17 @@ function update(dt) {
 }
 
 // ── Rendering ───────────────────────────────────────────────
+let _frameNow = 0;
+
 function draw() {
+  _frameNow = performance.now();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const scaleX = canvas.width / WORLD_W;
+  const scaleY = canvas.height / WORLD_H;
   ctx.save();
+  ctx.setTransform(scaleX, 0, 0, scaleY, 0, 0);
 
   if (state && state.screenShake > 0) {
     const sx = (Math.random() - 0.5) * state.screenShake * 2;
@@ -2343,13 +2428,20 @@ function draw() {
     ctx.translate(sx, sy);
   }
 
-  if (state && state.timeStop.active) {
-    ctx.filter = "grayscale(70%) contrast(1.12)";
-  } else {
-    ctx.filter = "none";
-  }
-
   drawJoJoArenaFloor();
+
+  if (state && state.timeStop.active) {
+    // Fast GPU-friendly monochrome atmosphere overlay (avoids slow software ctx.filter)
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
+    ctx.fillStyle = "rgba(15, 23, 42, 0.36)";
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.55)";
+    ctx.stroke();
+    ctx.restore();
+  }
 
   if (!state) {
     ctx.restore();
@@ -2391,14 +2483,13 @@ function draw() {
   }
 
   for (const pt of state.particles) {
-    ctx.save();
     ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
     ctx.fillStyle = pt.color;
     ctx.beginPath();
     ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
   }
+  ctx.globalAlpha = 1;
 
   if (state.timeStop.active && state.timeStop.rippleRadius < 1600) {
     const caster = getFighter(state.timeStop.casterSlot);
@@ -2412,7 +2503,6 @@ function draw() {
     ctx.restore();
   }
 
-  ctx.filter = "none";
   for (const ft of state.floatingTexts) {
     ctx.save();
     ctx.globalAlpha = Math.max(0, ft.life / ft.maxLife);
@@ -2429,80 +2519,91 @@ function draw() {
   ctx.restore();
 }
 
-function drawJoJoArenaFloor() {
-  ctx.save();
+function buildArenaFloorCache() {
+  if (!arenaFloorCache) {
+    arenaFloorCache = document.createElement("canvas");
+  }
+  arenaFloorCache.width = canvas.width;
+  arenaFloorCache.height = canvas.height;
+  const fctx = arenaFloorCache.getContext("2d");
+  fctx.setTransform(canvas.width / WORLD_W, 0, 0, canvas.height / WORLD_H, 0, 0);
 
-  const grad = ctx.createRadialGradient(ARENA_CX, ARENA_CY, 90, ARENA_CX, ARENA_CY, ARENA_W * 0.65);
+  const grad = fctx.createRadialGradient(ARENA_CX, ARENA_CY, 90, ARENA_CX, ARENA_CY, ARENA_W * 0.65);
   grad.addColorStop(0, "#3b2621");
   grad.addColorStop(0.6, "#27171a");
   grad.addColorStop(1, "#160b12");
 
-  ctx.beginPath();
-  ctx.roundRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
-  ctx.fillStyle = grad;
-  ctx.fill();
+  fctx.beginPath();
+  fctx.roundRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
+  fctx.fillStyle = grad;
+  fctx.fill();
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
-  ctx.clip();
+  fctx.save();
+  fctx.beginPath();
+  fctx.roundRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
+  fctx.clip();
 
-  ctx.strokeStyle = "rgba(250, 204, 21, 0.08)";
-  ctx.lineWidth = 1.5;
+  fctx.strokeStyle = "rgba(250, 204, 21, 0.08)";
+  fctx.lineWidth = 1.5;
   const tileSize = 78;
+  fctx.beginPath();
   for (let x = ARENA_LEFT; x < ARENA_RIGHT; x += tileSize) {
-    ctx.beginPath();
-    ctx.moveTo(x, ARENA_TOP);
-    ctx.lineTo(x, ARENA_BOTTOM);
-    ctx.stroke();
+    fctx.moveTo(x, ARENA_TOP);
+    fctx.lineTo(x, ARENA_BOTTOM);
   }
   for (let y = ARENA_TOP; y < ARENA_BOTTOM; y += tileSize) {
-    ctx.beginPath();
-    ctx.moveTo(ARENA_LEFT, y);
-    ctx.lineTo(ARENA_RIGHT, y);
-    ctx.stroke();
+    fctx.moveTo(ARENA_LEFT, y);
+    fctx.lineTo(ARENA_RIGHT, y);
   }
+  fctx.stroke();
 
-  ctx.strokeStyle = "rgba(250, 204, 21, 0.14)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(ARENA_CX, ARENA_CY, 160, 0, Math.PI * 2);
-  ctx.stroke();
+  fctx.strokeStyle = "rgba(250, 204, 21, 0.14)";
+  fctx.lineWidth = 3;
+  fctx.beginPath();
+  fctx.arc(ARENA_CX, ARENA_CY, 160, 0, Math.PI * 2);
+  fctx.stroke();
 
-  ctx.beginPath();
+  fctx.beginPath();
   for (let i = 0; i < 10; i++) {
     const r = i % 2 === 0 ? 110 : 48;
     const a = (i * Math.PI) / 5 - Math.PI / 2;
     const px = ARENA_CX + Math.cos(a) * r;
     const py = ARENA_CY + Math.sin(a) * r;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
+    if (i === 0) fctx.moveTo(px, py);
+    else fctx.lineTo(px, py);
   }
-  ctx.closePath();
-  ctx.fillStyle = "rgba(250, 204, 21, 0.05)";
-  ctx.fill();
-  ctx.stroke();
+  fctx.closePath();
+  fctx.fillStyle = "rgba(250, 204, 21, 0.05)";
+  fctx.fill();
+  fctx.stroke();
 
-  ctx.fillStyle = "rgba(250, 204, 21, 0.07)";
-  ctx.font = "900 44px sans-serif";
-  ctx.fillText("ゴ", ARENA_LEFT + 32, ARENA_TOP + 64);
-  ctx.fillText("ゴ", ARENA_RIGHT - 74, ARENA_BOTTOM - 34);
+  fctx.fillStyle = "rgba(250, 204, 21, 0.07)";
+  fctx.font = "900 44px sans-serif";
+  fctx.fillText("ゴ", ARENA_LEFT + 32, ARENA_TOP + 64);
+  fctx.fillText("ゴ", ARENA_RIGHT - 74, ARENA_BOTTOM - 34);
 
-  ctx.restore();
+  fctx.restore();
 
-  ctx.beginPath();
-  ctx.roundRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = "#d97706";
-  ctx.stroke();
+  fctx.beginPath();
+  fctx.roundRect(ARENA_LEFT, ARENA_TOP, ARENA_W, ARENA_H, 22);
+  fctx.lineWidth = 6;
+  fctx.strokeStyle = "#d97706";
+  fctx.stroke();
 
-  ctx.beginPath();
-  ctx.roundRect(ARENA_LEFT + 5, ARENA_TOP + 5, ARENA_W - 10, ARENA_H - 10, 18);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "rgba(253, 224, 71, 0.45)";
-  ctx.stroke();
+  fctx.beginPath();
+  fctx.roundRect(ARENA_LEFT + 5, ARENA_TOP + 5, ARENA_W - 10, ARENA_H - 10, 18);
+  fctx.lineWidth = 2;
+  fctx.strokeStyle = "rgba(253, 224, 71, 0.45)";
+  fctx.stroke();
 
-  ctx.restore();
+  arenaFloorCacheDirty = false;
+}
+
+function drawJoJoArenaFloor() {
+  if (arenaFloorCacheDirty || !arenaFloorCache || arenaFloorCache.width !== canvas.width || arenaFloorCache.height !== canvas.height) {
+    buildArenaFloorCache();
+  }
+  ctx.drawImage(arenaFloorCache, 0, 0, WORLD_W, WORLD_H);
 }
 
 function drawFighter(f) {
@@ -2575,8 +2676,11 @@ function drawFighter(f) {
   // Normalize all characters by consistent visual height (+ per-character spriteScale)
   const scale = CHAR_CONFIG[f.charId].spriteScale || 1;
   const targetH = f.radius * 2.35 * scale;
-  if (f.img && f.img.complete && f.img.naturalWidth > 0) {
-    const aspect = f.img.naturalWidth / f.img.naturalHeight;
+  const sprite = getMipSprite(f.img, 240);
+  if (sprite) {
+    const sw = sprite.width || f.img.naturalWidth;
+    const sh = sprite.height || f.img.naturalHeight;
+    const aspect = sw / sh;
     let h = targetH;
     let w = targetH * aspect;
     const maxW = f.radius * 2.85 * scale;
@@ -2585,7 +2689,7 @@ function drawFighter(f) {
       h = maxW / aspect;
     }
     ctx.scale(f.facing, 1);
-    ctx.drawImage(f.img, -w / 2, -h / 2, w, h);
+    ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
   } else {
     ctx.fillStyle = CHAR_CONFIG[f.charId].color;
     ctx.beginPath();
@@ -2599,7 +2703,7 @@ function drawFighter(f) {
   if (f.stunTimer > 0) {
     ctx.save();
     ctx.translate(f.x, f.y - f.radius - 26);
-    const rot = performance.now() * 0.0085;
+    const rot = _frameNow * 0.0085;
     const rx = 24;
     const ry = 8;
     ctx.strokeStyle = "rgba(253, 224, 71, 0.45)";
@@ -2638,18 +2742,23 @@ function drawFighter(f) {
 function drawFirstBomb(bomb) {
   ctx.save();
   ctx.translate(bomb.x, bomb.y);
-  const pulse = 1 + Math.sin(performance.now() * 0.018) * 0.15;
+  const pulse = 1 + Math.sin(_frameNow * 0.018) * 0.15;
 
   if (bomb.attachedSlot) {
-    // Prominent RED ring when attached to enemy!
+    // Prominent RED double-ring when attached to enemy (no slow shadowBlur)
     const target = getFighter(bomb.attachedSlot);
+    const rr = (target.radius + 18) * pulse;
+    ctx.strokeStyle = "rgba(239, 68, 68, 0.35)";
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(0, 0, rr + 4, 0, Math.PI * 2);
+    ctx.stroke();
+
     ctx.strokeStyle = "#ef4444";
     ctx.fillStyle = "rgba(239, 68, 68, 0.18)";
-    ctx.lineWidth = 4.5;
-    ctx.shadowColor = "#ef4444";
-    ctx.shadowBlur = 16;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(0, 0, (target.radius + 18) * pulse, 0, Math.PI * 2);
+    ctx.arc(0, 0, rr, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   } else {
@@ -2678,7 +2787,6 @@ function drawFirstBomb(bomb) {
     }
   }
 
-  ctx.shadowBlur = 0;
   ctx.fillStyle = bomb.armTimer > 0 ? "#fcd34d" : bomb.attachedSlot ? "#fecaca" : "#fde047";
   ctx.font = "900 13px sans-serif";
   ctx.textAlign = "center";
@@ -2724,7 +2832,7 @@ function drawBombExplosion(ex) {
     ctx.fill();
   }
 
-  // 3. Turbulent Fireball Puffs
+  // 3. Turbulent Fireball Puffs (layered circles avoid per-frame gradient allocation for 60fps)
   for (const puff of ex.puffs) {
     const pProg = Math.max(0, (progress - puff.delay * 0.5) / 0.75);
     if (pProg <= 0 || pProg >= 1) continue;
@@ -2733,27 +2841,33 @@ function drawBombExplosion(ex) {
     const py = Math.sin(puff.angle) * puff.dist * easeOut;
     const pr = puff.size * (0.4 + pProg * 0.7);
 
-    const grad = ctx.createRadialGradient(px, py, pr * 0.1, px, py, pr);
-    grad.addColorStop(0, `rgba(255, 255, 255, ${fireAlpha})`);
-    grad.addColorStop(0.45, `${innerFire} ${fireAlpha * 0.95})`);
-    grad.addColorStop(1, `${outerFire} 0)`);
-
-    ctx.fillStyle = grad;
+    ctx.fillStyle = `${outerFire} ${fireAlpha * 0.45})`;
     ctx.beginPath();
     ctx.arc(px, py, pr, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = `${innerFire} ${fireAlpha * 0.8})`;
+    ctx.beginPath();
+    ctx.arc(px, py, pr * 0.68, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = `rgba(255, 255, 255, ${fireAlpha * 0.85})`;
+    ctx.beginPath();
+    ctx.arc(px, py, pr * 0.32, 0, Math.PI * 2);
     ctx.fill();
   }
 
   // 4. Central Blinding Core Flash
   if (progress < 0.45) {
     const coreAlpha = Math.max(0, 1 - progress / 0.45);
-    const coreGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, curR * 0.75);
-    coreGrad.addColorStop(0, `rgba(255, 255, 255, ${coreAlpha})`);
-    coreGrad.addColorStop(0.5, `rgba(254, 240, 138, ${coreAlpha * 0.85})`);
-    coreGrad.addColorStop(1, `${outerFire} 0)`);
-    ctx.fillStyle = coreGrad;
+    ctx.fillStyle = `rgba(254, 240, 138, ${coreAlpha * 0.75})`;
     ctx.beginPath();
-    ctx.arc(0, 0, curR * 0.75, 0, Math.PI * 2);
+    ctx.arc(0, 0, curR * 0.72, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = `rgba(255, 255, 255, ${coreAlpha})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, curR * 0.38, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -2784,8 +2898,9 @@ function drawPunch(p) {
     ctx.stroke();
   }
 
-  if (p.img && p.img.complete && p.img.naturalWidth > 0) {
-    ctx.drawImage(p.img, -w / 2, -h / 2, w, h);
+  const armSprite = getMipSprite(p.img, 148);
+  if (armSprite) {
+    ctx.drawImage(armSprite, -w / 2, -h / 2, w, h);
   } else {
     ctx.fillStyle = p.color;
     ctx.fillRect(-w / 2, -h / 2, w, h);
@@ -2820,17 +2935,13 @@ function drawBarrageClash(c) {
   ctx.arc(14 + prog * 18, 0, arcRadius, Math.PI - 0.85, Math.PI + 0.85);
   ctx.stroke();
 
-  // 2. Central golden-white starburst flash
+  // 2. Central golden-white starburst flash (zero gradient allocation)
   ctx.rotate(c.seed + prog * 1.4);
   const spikes = 10;
   const outerR = 30 + prog * 36;
   const innerR = 9 + prog * 8;
-  const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, outerR);
-  grad.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
-  grad.addColorStop(0.45, `rgba(253, 224, 71, ${alpha * 0.92})`);
-  grad.addColorStop(1, `rgba(249, 115, 22, 0)`);
 
-  ctx.fillStyle = grad;
+  ctx.fillStyle = `rgba(253, 224, 71, ${alpha * 0.85})`;
   ctx.beginPath();
   for (let i = 0; i < spikes * 2; i++) {
     const r = i % 2 === 0 ? outerR : innerR;
@@ -2841,6 +2952,11 @@ function drawBarrageClash(c) {
     else ctx.lineTo(sx, sy);
   }
   ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+  ctx.beginPath();
+  ctx.arc(0, 0, innerR * 1.15, 0, Math.PI * 2);
   ctx.fill();
 
   // 3. Expanding crisp impact ring
@@ -2919,7 +3035,7 @@ function drawStarFinger(beam) {
 
 function drawRoadRollerTarget(rr) {
   ctx.save();
-  const pulse = 0.85 + Math.sin(performance.now() * 0.018) * 0.15;
+  const pulse = 0.85 + Math.sin(_frameNow * 0.018) * 0.15;
   ctx.strokeStyle = "#ef4444";
   ctx.fillStyle = "rgba(239, 68, 68, 0.18)";
   ctx.lineWidth = 4;
@@ -2945,11 +3061,13 @@ function drawRoadRollerVehicle(rr) {
     ctx.globalAlpha = 1;
   }
 
-  const img = ASSETS.roadRoller;
-  if (img && img.complete && img.naturalWidth > 0) {
+  const rrSprite = getMipSprite(ASSETS.roadRoller, 300);
+  if (rrSprite) {
+    const sw = rrSprite.width || ASSETS.roadRoller.naturalWidth;
+    const sh = rrSprite.height || ASSETS.roadRoller.naturalHeight;
     const drawW = 240;
-    const drawH = (drawW * img.naturalHeight) / img.naturalWidth;
-    ctx.drawImage(img, -drawW / 2, -drawH / 2 - 20, drawW, drawH);
+    const drawH = (drawW * sh) / sw;
+    ctx.drawImage(rrSprite, -drawW / 2, -drawH / 2 - 20, drawW, drawH);
   } else {
     ctx.fillStyle = "#eab308";
     ctx.fillRect(-90, -60, 180, 90);
@@ -2958,7 +3076,27 @@ function drawRoadRollerVehicle(rr) {
   ctx.restore();
 }
 
-// ── UI Updates ──────────────────────────────────────────────
+// ── UI Updates (Diff-cached to prevent 60fps DOM layout thrashing) ──
+const _uiCache = {};
+function resetUiCache() {
+  for (const k of Object.keys(_uiCache)) delete _uiCache[k];
+}
+function setCachedText(key, el, val) {
+  if (!el || _uiCache[key] === val) return;
+  _uiCache[key] = val;
+  el.textContent = val;
+}
+function setCachedWidth(key, el, val) {
+  if (!el || _uiCache[key] === val) return;
+  _uiCache[key] = val;
+  el.style.width = val;
+}
+function setCachedHeight(key, el, val) {
+  if (!el || _uiCache[key] === val) return;
+  _uiCache[key] = val;
+  el.style.height = val;
+}
+
 function updateHpUI() {
   if (!state) return;
   const p = state.p1;
@@ -2967,15 +3105,17 @@ function updateHpUI() {
   const pPct = Math.max(0, (p.hp / p.maxHp) * 100);
   const aPct = Math.max(0, (a.hp / a.maxHp) * 100);
 
-  p1HpFill.style.width = `${pPct}%`;
-  p1HpTrail.style.width = `${pPct}%`;
-  p1HpText.textContent = `${p.hp <= 0 ? 0 : Math.max(1, Math.round(pPct))}%`;
-  p1GuardFill.style.width = `${(p.guardPool / MAX_GUARD_POOL) * 100}%`;
+  const pW = `${pPct.toFixed(1)}%`;
+  const aW = `${aPct.toFixed(1)}%`;
+  setCachedWidth("p1HpW", p1HpFill, pW);
+  setCachedWidth("p1TrailW", p1HpTrail, pW);
+  setCachedText("p1HpT", p1HpText, `${p.hp <= 0 ? 0 : Math.max(1, Math.round(pPct))}%`);
+  setCachedWidth("p1GW", p1GuardFill, `${((p.guardPool / MAX_GUARD_POOL) * 100).toFixed(1)}%`);
 
-  p2HpFill.style.width = `${aPct}%`;
-  p2HpTrail.style.width = `${aPct}%`;
-  p2HpText.textContent = `${a.hp <= 0 ? 0 : Math.max(1, Math.round(aPct))}%`;
-  p2GuardFill.style.width = `${(a.guardPool / MAX_GUARD_POOL) * 100}%`;
+  setCachedWidth("p2HpW", p2HpFill, aW);
+  setCachedWidth("p2TrailW", p2HpTrail, aW);
+  setCachedText("p2HpT", p2HpText, `${a.hp <= 0 ? 0 : Math.max(1, Math.round(aPct))}%`);
+  setCachedWidth("p2GW", p2GuardFill, `${((a.guardPool / MAX_GUARD_POOL) * 100).toFixed(1)}%`);
 }
 
 function updateSkillBarUI() {
@@ -2993,19 +3133,19 @@ function updateSkillBarUI() {
     if (cd > 0) {
       const txt = cd >= 10 ? `${Math.ceil(cd)}s` : `${cd.toFixed(1)}s`;
       ui.btn.classList.add("on-cooldown");
-      ui.overlay.style.height = `${(cd / max) * 100}%`;
-      ui.text.textContent = txt;
+      setCachedHeight(`ov_${k}`, ui.overlay, `${((cd / max) * 100).toFixed(1)}%`);
+      setCachedText(`tx_${k}`, ui.text, txt);
       if (mBtn && mCd) {
         mBtn.classList.add("on-cooldown");
-        mCd.textContent = txt;
+        setCachedText(`mtx_${k}`, mCd, txt);
       }
     } else {
       ui.btn.classList.remove("on-cooldown");
-      ui.overlay.style.height = "0%";
-      ui.text.textContent = "";
+      setCachedHeight(`ov_${k}`, ui.overlay, "0%");
+      setCachedText(`tx_${k}`, ui.text, "");
       if (mBtn && mCd) {
         mBtn.classList.remove("on-cooldown");
-        mCd.textContent = "";
+        setCachedText(`mtx_${k}`, mCd, "");
       }
     }
   }
@@ -3016,19 +3156,19 @@ function updateSkillBarUI() {
   if (dashCd > 0) {
     const txt = `${dashCd.toFixed(1)}s`;
     skillBtns.dash.btn.classList.add("on-cooldown");
-    skillBtns.dash.overlay.style.height = `${(dashCd / DASH_COOLDOWN) * 100}%`;
-    skillBtns.dash.text.textContent = txt;
+    setCachedHeight("ov_dash", skillBtns.dash.overlay, `${((dashCd / DASH_COOLDOWN) * 100).toFixed(1)}%`);
+    setCachedText("tx_dash", skillBtns.dash.text, txt);
     if (mDashBtn && mDashCd) {
       mDashBtn.classList.add("on-cooldown");
-      mDashCd.textContent = txt;
+      setCachedText("mtx_dash", mDashCd, txt);
     }
   } else {
     skillBtns.dash.btn.classList.remove("on-cooldown");
-    skillBtns.dash.overlay.style.height = "0%";
-    skillBtns.dash.text.textContent = "";
+    setCachedHeight("ov_dash", skillBtns.dash.overlay, "0%");
+    setCachedText("tx_dash", skillBtns.dash.text, "");
     if (mDashBtn && mDashCd) {
       mDashBtn.classList.remove("on-cooldown");
-      mDashCd.textContent = "";
+      setCachedText("mtx_dash", mDashCd, "");
     }
   }
 
@@ -3040,33 +3180,32 @@ function updateSkillBarUI() {
       const txt = `${Math.ceil(activeBomb.life)}s`;
       skillBtns.t.btn.classList.remove("on-cooldown");
       skillBtns.t.btn.classList.add("bomb-ready");
-      skillBtns.t.text.textContent = txt;
+      setCachedText("tx_t", skillBtns.t.text, txt);
       if (mTBtn && mTCd) {
         mTBtn.classList.remove("on-cooldown");
         mTBtn.classList.add("bomb-ready");
-        mTCd.textContent = txt;
+        setCachedText("mtx_t", mTCd, txt);
       }
     } else {
       skillBtns.t.btn.classList.add("on-cooldown");
       skillBtns.t.btn.classList.remove("bomb-ready");
-      skillBtns.t.text.textContent = "";
+      setCachedText("tx_t", skillBtns.t.text, "");
       if (mTBtn && mTCd) {
         mTBtn.classList.add("on-cooldown");
         mTBtn.classList.remove("bomb-ready");
-        mTCd.textContent = "";
+        setCachedText("mtx_t", mTCd, "");
       }
     }
   }
 
   const guardText = p.guardBrokenTimer > 0 ? `Vỡ ${p.guardBrokenTimer.toFixed(1)}s` : "Block";
-  const guardNameEl = document.getElementById("guard-desc-f");
-  if (guardNameEl) guardNameEl.textContent = guardText;
+  setCachedText("guard_f", guardDescEl, guardText);
   guardBtnEl.classList.toggle("guard-active", p.isGuarding);
 
   const mGuardBtn = document.getElementById("m-btn-f");
   const mGuardSub = document.getElementById("m-guard-sub");
   if (mGuardBtn) mGuardBtn.classList.toggle("guard-active", p.isGuarding);
-  if (mGuardSub) mGuardSub.textContent = guardText;
+  setCachedText("mguard_f", mGuardSub, guardText);
 }
 
 // ── Main Loop & Controls ────────────────────────────────────
@@ -3074,8 +3213,17 @@ function gameLoop(timestamp) {
   const dt = Math.min(0.05, (timestamp - lastTime) / 1000 || 0);
   lastTime = timestamp;
 
-  update(dt);
-  draw();
+  const isMenuCovered =
+    !mainMenuOverlay.classList.contains("hidden") ||
+    !selectOverlay.classList.contains("hidden");
+  const isBlocked = document.hidden || document.body.classList.contains("portrait-blocked");
+
+  if (!isBlocked) {
+    update(dt);
+    if (!isMenuCovered) {
+      draw();
+    }
+  }
 
   requestAnimationFrame(gameLoop);
 }
@@ -3234,14 +3382,6 @@ const joystickZoneEl = document.getElementById("touch-joystick-zone");
 const joystickBaseEl = document.getElementById("joystick-base");
 const joystickKnobEl = document.getElementById("joystick-knob");
 const toggleTouchBtn = document.getElementById("toggle-touch-btn");
-
-function isTouchDeviceOrSmallScreen() {
-  return (
-    "ontouchstart" in window ||
-    navigator.maxTouchPoints > 0 ||
-    window.innerWidth <= 920
-  );
-}
 
 function syncMobileControlsVisibility() {
   const isTouch = isTouchDeviceOrSmallScreen();
