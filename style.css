@@ -1231,22 +1231,161 @@ body {
   }
 
   #touch-skills-zone {
-    transform: scale(0.92);
-    transform-origin: bottom right;
+    transform: none;
   }
 }
 
-@media (max-height: 440px), (max-width: 560px) {
-  #touch-skills-zone {
-    transform: scale(0.8);
-    transform-origin: bottom right;
+/* Mobile Portrait: Force landscape orientation prompt */
+#rotate-overlay {
+  display: none;
+}
+
+@media (max-width: 920px) and (orientation: portrait), (pointer: coarse) and (orientation: portrait) {
+  #rotate-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: radial-gradient(circle at center, #261247 0%, #090414 85%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
   }
+
+  .rotate-card {
+    background: rgba(18, 9, 36, 0.92);
+    border: 2.5px solid #fde047;
+    border-radius: 20px;
+    padding: 28px 22px;
+    max-width: 340px;
+    box-shadow: 0 0 36px rgba(168, 85, 247, 0.55);
+  }
+
+  .rotate-phone-icon {
+    font-size: 3.4rem;
+    margin-bottom: 12px;
+    display: inline-block;
+    animation: rotatePhoneAnim 1.6s ease-in-out infinite;
+  }
+
+  .rotate-card h2 {
+    color: #fde047;
+    font-size: 1.35rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 0 #7e22ce;
+  }
+
+  .rotate-card p {
+    color: #e2e8f0;
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+}
+
+@keyframes rotatePhoneAnim {
+  0%, 20% { transform: rotate(0deg); }
+  55%, 80% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Mobile Landscape Ergonomic Layout (Joystick bottom-left + 1..6 Skills bottom-right) */
+@media (max-height: 500px), (max-width: 920px) and (orientation: landscape) {
+  #hud {
+    padding: 3px 8px;
+    gap: 6px;
+  }
+
+  .fighter-hud {
+    padding: 3px 6px;
+    gap: 5px;
+  }
+
+  .avatar-box {
+    width: 28px;
+    height: 28px;
+  }
+
+  .hp-bar-outer {
+    height: 8px;
+  }
+
+  .guard-bar-outer {
+    height: 4px;
+  }
+
+  #mobile-controls {
+    padding: 6px 12px;
+  }
+
+  #touch-joystick-zone {
+    padding: 4px 8px 6px 6px;
+  }
+
   .joystick-base {
-    width: 128px;
-    height: 128px;
+    width: 132px;
+    height: 132px;
   }
+
   .joystick-knob {
+    width: 56px;
+    height: 56px;
+  }
+
+  #touch-skills-zone {
+    width: 240px;
+    height: 246px;
+    transform: none;
+  }
+
+  .m-skill-btn.dash {
+    right: 8px;
+    bottom: 8px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .m-skill-btn.guard {
+    right: 88px;
+    bottom: 10px;
     width: 54px;
     height: 54px;
+  }
+
+  .m-skill-btn.skill-e {
+    right: 160px;
+    bottom: 72px;
+    width: 54px;
+    height: 54px;
+  }
+
+  .m-skill-btn.skill-r {
+    right: 88px;
+    bottom: 108px;
+    width: 54px;
+    height: 54px;
+  }
+
+  .m-skill-btn.ulti {
+    right: 10px;
+    bottom: 118px;
+    width: 58px;
+    height: 58px;
+  }
+
+  .m-skill-btn.kira-t {
+    right: 13px;
+    bottom: 192px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .m-key {
+    font-size: 0.88rem;
+  }
+
+  .m-sub {
+    font-size: 0.52rem;
   }
 }

@@ -22,8 +22,8 @@ let state = null;
 function syncArenaSize() {
   if (!arenaContainer) return;
   const rect = arenaContainer.getBoundingClientRect();
-  const w = Math.max(640, Math.floor(rect.width));
-  const h = Math.max(360, Math.floor(rect.height));
+  const w = Math.max(480, Math.floor(rect.width));
+  const h = Math.max(260, Math.floor(rect.height));
   if (canvas.width !== w || canvas.height !== h) {
     canvas.width = w;
     canvas.height = h;
@@ -553,6 +553,9 @@ function resolveAiCharacter() {
 }
 
 function startMatchWithIntro() {
+  if (isTouchDeviceOrSmallScreen() && screen.orientation?.lock) {
+    screen.orientation.lock("landscape").catch(() => {});
+  }
   syncArenaSize();
   preloadAllSounds();
   stopAllSounds();
@@ -2251,6 +2254,7 @@ function updateAI(dt) {
 
 function update(dt) {
   if (!state || !state.running) return;
+  if (isTouchDeviceOrSmallScreen() && window.innerHeight > window.innerWidth) return;
 
   for (const slot of ["p1", "p2"]) {
     for (const k of ["q", "e", "r", "dash"]) {
