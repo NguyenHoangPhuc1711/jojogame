@@ -1582,17 +1582,39 @@ function applyAiSteering(ai, dt) {
   } else if (ai.charId === "kira" && diff.id !== "easy") {
     const aiBomb = state.firstBombs.find((b) => b.ownerSlot === "p2" && !b.attachedSlot);
     if (aiBomb) {
-      // Smart trapper Kira: position on the opposite side of the floor bomb from the player to lure/pincer them into blast zone!
-      const bdx = aiBomb.x - player.x;
-      const bdy = aiBomb.y - player.y;
-      const bd = Math.hypot(bdx, bdy) || 1;
-      const anchorX = Math.max(ARENA_LEFT + 60, Math.min(ARENA_RIGHT - 60, aiBomb.x + (bdx / bd) * 95));
-      const anchorY = Math.max(ARENA_TOP + 60, Math.min(ARENA_BOTTOM - 60, aiBomb.y + (bdy / bd) * 95));
-      const ax = anchorX - ai.x;
-      const ay = anchorY - ai.y;
-      const ad = Math.hypot(ax, ay) || 1;
-      steerX = ad > 24 ? ax / ad : -rawNy * state.aiStrafeDir;
-      steerY = ad > 24 ? ay / ad : rawNx * state.aiStrafeDir;
+      if (diff.id === "super") {
+        // Super Kira chases aggressively and gets behind the player, pushing them toward the bomb.
+        const fromBombX = player.x - aiBomb.x;
+        const fromBombY = player.y - aiBomb.y;
+        const fromBombDist = Math.hypot(fromBombX, fromBombY) || 1;
+        const pushDirX = fromBombX / fromBombDist;
+        const pushDirY = fromBombY / fromBombDist;
+        const pressTargetX = Math.max(
+          ARENA_LEFT + 64,
+          Math.min(ARENA_RIGHT - 64, player.x + pushDirX * 82)
+        );
+        const pressTargetY = Math.max(
+          ARENA_TOP + 64,
+          Math.min(ARENA_BOTTOM - 64, player.y + pushDirY * 82)
+        );
+        const px = pressTargetX - ai.x;
+        const py = pressTargetY - ai.y;
+        const pd = Math.hypot(px, py) || 1;
+        steerX = (px / pd) * 0.88 - rawNy * 0.34 * state.aiStrafeDir;
+        steerY = (py / pd) * 0.88 + rawNx * 0.34 * state.aiStrafeDir;
+      } else {
+        // Medium/Hard Kira still uses a controlled anchor position around the trap.
+        const bdx = aiBomb.x - player.x;
+        const bdy = aiBomb.y - player.y;
+        const bd = Math.hypot(bdx, bdy) || 1;
+        const anchorX = Math.max(ARENA_LEFT + 60, Math.min(ARENA_RIGHT - 60, aiBomb.x + (bdx / bd) * 95));
+        const anchorY = Math.max(ARENA_TOP + 60, Math.min(ARENA_BOTTOM - 60, aiBomb.y + (bdy / bd) * 95));
+        const ax = anchorX - ai.x;
+        const ay = anchorY - ai.y;
+        const ad = Math.hypot(ax, ay) || 1;
+        steerX = ad > 24 ? ax / ad : -rawNy * state.aiStrafeDir;
+        steerY = ad > 24 ? ay / ad : rawNx * state.aiStrafeDir;
+      }
     } else if (player.barrageQueue && dist < 175) {
       steerX = -rawNx * 0.72 - rawNy * 0.65 * state.aiStrafeDir;
       steerY = -rawNy * 0.72 + rawNx * 0.65 * state.aiStrafeDir;
@@ -2052,7 +2074,7 @@ function checkSuperAiReflexes(ai, player, cds, dist) {
       const rCfg = CHAR_CONFIG.kira.skills.r;
       const blastR = rCfg.groundBlastRadius || 160;
       const bDist = Math.hypot(player.x - bomb.x, player.y - bomb.y);
-      if (!player.hidden && bDist <= blastR + player.radius * 0.4) {
+      if (!player.hidden && bDist <= blastR + player.radius * 0.8) {
         detonateFirstBomb("p2");
         return true;
       }
@@ -2090,7 +2112,7 @@ function runAiCombo(ai, player, cds, dist, dt) {
     if (bomb) {
       const bDist = Math.hypot(player.x - bomb.x, player.y - bomb.y);
       const blastR = CHAR_CONFIG.kira.skills.r.groundBlastRadius || 160;
-      if (bomb.attachedSlot === "p1" || (!player.hidden && bDist <= blastR + player.radius * 0.5)) {
+      if (bomb.attachedSlot === "p1" || (!player.hidden && bDist <= blastR + player.radius * (step.wideRadius ? 0.8 : 0.5))) {
         detonateFirstBomb("p2");
       }
     }
@@ -2158,7 +2180,7 @@ function tryStartSuperAiCombo(ai, player, cds, dist) {
       return true;
     }
   } else if (ai.charId === "kira") {
-    // Kira Combo 1 (Smart Bomb Trap + Herd/Pressure): Plant floor bomb ahead -> Barrage to corner player into bomb -> Detonate after >= 1s!
+    // Kira Combo 1: plant a trap, pursue and pressure, then detonate after the fuse arms.
     const existingBomb = state.firstBombs.find((b) => b.ownerSlot === "p2");
     if (!existingBomb && cds.r <= 0 && dist >= 100 && dist <= 245 && !player.barrageQueue && !player.hidden) {
       const steps = [
@@ -2168,7 +2190,11 @@ function tryStartSuperAiCombo(ai, player, cds, dist) {
         steps.push({ type: "skill", key: "e", delay: 0.16, maxDist: 170 });
       } else if (cds.dash <= 0 && dist > 165) {
         steps.push({ type: "dash_in", delay: 0.16, lead: 0.15, minDist: 115 });
+        if (cds.e <= 0) {
+          steps.push({ type: "skill", key: "e", delay: 0.18, maxDist: 170 });
+        }
       }
+      steps.push({ type: "detonate", delay: 1.05, wideRadius: true });
       state.aiCombo = { steps, index: 0, timer: 0 };
       return true;
     }
@@ -2319,9 +2345,22 @@ function updateAI(dt) {
     const bomb = state.firstBombs.find((b) => b.ownerSlot === "p2");
     if (bomb && bomb.armTimer <= 0) {
       const bDist = Math.hypot(player.x - bomb.x, player.y - bomb.y);
-      const detRadius = diff.id === "super" ? 160 : 135;
+      const detRadius = diff.id === "super" ? 195 : 135;
       if (bomb.attachedSlot || bDist <= detRadius + player.radius * 0.4) {
         detonateFirstBomb("p2");
+        return;
+      }
+      if (diff.id === "super" && cds.dash <= 0 && dist > 115 && dist < 260) {
+        const fromBombX = player.x - bomb.x;
+        const fromBombY = player.y - bomb.y;
+        const fromBombDist = Math.hypot(fromBombX, fromBombY) || 1;
+        const pushDirX = fromBombX / fromBombDist;
+        const pushDirY = fromBombY / fromBombDist;
+        triggerDash(
+          ai,
+          player.x + pushDirX * 54 - ai.x,
+          player.y + pushDirY * 54 - ai.y
+        );
         return;
       }
     }
