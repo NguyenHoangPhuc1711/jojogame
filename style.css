@@ -1237,7 +1237,19 @@ body {
 
 /* Mobile Portrait: Force landscape orientation prompt */
 #rotate-overlay {
-  display: none;
+  display: none !important;
+}
+
+body.portrait-blocked #rotate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: radial-gradient(circle at center, #261247 0%, #090414 85%);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
 }
 
 @media (max-width: 920px) and (orientation: portrait), (pointer: coarse) and (orientation: portrait) {
@@ -1246,7 +1258,7 @@ body {
     inset: 0;
     z-index: 200;
     background: radial-gradient(circle at center, #261247 0%, #090414 85%);
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     padding: 24px;
@@ -1290,21 +1302,38 @@ body {
   100% { transform: rotate(0deg); }
 }
 
-/* Mobile Landscape Ergonomic Layout (Joystick bottom-left + 1..6 Skills bottom-right) */
+/* Mobile Landscape Ergonomic Layout (Full-bleed arena + sleek MOBA touch HUD) */
 @media (max-height: 500px), (max-width: 920px) and (orientation: landscape) {
+  #game-wrapper {
+    padding: 2px 6px 4px;
+    gap: 3px;
+  }
+
   #hud {
-    padding: 3px 8px;
+    padding: 0 4px;
     gap: 6px;
   }
 
   .fighter-hud {
-    padding: 3px 6px;
-    gap: 5px;
+    padding: 3px 7px;
+    gap: 6px;
+    border-radius: 9px;
+    background: rgba(16, 10, 26, 0.88);
+    backdrop-filter: blur(6px);
   }
 
   .avatar-box {
     width: 28px;
     height: 28px;
+    border-radius: 6px;
+  }
+
+  .name-row {
+    font-size: 0.68rem;
+  }
+
+  .hp-text {
+    font-size: 0.72rem;
   }
 
   .hp-bar-outer {
@@ -1315,28 +1344,52 @@ body {
     height: 4px;
   }
 
+  .center-hud {
+    gap: 2px;
+  }
+
+  .vs-badge {
+    font-size: 0.82rem;
+  }
+
+  .hud-actions button {
+    padding: 2px 7px;
+    font-size: 0.76rem;
+    border-radius: 6px;
+  }
+
   #mobile-controls {
     padding: 6px 12px;
   }
 
   #touch-joystick-zone {
-    padding: 4px 8px 6px 6px;
+    padding: 4px 8px 6px 8px;
   }
 
   .joystick-base {
-    width: 132px;
-    height: 132px;
+    width: 136px;
+    height: 136px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, rgba(12, 8, 22, 0.42) 68%, rgba(250, 204, 21, 0.14) 100%);
+    border: 2px solid rgba(250, 204, 21, 0.5);
+    backdrop-filter: blur(3px);
   }
 
   .joystick-knob {
-    width: 56px;
-    height: 56px;
+    width: 58px;
+    height: 58px;
+    background: radial-gradient(circle at 35% 30%, #fef9c3, #eab308 65%, #a16207 100%);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7), 0 0 12px rgba(250, 204, 21, 0.45);
   }
 
   #touch-skills-zone {
-    width: 240px;
+    width: 244px;
     height: 246px;
     transform: none;
+  }
+
+  .m-skill-btn {
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   }
 
   .m-skill-btn.dash {
@@ -1354,7 +1407,7 @@ body {
   }
 
   .m-skill-btn.skill-e {
-    right: 160px;
+    right: 162px;
     bottom: 72px;
     width: 54px;
     height: 54px;
@@ -1382,7 +1435,7 @@ body {
   }
 
   .m-key {
-    font-size: 0.88rem;
+    font-size: 0.9rem;
   }
 
   .m-sub {

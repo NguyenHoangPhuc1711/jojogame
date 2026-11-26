@@ -3244,8 +3244,11 @@ function isTouchDeviceOrSmallScreen() {
 }
 
 function syncMobileControlsVisibility() {
+  const isTouch = isTouchDeviceOrSmallScreen();
+  const isPortrait = isTouch && window.innerHeight > window.innerWidth;
+  document.body.classList.toggle("portrait-blocked", isPortrait);
   const show =
-    touchMode === "on" || (touchMode === "auto" && isTouchDeviceOrSmallScreen());
+    !isPortrait && (touchMode === "on" || (touchMode === "auto" && isTouch));
   mobileControlsEl.classList.toggle("hidden", !show);
 }
 

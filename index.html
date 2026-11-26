@@ -2,9 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>JOJO Bizarre Arena 2D — Beta v2</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
   <div id="game-wrapper">
@@ -346,20 +346,20 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Mobile Portrait Rotate Prompt Overlay -->
-    <div id="rotate-overlay" aria-hidden="true">
-      <div class="rotate-card">
-        <div class="rotate-phone-icon">📱</div>
-        <h2>XOAY NGANG MÀN HÌNH</h2>
-        <p>Vui lòng xoay ngang điện thoại để chơi <b>JOJO Bizarre Arena 2D</b> với đầy đủ Joystick và bộ kỹ năng.</p>
-      </div>
+  <!-- Mobile Portrait Rotate Prompt Overlay (outside game-wrapper, hidden in landscape) -->
+  <div id="rotate-overlay" aria-hidden="true">
+    <div class="rotate-card">
+      <div class="rotate-phone-icon">📱</div>
+      <h2>XOAY NGANG MÀN HÌNH</h2>
+      <p>Vui lòng xoay ngang điện thoại để chơi <b>JOJO Bizarre Arena 2D</b> với đầy đủ Joystick và bộ kỹ năng.</p>
     </div>
   </div>
 
-  <script src="characters/jotaro.js"></script>
-  <script src="characters/dio.js"></script>
-  <script src="characters/kira.js"></script>
-  <script src="game.js"></script>
+  <script src="characters/jotaro.js?v=4"></script>
+  <script src="characters/dio.js?v=4"></script>
+  <script src="characters/kira.js?v=4"></script>
+  <script src="game.js?v=4"></script>
 </body>
 </html>
