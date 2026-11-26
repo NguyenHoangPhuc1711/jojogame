@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#12090d" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JOJO Bizarre Arena 2D — Beta v2</title>
-  <link rel="stylesheet" href="style.css?v=6" />
+  <title>JOJO Bizarre Arena 2D — Beta v3</title>
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
   <div id="game-wrapper">
@@ -201,7 +201,7 @@
         </div>
 
         <div class="menu-center-panel">
-          <div class="version-pill">BETA v2.0</div>
+          <div class="version-pill">BETA v3.0 • 8 STANDS</div>
           <h1 class="game-logo">JOJO<br /><span>BIZARRE ARENA 2D</span></h1>
           <p class="menu-tagline">Chiến trường Stand — Định đoạt số phận bằng nắm đấm & thời gian!</p>
           <div class="menu-buttons">
@@ -229,35 +229,48 @@
         <h2>CHỌN CHIẾN BINH</h2>
         <div class="select-columns">
           <div class="select-col">
-            <div class="col-header player">NHÂN VẬT CỦA BẠN</div>
+            <div class="col-header player">NHÂN VẬT CỦA BẠN (8 STAND)</div>
             <div class="char-grid" id="player-char-grid">
               <button type="button" class="char-card selected" data-char="jotaro">
-                <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" />
-                <div class="char-title">JOTARO KUJO</div>
-                <div class="char-skills">
-                  <span><b>Q</b> Za Warudo (5s / 40s)</span>
-                  <span><b>E</b> Star Finger (15 DMG / Choáng 0.5s)</span>
-                  <span><b>R</b> ORA Barrage (45 DMG / 8s)</span>
-                </div>
+                <div class="char-avatar"><img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" /></div>
+                <div class="char-title">JOTARO</div>
               </button>
               <button type="button" class="char-card" data-char="dio">
-                <img src="Dio/dio_with_stand.png" alt="DIO" />
-                <div class="char-title">DIO BRANDO</div>
-                <div class="char-skills">
-                  <span><b>Q</b> Za Warudo (6s / 35s)</span>
-                  <span><b>E</b> MUDA Barrage (35 DMG)</span>
-                  <span><b>R</b> ROAD ROLLER (40 DMG / Đánh bay)</span>
-                </div>
+                <div class="char-avatar"><img src="Dio/dio_with_stand.png" alt="DIO" /></div>
+                <div class="char-title">DIO</div>
               </button>
               <button type="button" class="char-card" data-char="kira">
-                <img src="killerqueen/kira_with_stand.png" alt="Kira" />
-                <div class="char-title">YOSHIKAGE KIRA</div>
-                <div class="char-skills">
-                  <span><b>Q</b> Bite The Dust (CD 60s)</span>
-                  <span><b>E</b> Killer Barrage (30 DMG)</span>
-                  <span><b>R / T</b> First Bomb (8s / OHKO!)</span>
-                </div>
+                <div class="char-avatar"><img src="killerqueen/kira_with_stand.png" alt="Kira" /></div>
+                <div class="char-title">KIRA</div>
               </button>
+              <button type="button" class="char-card" data-char="diavolo">
+                <div class="char-avatar"><img src="Diavolo/Diavolo_with_stand.webp" alt="Diavolo" /></div>
+                <div class="char-title">DIAVOLO</div>
+              </button>
+              <button type="button" class="char-card" data-char="okuyasu">
+                <div class="char-avatar"><img src="The hand/Okuyasu_with_stand.webp" alt="Okuyasu" /></div>
+                <div class="char-title">OKUYASU</div>
+              </button>
+              <button type="button" class="char-card" data-char="josuke">
+                <div class="char-avatar"><img src="Josuke/Josuke_with_stand.webp" alt="Josuke" /></div>
+                <div class="char-title">JOSUKE</div>
+              </button>
+              <button type="button" class="char-card" data-char="polnareff">
+                <div class="char-avatar"><img src="Polnareff/Polnareff_with_stand.webp" alt="Polnareff" /></div>
+                <div class="char-title">POLNAREFF</div>
+              </button>
+              <button type="button" class="char-card" data-char="jolyne">
+                <div class="char-avatar"><img src="Jolyne/Jolyne_with_stand.webp" alt="Jolyne" /></div>
+                <div class="char-title">JOLYNE</div>
+              </button>
+            </div>
+            <div class="selected-skill-preview" id="selected-skill-preview">
+              <div class="preview-name" id="preview-char-name">JOTARO KUJO</div>
+              <div class="preview-skills" id="preview-char-skills">
+                <span><b>Q</b> Za Warudo (5s / 40s)</span>
+                <span><b>E</b> Star Finger (15 DMG / Choáng 0.5s)</span>
+                <span><b>R</b> ORA Barrage (45 DMG / 8s)</span>
+              </div>
             </div>
           </div>
 
@@ -272,16 +285,36 @@
             <div class="ai-diff-desc" id="ai-diff-desc">Kỹ năng cao, phản xạ nhanh • +50 Máu AI</div>
             <div class="char-grid ai-grid" id="ai-char-grid">
               <button type="button" class="char-card" data-ai="jotaro">
-                <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" />
-                <div class="char-title">JOTARO KUJO</div>
+                <div class="char-avatar"><img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" /></div>
+                <div class="char-title">JOTARO</div>
               </button>
               <button type="button" class="char-card selected" data-ai="dio">
-                <img src="Dio/dio_with_stand.png" alt="DIO" />
-                <div class="char-title">DIO BRANDO</div>
+                <div class="char-avatar"><img src="Dio/dio_with_stand.png" alt="DIO" /></div>
+                <div class="char-title">DIO</div>
               </button>
               <button type="button" class="char-card" data-ai="kira">
-                <img src="killerqueen/kira_with_stand.png" alt="Kira" />
-                <div class="char-title">YOSHIKAGE KIRA</div>
+                <div class="char-avatar"><img src="killerqueen/kira_with_stand.png" alt="Kira" /></div>
+                <div class="char-title">KIRA</div>
+              </button>
+              <button type="button" class="char-card" data-ai="diavolo">
+                <div class="char-avatar"><img src="Diavolo/Diavolo_with_stand.webp" alt="Diavolo" /></div>
+                <div class="char-title">DIAVOLO</div>
+              </button>
+              <button type="button" class="char-card" data-ai="okuyasu">
+                <div class="char-avatar"><img src="The hand/Okuyasu_with_stand.webp" alt="Okuyasu" /></div>
+                <div class="char-title">OKUYASU</div>
+              </button>
+              <button type="button" class="char-card" data-ai="josuke">
+                <div class="char-avatar"><img src="Josuke/Josuke_with_stand.webp" alt="Josuke" /></div>
+                <div class="char-title">JOSUKE</div>
+              </button>
+              <button type="button" class="char-card" data-ai="polnareff">
+                <div class="char-avatar"><img src="Polnareff/Polnareff_with_stand.webp" alt="Polnareff" /></div>
+                <div class="char-title">POLNAREFF</div>
+              </button>
+              <button type="button" class="char-card" data-ai="jolyne">
+                <div class="char-avatar"><img src="Jolyne/Jolyne_with_stand.webp" alt="Jolyne" /></div>
+                <div class="char-title">JOLYNE</div>
               </button>
               <button type="button" class="char-card random-card" data-ai="random">
                 <div class="random-icon">🎲</div>
@@ -360,9 +393,14 @@
     </div>
   </div>
 
-  <script src="characters/jotaro.js?v=6"></script>
-  <script src="characters/dio.js?v=6"></script>
-  <script src="characters/kira.js?v=6"></script>
-  <script src="game.js?v=6"></script>
+  <script src="characters/jotaro.js?v=7"></script>
+  <script src="characters/dio.js?v=7"></script>
+  <script src="characters/kira.js?v=7"></script>
+  <script src="characters/diavolo.js?v=7"></script>
+  <script src="characters/okuyasu.js?v=7"></script>
+  <script src="characters/josuke.js?v=7"></script>
+  <script src="characters/polnareff.js?v=7"></script>
+  <script src="characters/jolyne.js?v=7"></script>
+  <script src="game.js?v=7"></script>
 </body>
 </html>

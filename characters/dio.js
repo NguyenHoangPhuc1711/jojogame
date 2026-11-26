@@ -26,8 +26,9 @@ window.JOJO_CHARS.dio = {
     },
     e: {
       name: "MUDA BARRAGE",
-      desc: "35 đấm × 1.0 DMG (35 DMG)",
+      desc: "Giữ E — 35 đấm × 1.0 DMG (35 DMG)",
       cd: 10,
+      isBarrage: true,
     },
     r: {
       name: "ROAD ROLLER DA!",
@@ -57,8 +58,9 @@ window.JOJO_CHARS.dio = {
       api.playSound(q.soundKey);
       api.spawnFloatingText(caster.x, caster.y - 88, q.callout, this.color, 26);
     } else if (key === "e") {
-      api.startBarrage(caster, this.barrage);
+      api.startBarrage(caster, this.barrage, "e", this.skills.e.cd);
     } else if (key === "r") {
+      if (api.state.roadRoller.active) return;
       const r = this.skills.r;
       api.playSound(r.soundKey);
       caster.hidden = true;

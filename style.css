@@ -17,10 +17,11 @@ body {
   overflow: hidden;
   overscroll-behavior: none;
   touch-action: manipulation;
+  background: #12090d !important;
+  background-color: #12090d !important;
 }
 
 body {
-  background: radial-gradient(circle at center, #261614 0%, #12090d 70%, #070306 100%);
   color: #f8f5ff;
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   display: flex;
@@ -38,6 +39,7 @@ body {
   max-width: 100%;
   height: 100vh;
   height: 100dvh;
+  background: radial-gradient(circle at center, #261614 0%, #12090d 70%, #070306 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -83,7 +85,9 @@ body {
 .avatar-box img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: 38% 12%;
+  transform: scale(1.22);
 }
 
 .jotaro-theme {
@@ -99,6 +103,31 @@ body {
 .kira-theme {
   border: 2px solid #ec4899;
   box-shadow: 0 0 12px rgba(236, 72, 153, 0.55);
+}
+
+.diavolo-theme {
+  border: 2px solid #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.55);
+}
+
+.okuyasu-theme {
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
+}
+
+.josuke-theme {
+  border: 2px solid #f472b6;
+  box-shadow: 0 0 12px rgba(244, 114, 182, 0.55);
+}
+
+.polnareff-theme {
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 0 12px rgba(226, 232, 240, 0.5);
+}
+
+.jolyne-theme {
+  border: 2px solid #22d3ee;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.55);
 }
 
 .hp-section {
@@ -167,6 +196,26 @@ body {
 
 .kira-fill {
   background: linear-gradient(90deg, #be185d, #f472b6);
+}
+
+.diavolo-fill {
+  background: linear-gradient(90deg, #991b1b, #ef4444);
+}
+
+.okuyasu-fill {
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+}
+
+.josuke-fill {
+  background: linear-gradient(90deg, #0ea5e9, #f472b6);
+}
+
+.polnareff-fill {
+  background: linear-gradient(90deg, #64748b, #f1f5f9);
+}
+
+.jolyne-fill {
+  background: linear-gradient(90deg, #0891b2, #22d3ee);
 }
 
 .guard-bar-outer {
@@ -457,6 +506,26 @@ body {
 
 .skill-btn.kira-mode {
   border-color: #ec4899;
+}
+
+.skill-btn.diavolo-mode {
+  border-color: #ef4444;
+}
+
+.skill-btn.okuyasu-mode {
+  border-color: #38bdf8;
+}
+
+.skill-btn.josuke-mode {
+  border-color: #f472b6;
+}
+
+.skill-btn.polnareff-mode {
+  border-color: #e2e8f0;
+}
+
+.skill-btn.jolyne-mode {
+  border-color: #22d3ee;
 }
 
 .skill-btn.guard-btn {
@@ -806,12 +875,13 @@ body {
 
 .char-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 
 .char-grid.ai-grid {
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 .char-card {
@@ -821,13 +891,13 @@ body {
   background: rgba(12, 7, 26, 0.85);
   border: 2px solid rgba(255, 255, 255, 0.16);
   border-radius: 12px;
-  padding: 10px 8px;
+  padding: 6px;
   color: #f8fafc;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -842,39 +912,76 @@ body {
   background: rgba(126, 34, 206, 0.35);
 }
 
-.char-card img {
-  width: 78px;
-  height: 78px;
-  object-fit: contain;
-}
-
-.random-icon {
-  width: 78px;
-  height: 78px;
+.char-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, rgba(168, 85, 247, 0.25), rgba(8, 4, 18, 0.9));
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.6rem;
+  flex-shrink: 0;
+}
+
+.char-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 36% 12%;
+  transform: scale(1.38);
+  transition: transform 0.16s ease;
+}
+
+.char-card:hover .char-avatar img,
+.char-card.selected .char-avatar img {
+  transform: scale(1.48);
+}
+
+.random-icon {
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.3rem;
 }
 
 .char-title {
   font-weight: 900;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   color: #fde047;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
-.char-skills {
-  width: 100%;
-  min-width: 0;
-  overflow: hidden;
+.selected-skill-preview {
+  margin-top: 10px;
+  background: rgba(18, 10, 36, 0.85);
+  border: 1.5px solid rgba(250, 204, 21, 0.35);
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.preview-name {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #fde047;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.preview-skills {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 0.7rem;
-  color: #cbd5e1;
+  font-size: 0.72rem;
+  color: #e2e8f0;
 }
 
-.char-skills b {
+.preview-skills b {
   color: #fde047;
 }
 
@@ -1558,53 +1665,59 @@ body.portrait-blocked #rotate-overlay {
   .char-grid {
     flex: 1;
     min-height: 0;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
     align-content: stretch;
   }
 
   .char-grid.ai-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 5px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
   }
 
   .char-card {
-    padding: 5px 4px;
-    border-radius: 9px;
-    gap: 3px;
+    padding: 4px 3px;
+    border-radius: 8px;
+    gap: 2px;
     justify-content: center;
     min-height: 0;
   }
 
-  .char-card img,
+  .char-avatar,
   .random-icon {
-    width: auto;
-    height: clamp(38px, 14dvh, 66px);
-    max-width: 100%;
+    width: clamp(34px, 12dvh, 52px);
+    height: clamp(34px, 12dvh, 52px);
+    border-radius: 7px;
   }
 
   .random-icon {
-    font-size: clamp(1.5rem, 6dvh, 2.2rem);
+    font-size: clamp(1.2rem, 5dvh, 1.8rem);
   }
 
   .char-title {
-    font-size: 0.62rem;
-    line-height: 1.1;
+    font-size: 0.56rem;
+    line-height: 1.05;
   }
 
-  .char-skills {
-    display: flex;
-    width: 100%;
-    min-width: 0;
-    gap: 1.5px;
+  .selected-skill-preview {
+    margin-top: 4px;
+    padding: 4px 7px;
+    border-radius: 7px;
+    flex-shrink: 0;
+  }
+
+  .preview-name {
+    font-size: 0.64rem;
+    margin-bottom: 1px;
+  }
+
+  .preview-skills {
     font-size: 0.54rem;
     line-height: 1.15;
-    text-align: center;
+    gap: 1px;
   }
 
-  .char-skills span {
-    display: block;
-    width: 100%;
+  .preview-skills span {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1722,7 +1835,7 @@ body.portrait-blocked #rotate-overlay {
 
 /* Extra-short landscape screens (e.g. Messenger / in-app browser ~300-350px tall) */
 @media (max-height: 365px) and (orientation: landscape) {
-  .char-skills {
+  .selected-skill-preview {
     display: none;
   }
 

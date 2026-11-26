@@ -29,8 +29,9 @@ window.JOJO_CHARS.kira = {
     },
     e: {
       name: "KILLER BARRAGE",
-      desc: "34 đấm × 0.9 DMG (30 DMG)",
+      desc: "Giữ E — 34 đấm × 0.9 DMG (30 DMG)",
       cd: 10,
+      isBarrage: true,
     },
     r: {
       name: "FIRST BOMB",
@@ -55,7 +56,7 @@ window.JOJO_CHARS.kira = {
 
   castSkill(api, casterSlot, caster, opponent, key) {
     if (key === "e") {
-      api.startBarrage(caster, this.barrage);
+      api.startBarrage(caster, this.barrage, "e", this.skills.e.cd);
     } else if (key === "r") {
       api.plantFirstBomb(caster, opponent, this.skills.r);
     } else if (key === "q") {

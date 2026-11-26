@@ -37,8 +37,9 @@ window.JOJO_CHARS.jotaro = {
     },
     r: {
       name: "ORA BARRAGE",
-      desc: "38 đấm × 1.2 DMG (45 DMG)",
+      desc: "Giữ R — 38 đấm × 1.2 DMG (45 DMG)",
       cd: 8,
+      isBarrage: true,
     },
   },
 
@@ -80,7 +81,7 @@ window.JOJO_CHARS.jotaro = {
       });
       api.spawnFloatingText(caster.x, caster.y - 84, e.callout, "#d8b4fe", 22);
     } else if (key === "r") {
-      api.startBarrage(caster, this.barrage);
+      api.startBarrage(caster, this.barrage, "r", this.skills.r.cd);
     }
   },
 };
