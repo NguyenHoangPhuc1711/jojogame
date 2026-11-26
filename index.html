@@ -1,1430 +1,356 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ôn Tập Kinh Tế Chính Trị Mác - Lênin (301 Câu Trắc Nghiệm)</title>
-  <style>
-    :root {
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --card-border: #e2e8f0;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-      --primary-light: #eef2ff;
-      --success: #10b981;
-      --success-bg: #ecfdf5;
-      --success-border: #a7f3d0;
-      --danger: #ef4444;
-      --danger-bg: #fef2f2;
-      --danger-border: #fecaca;
-      --warning: #f59e0b;
-      --warning-bg: #fffbeb;
-      --accent: #0ea5e9;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    }
-
-    [data-theme="dark"] {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --primary-light: #1e1b4b;
-      --success: #34d399;
-      --success-bg: #064e3b;
-      --success-border: #047857;
-      --danger: #f87171;
-      --danger-bg: #7f1d1d;
-      --danger-border: #b91c1c;
-      --warning: #fbbf24;
-      --warning-bg: #78350f;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
-      --shadow-lg: 0 10px 20px -3px rgb(0 0 0 / 0.7);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: background 0.2s, color 0.2s;
-    }
-
-    /* Header */
-    header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--card-border);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
-    }
-
-    .header-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-badge {
-      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
-      color: white;
-      font-weight: 800;
-      font-size: 14px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      letter-spacing: 0.5px;
-    }
-
-    .title-group h1 {
-      font-size: 17px;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-
-    .title-group p {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      background: var(--bg);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s;
-    }
-
-    .icon-btn:hover {
-      background: var(--primary-light);
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    /* Container */
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 16px;
-      width: 100%;
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 20px;
-    }
-
-    @media (max-width: 860px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-      .sidebar {
-        order: 2;
-      }
-    }
-
-    /* Main Quiz Area */
-    .main-area {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* Top Control Bar */
-    .control-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .mode-tabs {
-      display: flex;
-      background: var(--bg);
-      padding: 3px;
-      border-radius: 8px;
-      border: 1px solid var(--card-border);
-      gap: 4px;
-      flex-wrap: wrap;
-    }
-
-    .mode-tab {
-      padding: 6px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      transition: all 0.15s;
-    }
-
-    .mode-tab.active {
-      background: var(--card-bg);
-      color: var(--primary);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    select, input[type="text"] {
-      background: var(--bg);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      outline: none;
-    }
-
-    select:focus, input[type="text"]:focus {
-      border-color: var(--primary);
-    }
-
-    .toggles-bar {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-size: 12px;
-      color: var(--text-muted);
-      flex-wrap: wrap;
-    }
-
-    .toggle-label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    /* Quiz Card */
-    .quiz-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 24px;
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      position: relative;
-    }
-
-    .q-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 12px;
-    }
-
-    .q-badges {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 8px;
-      border-radius: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-
-    .badge-chap {
-      background: var(--primary-light);
-      color: var(--primary);
-    }
-
-    .badge-id {
-      background: var(--bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-    }
-
-    .star-btn {
-      background: none;
-      border: none;
-      font-size: 22px;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: transform 0.15s, color 0.15s;
-    }
-
-    .star-btn.active {
-      color: var(--warning);
-      transform: scale(1.15);
-    }
-
-    .q-prompt {
-      font-size: 17px;
-      font-weight: 600;
-      line-height: 1.55;
-    }
-
-    /* Options */
-    .options-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .opt-btn {
-      background: var(--bg);
-      border: 2px solid var(--card-border);
-      border-radius: 10px;
-      padding: 12px 16px;
-      text-align: left;
-      cursor: pointer;
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      font-size: 14.5px;
-      line-height: 1.45;
-      color: var(--text);
-      transition: all 0.15s ease;
-      position: relative;
-    }
-
-    .opt-btn:hover:not(.locked) {
-      border-color: var(--primary);
-      background: var(--primary-light);
-      transform: translateY(-1px);
-    }
-
-    .opt-key {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      font-weight: 700;
-      font-size: 12px;
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-
-    .opt-btn.selected {
-      border-color: var(--primary);
-      background: var(--primary-light);
-      font-weight: 600;
-    }
-
-    .opt-btn.correct {
-      border-color: var(--success) !important;
-      background: var(--success-bg) !important;
-      color: var(--text) !important;
-      font-weight: 600;
-    }
-
-    .opt-btn.correct .opt-key {
-      background: var(--success);
-      color: white;
-      border-color: var(--success);
-    }
-
-    .opt-btn.wrong {
-      border-color: var(--danger) !important;
-      background: var(--danger-bg) !important;
-      color: var(--text) !important;
-    }
-
-    .opt-btn.wrong .opt-key {
-      background: var(--danger);
-      color: white;
-      border-color: var(--danger);
-    }
-
-    /* Feedback Banner */
-    .feedback-box {
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 14.5px;
-      font-weight: 600;
-      display: none;
-      line-height: 1.4;
-    }
-
-    .feedback-box.correct {
-      display: block;
-      background: var(--success-bg);
-      color: #065f46;
-      border: 1px solid var(--success-border);
-    }
-
-    [data-theme="dark"] .feedback-box.correct {
-      color: #6ee7b7;
-    }
-
-    .feedback-box.wrong {
-      display: block;
-      background: var(--danger-bg);
-      color: #991b1b;
-      border: 1px solid var(--danger-border);
-    }
-
-    [data-theme="dark"] .feedback-box.wrong {
-      color: #fca5a5;
-    }
-
-    /* Navigation inside Card */
-    .q-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      border-top: 1px solid var(--card-border);
-      padding-top: 16px;
-      flex-wrap: wrap;
-    }
-
-    .nav-btn {
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13.5px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border: 1px solid var(--card-border);
-      background: var(--bg);
-      color: var(--text);
-      transition: all 0.15s;
-    }
-
-    .nav-btn:hover:not(:disabled) {
-      background: var(--card-border);
-    }
-
-    .nav-btn.primary {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: white;
-    }
-
-    .nav-btn.primary:hover:not(:disabled) {
-      background: var(--primary-hover);
-    }
-
-    .nav-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .side-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .side-card h3 {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    /* Stats bar */
-    .stat-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 13px;
-    }
-
-    .stat-val {
-      font-weight: 700;
-    }
-
-    .progress-bar-wrap {
-      width: 100%;
-      height: 8px;
-      background: var(--bg);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 4px;
-      border: 1px solid var(--card-border);
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
-      width: 0%;
-      transition: width 0.3s;
-    }
-
-    /* Question Grid Palette */
-    .grid-container {
-      max-height: 380px;
-      overflow-y: auto;
-      padding-right: 4px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
-      gap: 6px;
-    }
-
-    .q-palette-btn {
-      width: 100%;
-      aspect-ratio: 1;
-      border-radius: 6px;
-      border: 1px solid var(--card-border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 11.5px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      transition: all 0.1s;
-    }
-
-    .q-palette-btn:hover {
-      transform: scale(1.08);
-      border-color: var(--primary);
-    }
-
-    .q-palette-btn.current {
-      outline: 2px solid var(--primary);
-      outline-offset: 1px;
-      font-weight: 800;
-    }
-
-    .q-palette-btn.correct {
-      background: var(--success);
-      color: white;
-      border-color: var(--success);
-    }
-
-    .q-palette-btn.wrong {
-      background: var(--danger);
-      color: white;
-      border-color: var(--danger);
-    }
-
-    .q-palette-btn.answered {
-      background: var(--primary-light);
-      color: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .q-palette-btn.starred::after {
-      content: "★";
-      position: absolute;
-      top: -3px;
-      right: 1px;
-      font-size: 9px;
-      color: var(--warning);
-    }
-
-    /* Exam Mode Header */
-    .exam-timer-box {
-      background: var(--card-bg);
-      border: 2px solid var(--accent);
-      border-radius: 10px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-weight: 700;
-      font-size: 15px;
-    }
-
-    .timer-text {
-      color: var(--accent);
-      font-family: monospace;
-      font-size: 18px;
-    }
-
-    .timer-danger {
-      color: var(--danger) !important;
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    /* Score Report Modal */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 16px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      max-width: 500px;
-      width: 100%;
-      padding: 24px;
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      text-align: center;
-    }
-
-    .score-circle {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      background: var(--primary-light);
-      border: 4px solid var(--primary);
-      color: var(--primary);
-      font-size: 32px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto;
-    }
-
-    .shortcuts-help {
-      font-size: 11.5px;
-      color: var(--text-muted);
-      line-height: 1.6;
-      border-top: 1px solid var(--card-border);
-      padding-top: 10px;
-    }
-
-    kbd {
-      background: var(--bg);
-      border: 1px solid var(--card-border);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-size: 10.5px;
-      font-family: monospace;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>JOJO Bizarre Arena 2D — Beta v2</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- HEADER -->
-  <header>
-    <div class="header-inner">
-      <div class="logo-area">
-        <span class="logo-badge">KTCT</span>
-        <div class="title-group">
-          <h1>Ôn Tập Kinh Tế Chính Trị Mác - Lênin</h1>
-          <p>Ngân hàng 301 câu hỏi trắc nghiệm chuẩn đề cương</p>
+  <div id="game-wrapper">
+    <!-- Top HUD (Includes compact skill pills so arena fills full bottom) -->
+    <header id="hud">
+      <div class="fighter-hud left">
+        <div class="avatar-box jotaro-theme" id="p1-avatar-box">
+          <img id="p1-avatar-img" src="Jotaro/Jotaro_with_stand.png" alt="Player" />
         </div>
-      </div>
-      <div class="header-actions">
-        <button class="icon-btn" id="soundToggle" title="Bật/Tắt âm thanh">🔊 Âm thanh</button>
-        <button class="icon-btn" id="themeToggle" title="Đổi giao diện sáng/tối">🌓 Giao diện</button>
-      </div>
-    </div>
-  </header>
+        <div class="hp-section">
+          <div class="name-row">
+            <span class="fighter-name" id="p1-name">JOTARO KUJO <small>(BẠN)</small></span>
 
-  <!-- MAIN CONTAINER -->
-  <div class="container">
-    <!-- MAIN QUIZ AREA -->
-    <main class="main-area">
-      <!-- TOP CONTROL -->
-      <div class="control-card">
-        <div class="mode-tabs">
-          <button class="mode-tab active" data-mode="study">📖 Luyện Tập</button>
-          <button class="mode-tab" data-mode="exam">⏱️ Thi Thử (40 câu)</button>
-          <button class="mode-tab" data-mode="wrong">❌ Ôn Câu Sai (<span id="wrongCountBadge">0</span>)</button>
-          <button class="mode-tab" data-mode="starred">⭐ Đã Lưu (<span id="starredCountBadge">0</span>)</button>
-        </div>
+            <!-- Ultra-compact Skill Bar inline between Name & HP% -->
+            <div id="skill-bar">
+              <button class="skill-btn" id="btn-q" data-key="Q">
+                <span class="key-badge">Q</span>
+                <span class="skill-name" id="skill-name-q">Ulti</span>
+                <div class="cd-overlay" id="cd-q"></div>
+                <span class="cd-text" id="cd-text-q"></span>
+              </button>
 
-        <div class="filter-group">
-          <select id="chapterFilter" title="Chọn chương ôn tập">
-            <option value="all">Tất cả 6 chương (301 câu)</option>
-            <option value="Chương 1">Chương 1: Khái quát & chức năng (20 câu)</option>
-            <option value="Chương 2">Chương 2: Hàng hóa & thị trường (80 câu)</option>
-            <option value="Chương 3">Chương 3: Giá trị thặng dư (80 câu)</option>
-            <option value="Chương 4">Chương 4: Cạnh tranh & độc quyền (30 câu)</option>
-            <option value="Chương 5">Chương 5: Kinh tế TT định hướng XHCN (50 câu)</option>
-            <option value="Chương 6">Chương 6: CNH, HĐH & Hội nhập KTQT (41 câu)</option>
-          </select>
-          <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm câu hỏi..." style="width: 160px;">
-        </div>
+              <button class="skill-btn key-only" id="btn-e" data-key="E">
+                <span class="key-badge">E</span>
+                <span class="skill-name hidden" id="skill-name-e"></span>
+                <div class="cd-overlay" id="cd-e"></div>
+                <span class="cd-text" id="cd-text-e"></span>
+              </button>
 
-        <div class="toggles-bar">
-          <label class="toggle-label" title="Xáo trộn thứ tự các câu hỏi">
-            <input type="checkbox" id="shuffleQuestionsToggle"> Đảo câu hỏi
-          </label>
-          <label class="toggle-label" title="Xáo trộn thứ tự 4 đáp án A, B, C, D để tránh học vẹt">
-            <input type="checkbox" id="shuffleOptionsToggle"> Đảo đáp án
-          </label>
-          <button class="icon-btn" id="resetProgressBtn" style="padding: 4px 8px; font-size: 11px;">🔄 Đặt lại</button>
-        </div>
-      </div>
+              <button class="skill-btn key-only" id="btn-r" data-key="R">
+                <span class="key-badge">R</span>
+                <span class="skill-name hidden" id="skill-name-r"></span>
+                <div class="cd-overlay" id="cd-r"></div>
+                <span class="cd-text" id="cd-text-r"></span>
+              </button>
 
-      <!-- EXAM BAR (SHOWS IN EXAM MODE) -->
-      <div id="examBar" class="exam-timer-box" style="display: none;">
-        <span>Bài thi trắc nghiệm (Tổng: <span id="examTotalCount">40</span> câu)</span>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <span>Thời gian còn: <span id="examTimerDisplay" class="timer-text">30:00</span></span>
-          <button class="nav-btn primary" id="submitExamBtn">Nộp Bài ➔</button>
-        </div>
-      </div>
+              <button class="skill-btn key-only hidden" id="btn-t" data-key="T" title="Kích nổ First Bomb">
+                <span class="key-badge">T</span>
+                <span class="skill-name hidden" id="skill-name-t"></span>
+                <div class="cd-overlay" id="cd-t"></div>
+                <span class="cd-text" id="cd-text-t"></span>
+              </button>
 
-      <!-- QUIZ CARD -->
-      <div class="quiz-card" id="quizCard">
-        <div class="q-meta">
-          <div class="q-badges">
-            <span class="badge badge-chap" id="qChapter">Chương 1</span>
-            <span class="badge badge-id" id="qId">ID: 1</span>
-            <span class="badge badge-id" id="qIndexBadge">Câu 1 / 301</span>
+              <button class="skill-btn guard-btn" id="btn-f" data-key="F" title="Giữ F để phòng thủ (tối đa 20 DMG)">
+                <span class="key-badge">F</span>
+                <span class="skill-name" id="guard-desc-f">Block</span>
+              </button>
+
+              <button class="skill-btn dash-btn" id="btn-dash" data-key="Shift" title="Bấm Shift để lướt nhanh (CD 5s)">
+                <span class="key-badge wide-badge">Shift</span>
+                <span class="skill-name">Dash</span>
+                <div class="cd-overlay" id="cd-dash"></div>
+                <span class="cd-text" id="cd-text-dash"></span>
+              </button>
+            </div>
+
+            <span class="hp-text" id="p1-hp-text">100%</span>
           </div>
-          <button class="star-btn" id="starToggleBtn" title="Lưu câu hỏi này">☆</button>
-        </div>
-
-        <div class="q-prompt" id="qPrompt">
-          Đang tải câu hỏi...
-        </div>
-
-        <div class="options-list" id="optionsContainer">
-          <!-- Options dynamically rendered here -->
-        </div>
-
-        <div class="feedback-box" id="feedbackBox">
-          <span id="feedbackText">Chính xác! 🎉</span>
-        </div>
-
-        <div class="q-nav">
-          <button class="nav-btn" id="prevBtn">◀ Trước (P)</button>
-          <div style="display: flex; gap: 8px;">
-            <button class="nav-btn" id="revealBtn" title="Xem đáp án ngay">💡 Xem đáp án (H)</button>
+          <div class="hp-bar-outer">
+            <div class="hp-bar-trail" id="p1-hp-trail"></div>
+            <div class="hp-bar-fill jotaro-fill" id="p1-hp-fill"></div>
           </div>
-          <button class="nav-btn primary" id="nextBtn">Tiếp theo (N) ▶</button>
+          <div class="guard-bar-outer" title="Thanh phòng thủ (F) — Tối đa đỡ 20 DMG">
+            <div class="guard-bar-fill" id="p1-guard-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="center-hud">
+        <div class="vs-badge">VS</div>
+        <div id="timestop-banner" class="hidden">
+          <span id="timestop-label">ZA WARUDO!</span>
+          <span id="timestop-timer">5.0s</span>
+        </div>
+        <div class="hud-actions">
+          <button id="mute-btn" title="Bật / Tắt toàn bộ âm thanh">🔊</button>
+          <button id="settings-btn" title="Cài đặt âm lượng">⚙️</button>
+          <button id="menu-btn" title="Về Menu chính">🏠</button>
+        </div>
+      </div>
+
+      <div class="fighter-hud right">
+        <div class="hp-section">
+          <div class="name-row">
+            <span class="hp-text" id="p2-hp-text">100%</span>
+            <span class="fighter-name" id="p2-name">DIO BRANDO <small>(AI)</small></span>
+          </div>
+          <div class="hp-bar-outer">
+            <div class="hp-bar-trail" id="p2-hp-trail"></div>
+            <div class="hp-bar-fill dio-fill" id="p2-hp-fill"></div>
+          </div>
+          <div class="guard-bar-outer" title="Thanh phòng thủ AI">
+            <div class="guard-bar-fill" id="p2-guard-fill"></div>
+          </div>
+        </div>
+        <div class="avatar-box dio-theme" id="p2-avatar-box">
+          <img id="p2-avatar-img" src="Dio/dio_with_stand.png" alt="AI" />
+        </div>
+      </div>
+    </header>
+
+    <!-- Arena Canvas (Full height to bottom of screen) -->
+    <main id="arena-container">
+      <canvas id="arena" width="1680" height="780"></canvas>
+      <div id="menacing-overlay" aria-hidden="true">ゴ ゴ ゴ ゴ</div>
+
+      <!-- VS Intro Splash Overlay -->
+      <div id="vs-intro-overlay" class="hidden">
+        <div class="vs-top-names">
+          <span class="vs-p1-name" id="vs-p1-name">JOTARO KUJO</span>
+          <span class="vs-p2-name" id="vs-p2-name">DIO BRANDO</span>
+        </div>
+        <div class="vs-fighters-stage">
+          <div class="vs-fighter-side left">
+            <img id="vs-p1-img" src="Jotaro/Jotaro_with_stand.png" alt="P1" />
+          </div>
+          <div class="vs-bolt-center">
+            <div class="lightning-bolt">⚡</div>
+            <div class="vs-clash-text"><span class="vs-red">V</span><span class="vs-blue">S</span></div>
+          </div>
+          <div class="vs-fighter-side right">
+            <img id="vs-p2-img" src="Dio/dio_with_stand.png" alt="P2" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Victory / Defeat Banner -->
+      <div id="result-banner" class="hidden">
+        <div id="result-banner-text">VICTORY!</div>
+        <div id="result-banner-sub">TO BE CONTINUED...</div>
+      </div>
+
+      <!-- Mobile Touch Controls Overlay (Joystick Left + Liên Quân Arc Skills Right) -->
+      <div id="mobile-controls" class="hidden">
+        <div id="touch-joystick-zone">
+          <div class="joystick-base" id="joystick-base">
+            <span class="joy-dir up">▲</span>
+            <span class="joy-dir right">▶</span>
+            <span class="joy-dir down">▼</span>
+            <span class="joy-dir left">◀</span>
+            <div class="joystick-knob" id="joystick-knob"></div>
+          </div>
+        </div>
+
+        <div id="touch-skills-zone">
+          <button type="button" class="m-skill-btn ulti" id="m-btn-q" data-skill="q">
+            <span class="m-key">Q</span>
+            <span class="m-sub">Ulti</span>
+            <span class="m-cd" id="m-cd-q"></span>
+          </button>
+
+          <button type="button" class="m-skill-btn skill-r" id="m-btn-r" data-skill="r">
+            <span class="m-key">R</span>
+            <span class="m-sub">Chiêu R</span>
+            <span class="m-cd" id="m-cd-r"></span>
+          </button>
+
+          <button type="button" class="m-skill-btn skill-e" id="m-btn-e" data-skill="e">
+            <span class="m-key">E</span>
+            <span class="m-sub">Chiêu E</span>
+            <span class="m-cd" id="m-cd-e"></span>
+          </button>
+
+          <button type="button" class="m-skill-btn dash" id="m-btn-dash">
+            <span class="m-key">⚡</span>
+            <span class="m-sub">Dash</span>
+            <span class="m-cd" id="m-cd-dash"></span>
+          </button>
+
+          <button type="button" class="m-skill-btn guard" id="m-btn-f">
+            <span class="m-key">🛡️</span>
+            <span class="m-sub" id="m-guard-sub">Block</span>
+          </button>
+
+          <button type="button" class="m-skill-btn kira-t hidden" id="m-btn-t" data-skill="t">
+            <span class="m-key">T</span>
+            <span class="m-sub">Nổ</span>
+            <span class="m-cd" id="m-cd-t"></span>
+          </button>
         </div>
       </div>
     </main>
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <!-- PROGRESS & STATS -->
-      <div class="side-card">
-        <h3>Tiến Độ Học Tập</h3>
-        <div class="stat-row">
-          <span>Tiến độ hoàn thành:</span>
-          <span class="stat-val" id="statProgress">0 / 301</span>
+    <!-- Main Menu Overlay -->
+    <div id="main-menu-overlay">
+      <div class="main-menu-bg-menacing">ゴ ゴ ゴ ゴ ゴ</div>
+      <div class="main-menu-stage">
+        <div class="menu-fighter left-side">
+          <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro Kujo" />
+          <div class="menu-fighter-label jotaro">JOTARO KUJO</div>
         </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" id="progressBarFill"></div>
+
+        <div class="menu-center-panel">
+          <div class="version-pill">BETA v2.0</div>
+          <h1 class="game-logo">JOJO<br /><span>BIZARRE ARENA 2D</span></h1>
+          <p class="menu-tagline">Chiến trường Stand — Định đoạt số phận bằng nắm đấm & thời gian!</p>
+          <div class="menu-buttons">
+            <button id="goto-select-btn" class="primary-cta">⚔️ CHỌN NHÂN VẬT & ĐẤU</button>
+            <button id="menu-settings-btn" class="secondary-cta">⚙️ CÀI ĐẶT ÂM THANH</button>
+          </div>
+          <div class="controls-hint">
+            <span><b>WASD</b> Di chuyển</span>
+            <span><b>Shift</b> Lướt</span>
+            <span><b>F</b> Phòng thủ</span>
+            <span><b>Q E R T</b> Kỹ năng</span>
+          </div>
         </div>
-        <div class="stat-row" style="margin-top: 6px;">
-          <span style="color: var(--success);">Đúng: <strong id="statCorrect">0</strong></span>
-          <span style="color: var(--danger);">Sai: <strong id="statWrong">0</strong></span>
-          <span>Tỷ lệ: <strong id="statRate">0%</strong></span>
+
+        <div class="menu-fighter right-side">
+          <img src="Dio/dio_with_stand.png" alt="DIO Brando" />
+          <div class="menu-fighter-label dio">DIO BRANDO</div>
         </div>
       </div>
+    </div>
 
-      <!-- QUESTION MATRIX PALETTE -->
-      <div class="side-card">
-        <h3>Danh Sách Câu Hỏi</h3>
-        <div class="grid-container" id="questionPalette">
-          <!-- Buttons 1..301 -->
+    <!-- Character & Opponent Select Overlay -->
+    <div id="select-overlay" class="hidden">
+      <div class="modal-card wide">
+        <h2>CHỌN CHIẾN BINH</h2>
+        <div class="select-columns">
+          <div class="select-col">
+            <div class="col-header player">NHÂN VẬT CỦA BẠN</div>
+            <div class="char-grid" id="player-char-grid">
+              <button type="button" class="char-card selected" data-char="jotaro">
+                <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" />
+                <div class="char-title">JOTARO KUJO</div>
+                <div class="char-skills">
+                  <span><b>Q</b> Za Warudo (5s / 40s)</span>
+                  <span><b>E</b> Star Finger (15 DMG / Choáng 0.5s)</span>
+                  <span><b>R</b> ORA Barrage (45 DMG / 8s)</span>
+                </div>
+              </button>
+              <button type="button" class="char-card" data-char="dio">
+                <img src="Dio/dio_with_stand.png" alt="DIO" />
+                <div class="char-title">DIO BRANDO</div>
+                <div class="char-skills">
+                  <span><b>Q</b> Za Warudo (6s / 35s)</span>
+                  <span><b>E</b> MUDA Barrage (35 DMG)</span>
+                  <span><b>R</b> ROAD ROLLER (40 DMG / Đánh bay)</span>
+                </div>
+              </button>
+              <button type="button" class="char-card" data-char="kira">
+                <img src="killerqueen/kira_with_stand.png" alt="Kira" />
+                <div class="char-title">YOSHIKAGE KIRA</div>
+                <div class="char-skills">
+                  <span><b>Q</b> Bite The Dust (CD 60s)</span>
+                  <span><b>E</b> Killer Barrage (30 DMG)</span>
+                  <span><b>R / T</b> First Bomb (8s / OHKO!)</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="select-col">
+            <div class="col-header ai" id="ai-col-header">ĐỐI THỦ (AI KHÓ)</div>
+            <div class="ai-diff-bar" id="ai-diff-bar">
+              <button type="button" class="diff-btn" data-diff="easy">DỄ</button>
+              <button type="button" class="diff-btn" data-diff="medium">TRUNG BÌNH</button>
+              <button type="button" class="diff-btn selected" data-diff="hard">KHÓ</button>
+              <button type="button" class="diff-btn super" data-diff="super">🔥 SIÊU KHÓ</button>
+            </div>
+            <div class="ai-diff-desc" id="ai-diff-desc">Kỹ năng cao, phản xạ nhanh • +50 Máu AI</div>
+            <div class="char-grid ai-grid" id="ai-char-grid">
+              <button type="button" class="char-card" data-ai="jotaro">
+                <img src="Jotaro/Jotaro_with_stand.png" alt="Jotaro" />
+                <div class="char-title">JOTARO KUJO</div>
+              </button>
+              <button type="button" class="char-card selected" data-ai="dio">
+                <img src="Dio/dio_with_stand.png" alt="DIO" />
+                <div class="char-title">DIO BRANDO</div>
+              </button>
+              <button type="button" class="char-card" data-ai="kira">
+                <img src="killerqueen/kira_with_stand.png" alt="Kira" />
+                <div class="char-title">YOSHIKAGE KIRA</div>
+              </button>
+              <button type="button" class="char-card random-card" data-ai="random">
+                <div class="random-icon">🎲</div>
+                <div class="char-title">NGẪU NHIÊN</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="back-to-menu-btn" class="secondary-cta">← MENU CHÍNH</button>
+          <button id="start-btn" class="primary-cta">BẮT ĐẦU TRẬN ĐẤU</button>
         </div>
       </div>
+    </div>
 
-      <!-- KEYBOARD SHORTCUTS -->
-      <div class="side-card shortcuts-help">
-        <strong style="color: var(--text);">⌨️ Phím tắt thao tác nhanh:</strong><br>
-        • <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> hoặc <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd>: Chọn đáp án<br>
-        • <kbd>◀</kbd> / <kbd>P</kbd>: Câu trước | <kbd>▶</kbd> / <kbd>N</kbd> / <kbd>Space</kbd>: Câu tiếp<br>
-        • <kbd>S</kbd>: Đánh dấu sao ⭐ | <kbd>H</kbd>: Ẩn/Hiện đáp án
-      </div>
-    </aside>
-  </div>
-
-  <!-- EXAM RESULT MODAL -->
-  <div class="modal-overlay" id="examModal">
-    <div class="modal-card">
-      <h2>Kết Quả Bài Thi Thử</h2>
-      <div class="score-circle" id="modalScoreCircle">8.5</div>
-      <p id="modalScoreGrade" style="font-size: 16px; font-weight: 700; color: var(--primary);">XUẤT SẮC!</p>
-      
-      <div style="background: var(--bg); border-radius: 8px; padding: 12px; display: flex; justify-content: space-around;">
-        <div>
-          <div style="color: var(--text-muted); font-size: 12px;">Số câu đúng</div>
-          <div style="font-size: 18px; font-weight: 800; color: var(--success);" id="modalCorrectCount">34/40</div>
-        </div>
-        <div>
-          <div style="color: var(--text-muted); font-size: 12px;">Thời gian làm</div>
-          <div style="font-size: 18px; font-weight: 800;" id="modalTimeSpent">18:24</div>
-        </div>
-        <div>
-          <div style="color: var(--text-muted); font-size: 12px;">Tỷ lệ chính xác</div>
-          <div style="font-size: 18px; font-weight: 800; color: var(--accent);" id="modalAccuracyRate">85%</div>
+    <!-- End Match Overlay -->
+    <div id="end-overlay" class="hidden">
+      <div class="modal-card">
+        <h2 id="end-title">TRẬN ĐẤU KẾT THÚC</h2>
+        <p id="end-subtitle">Kết quả trận đấu</p>
+        <div class="modal-actions">
+          <button id="end-menu-btn" class="secondary-cta">🏠 MAIN MENU</button>
+          <button id="end-replay-btn" class="primary-cta">🔄 CHƠI LẠI</button>
         </div>
       </div>
+    </div>
 
-      <p style="font-size: 13px; color: var(--text-muted);">Các câu sai đã được tự động lưu vào mục <strong>❌ Ôn Câu Sai</strong> để bạn luyện tập lại!</p>
+    <!-- Settings Overlay -->
+    <div id="settings-overlay" class="hidden">
+      <div class="modal-card">
+        <h2>⚙️ CÀI ĐẶT ÂM THANH</h2>
 
-      <div style="display: flex; gap: 10px; justify-content: center;">
-        <button class="nav-btn" id="modalReviewBtn">Xem lại bài thi</button>
-        <button class="nav-btn primary" id="modalRetakeBtn">Thi lại đề khác</button>
+        <div class="setting-row">
+          <div class="setting-header">
+            <label for="sfx-volume">Âm lượng Kỹ năng (SFX)</label>
+            <button type="button" id="toggle-sfx-btn" class="toggle-pill on">🔊 BẬT</button>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="sfx-volume" min="0" max="100" value="30" />
+            <span id="sfx-volume-val">30%</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-header">
+            <label for="bgm-volume">Nhạc nền (Sound Battle)</label>
+            <button type="button" id="toggle-bgm-btn" class="toggle-pill on">🎵 BẬT</button>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="bgm-volume" min="0" max="100" value="20" />
+            <span id="bgm-volume-val">20%</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-header">
+            <label>Điều khiển cảm ứng (Mobile)</label>
+            <button type="button" id="toggle-touch-btn" class="toggle-pill">📱 TỰ ĐỘNG</button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="close-settings-btn" class="primary-cta">XONG</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // RAW QUESTIONS DATA
-    const RAW_QUESTIONS = [{"chapter": "Chương 1", "num": 1, "id": 1, "prompt": "Thuật ngữ Kinh tế chính trị lần đầu xuất hiện ở đâu?", "options": {"A": "Ở Châu Âu", "B": "Ở Liên Xô", "C": "Ở Trung Quốc", "D": "Ở Ấn độ"}, "answer": "A"}, {"chapter": "Chương 1", "num": 2, "id": 2, "prompt": "Thuật ngữ khoa học \"Kinh tế chính trị\" được xuất hiện ở Châu Âu vào thời gian nào?", "options": {"A": "1511", "B": "1713", "C": "1615", "D": "1617"}, "answer": "C"}, {"chapter": "Chương 1", "num": 3, "id": 3, "prompt": "Ai là người đầu tiên đưa ra thuật ngữ \"Kinh tế chính trị\"?", "options": {"A": "A.Smith", "B": "A.Montchretieen", "C": "W.Petty", "D": "F.Quesney"}, "answer": "B"}, {"chapter": "Chương 1", "num": 4, "id": 4, "prompt": "Thuật ngữ khoa học \"Kinh tế chính trị\" lần đầu tiên được nhà kinh tế A.Montchretien đưa ra trong tác phẩm nào?", "options": {"A": "Bộ \"Tư bản\"", "B": "Nguồn gốc của cải và sự giàu có", "C": "Bàn về thuế lương thực", "D": "Chuyên luận về kinh tế chính trị"}, "answer": "D"}, {"chapter": "Chương 1", "num": 5, "id": 5, "prompt": "Quá trình phát triển của khoa học kinh tế chính trị được khái quát qua những thời kỳ lịch sử nào:", "options": {"A": "Từ thế kỷ XV đến thế kỷ XVIII và từ thế kỷ XVIII đến nay", "B": "Từ thời cổ đại đến thế kỷ XV và từ thế kỷ XV đến nay", "C": "Từ thời cổ đại đến thế kỷ XVIII và từ thế kỷ XVIII đến nay", "D": "Từ thế kỷ XV đến thế kỷ XVII và từ thế kỷ XVII đến nay"}, "answer": "C"}, {"chapter": "Chương 1", "num": 6, "id": 6, "prompt": "Nội dung cơ bản của chủ nghĩa trọng thương là:", "options": {"A": "Khẳng định vai trò của thương mại đối với sự giàu có của xã hội", "B": "Nhấn mạnh vai trò của sản xuất nông nghiệp đối với sự phát triển xã hội", "C": "Nhấn mạnh vai trò của sản xuất công nghiệp đối với sự phát triển của xã hội", "D": "Khẳng định vai trò của sản xuất đối với sự phát triển của xã hội"}, "answer": "A"}, {"chapter": "Chương 1", "num": 7, "id": 7, "prompt": "Quá trình ra đời và phát triển của chủ nghĩa trọng nông?", "options": {"A": "Từ cổ đại đến thế kỷ XV", "B": "Từ thế kỷ XV đến cuối thế kỷ XVII", "C": "Từ giữa thế kỷ XVII đến nửa đầu thế kỷ XVIII", "D": "Từ sau thế kỷ XVIII đến nay"}, "answer": "C"}, {"chapter": "Chương 1", "num": 8, "id": 8, "prompt": "Nội dung cơ bản của chủ nghĩa trọng nông là:", "options": {"A": "Nhấn mạnh vai trò của thương mại đối với sự giàu có của xã hội", "B": "Nhấn mạnh vai trò của sản xuất nông nghiệp đối với sự giàu có của xã hội", "C": "Nhấn mạnh vai trò của lưu thông đối với sự giàu có của xã hội", "D": "Nhấn mạnh vai trò của sản xuất công nghiệp đối với xã hội"}, "answer": "B"}, {"chapter": "Chương 1", "num": 9, "id": 9, "prompt": "Coi nông nghiệp là đối tượng nghiên cứu là đặc trưng của:", "options": {"A": "Chủ nghĩa trọng nông", "B": "Chủ nghĩa trọng thương", "C": "Kinh tế chính trị cổ điển Anh", "D": "Kinh tế chính trị Mác - Lênin"}, "answer": "A"}, {"chapter": "Chương 1", "num": 10, "id": 10, "prompt": "Tìm nội dung sai của chủ nghĩa trọng nông:", "options": {"A": "Nhận mạnh vai trò của sản xuất nông nghiệp", "B": "Coi trọng sở hữu tư nhân", "C": "Coi trọng tự do kinh tế", "D": "Coi trọng sở hữu công cộng"}, "answer": "D"}, {"chapter": "Chương 1", "num": 11, "id": 11, "prompt": "Xác định nguồn gốc của của cải và sự giàu có của các dân tộc là đối tượng nghiên cứu là đặc trưng của:", "options": {"A": "Chủ nghĩa trọng nông", "B": "Chủ nghĩa trọng thương", "C": "Kinh tế chính trị cổ điển Anh", "D": "Kinh tế chính trị Mác - Lênin"}, "answer": "C"}, {"chapter": "Chương 1", "num": 12, "id": 12, "prompt": "Đâu là học thuyết lần đầu tiên rút ra kết luận giá trị là do hao phí lao động tạo ra?", "options": {"A": "Kinh tế chính trị cổ điển Anh", "B": "Kinh tế chính trị Mác - Lênin", "C": "Chủ nghĩa trọng nông", "D": "Chủ nghĩa trọng thương"}, "answer": "A"}, {"chapter": "Chương 1", "num": 13, "id": 13, "prompt": "Lý luận Kinh tế chính trị của C.Mác và Ph.Ăngghen được thể hiện tập trung và cô đọng nhất trong tác phẩm:", "options": {"A": "Tư bản", "B": "Bản thảo kinh tế- triết học năm 1844", "C": "Hệ tư tưởng Đức", "D": "Tuyên ngôn Đảng cộng sản"}, "answer": "A"}, {"chapter": "Chương 1", "num": 14, "id": 14, "prompt": "Điền từ vào chỗ trống, Ph.Ăngghen cho rằng: \"Kinh tế chính trị, theo nghĩa rộng nhất, là khoa học về những quy luật chi phối sự … vật chất và sự … những tư liệu sinh hoạt vật chất trong xã hội loài người\"?", "options": {"A": "Sản xuất- trao đổi", "B": "Trao đổi- sản xuất", "C": "Sản xuất- sản xuất", "D": "Trao đổi- trao đổi"}, "answer": "A"}, {"chapter": "Chương 1", "num": 15, "id": 15, "prompt": "Ai là người có công lao chỉ ra những đặc điểm kinh tế của độc quyền, độc quyền nhà nước trong chủ nghĩa tư bản giai đoạn cuối thế kỷ XIX đầu thế kỷ XX?", "options": {"A": "C.Mác và Ph.Ăngghen", "B": "V.Lênin", "C": "A.Smith, W.Petty, D.Ricardo", "D": "C.Mác, Ph.Ăngghen, V.Lênin"}, "answer": "B"}, {"chapter": "Chương 1", "num": 16, "id": 16, "prompt": "So sánh giữa quy luật kinh tế và chính sách kinh tế:", "options": {"A": "Quy luật kinh tế tồn tại khách quan còn chính sách kinh tế là sản phẩm chủ quan của con người", "B": "Quy luật kinh tế tồn tại chủ quan còn chính sách kinh tế là sản phẩm khách quan của con người", "C": "Quy luật kinh tế và chính sách kinh tế đều mang tính khách quan tuyệt đối", "D": "Quy luật kinh tế và chính sách kinh tế đều mang tính chủ quan tuyệt đối"}, "answer": "A"}, {"chapter": "Chương 1", "num": 17, "id": 17, "prompt": "Tìm phương án trả lời sai về đặc điểm của kinh tế chính trị Mác - Lênin?", "options": {"A": "Tập trung chỉ nghiên cứu biểu hiện kỹ thuật của sự sản xuất và trao đổi", "B": "Nghiên cứu hệ thống các quan hệ xã hội của sản xuất và trao đổi", "C": "Có mục đích tìm ra các quy luật chi phối các quan hệ giữa người với người trong sản xuất và trao đổi", "D": "Giúp cho các chủ thể trong xã hội vận dụng các quy luật kinh tế để tạo động lực cho con người sáng tạo, nâng cao sự phát triển của xã hội"}, "answer": "A"}, {"chapter": "Chương 1", "num": 18, "id": 18, "prompt": "Chức năng nào của kinh tế chính trị Mác - Lênin cung cấp hệ thống tri thức lý luận về những quy luật chi phối sự phát triển của sản xuất và trao đổi gắn với phương thức sản xuất?", "options": {"A": "Chức năng phương pháp luận", "B": "Chức năng nhận thức", "C": "Chức năng thực tiễn", "D": "Chức năng tư tưởng"}, "answer": "B"}, {"chapter": "Chương 1", "num": 19, "id": 19, "prompt": "Chức năng nào của kinh tế chính trị Mác - Lênin có vai trò cải tạo thực tiễn, thúc đẩy văn minh của xã hội?", "options": {"A": "Chức năng phương pháp luận", "B": "Chức năng nhận thức", "C": "Chức năng thực tiễn", "D": "Chức năng tư tưởng"}, "answer": "C"}, {"chapter": "Chương 1", "num": 20, "id": 20, "prompt": "Chức năng nào của kinh tế chính trị Mác - Lênin góp phần tạo lập nền tảng tư tưởng cộng sản cho những người lao động tiến bộ và yêu chuộng tự do, hòa bình, củng cố niềm tin?", "options": {"A": "Chức năng phương pháp luận", "B": "Chức năng nhận thức", "C": "Chức năng thực tiễn", "D": "Chức năng tư tưởng"}, "answer": "D"}, {"chapter": "Chương 2", "num": 1, "id": 21, "prompt": "Điều kiện cần và đủ để ra đời nền sản xuất hàng hóa?", "options": {"A": "Xã hội có sự phân công lao động xã hội", "B": "Xã hội có sự tách biệt về mặt kinh tế của các chủ thể sản xuất", "C": "Tư liệu sản xuất là của chung", "D": "Xã hội có sự phân công lao động xã hội và sự tách biệt về mặt kinh tế của các chủ thể sản xuất"}, "answer": "D"}, {"chapter": "Chương 2", "num": 2, "id": 22, "prompt": "Sản xuất hàng hóa là?", "options": {"A": "Là kiểu tổ chức kinh tế mà ở đó những người sản xuất ra sản phẩm không nhằm phục vụ mục đích, nhu cầu tiêu dùng của bản thân mà để trao đổi mua bán", "B": "Là kiểu tổ chức kinh tế mà ở đó những người sản xuất ra sản phẩm nhằm thỏa mãn nhu cầu tiêu dùng của bản thân", "C": "Là kiểu tổ chức kinh tế mà ở đó sản phẩm làm ra phục vụ người sản xuất", "D": "Là kiểu tổ chức kinh tế mà ở đó những sản phẩm sẽ không được trao đổi"}, "answer": "A"}, {"chapter": "Chương 2", "num": 3, "id": 23, "prompt": "Mục đích của nền sản xuất hàng hóa là?", "options": {"A": "Thỏa mãn nhu cầu của người sản xuất", "B": "Thỏa mãn nhu cầu của một bộ phận người sản xuất", "C": "Thỏa mãn nhu cầu của người tiêu dùng, của thị trường", "D": "Thỏa mãn nhu cầu của người sản xuất và gia đình người sản xuất"}, "answer": "C"}, {"chapter": "Chương 2", "num": 4, "id": 24, "prompt": "Đây là câu nói của ai \"Chi có sản phẩm của những lao động tư nhân độc lập và không phụ thuộc vào nhau mới đối diện với nhau như là những hàng hóa\":", "options": {"A": "Ph. Ăngghen", "B": "V.Lênin", "C": "C.Mác", "D": "Smith"}, "answer": "C"}, {"chapter": "Chương 2", "num": 5, "id": 25, "prompt": "Điền từ vào chỗ trống: \"Chỉ có … của những lao động tư nhân độc lập và không phụ thuộc vào nhau mới đối diện với nhau như là những hàng hóa\":", "options": {"A": "Vật phẩm", "B": "Hàng hóa", "C": "Sản phẩm", "D": "Giá trị"}, "answer": "C"}, {"chapter": "Chương 2", "num": 6, "id": 26, "prompt": "Sự tách biệt về mặt kinh tế giữa những người sản xuất xuất hiện do đâu?", "options": {"A": "Dựa trên sự tách biệt về sở hữu", "B": "Dựa trên sự đồng nhất về sở hữu", "C": "Dựa trên sở hữu công cộng về tư liệu sản xuất", "D": "Dựa trên sở hữu chung của những người sản xuất"}, "answer": "A"}, {"chapter": "Chương 2", "num": 7, "id": 27, "prompt": "Sự tách biệt về mặt kinh tế của các chủ thể sản xuất dẫn tới kết quả gì?", "options": {"A": "Sản phẩm thuộc về sở hữu chung", "B": "Sản phẩm phải trao đổi, mua bán dưới hình thức hàng hóa", "C": "Sản phẩm không được trao đổi, mua bán dưới bất cứ hình thức nào", "D": "Sản phẩm chỉ được tiêu dùng cho người sản xuất"}, "answer": "B"}, {"chapter": "Chương 2", "num": 8, "id": 28, "prompt": "Hàng hóa là gì?", "options": {"A": "Là sản phẩm của lao động", "B": "Là sản phẩm thỏa mãn nhu cầu nào đó của con người", "C": "Là sản phẩm của tự nhiên", "D": "Là sản phẩm của lao động, có thể thỏa mãn nhu cầu nào đó của con người thông qua trao đổi, mua bán"}, "answer": "D"}, {"chapter": "Chương 2", "num": 9, "id": 29, "prompt": "Hai thuộc tính của hàng hóa?", "options": {"A": "Lao động cụ thể và lao động trừu tượng", "B": "Giá trị và giá trị sử dụng", "C": "Lao động tư nhân và lao động xã hội", "D": "Giá trị và giá trị trao đổi"}, "answer": "B"}, {"chapter": "Chương 2", "num": 10, "id": 30, "prompt": "Tại sao giữa các hàng hóa có giá trị sử dụng khác nhau lại trao đổi được với nhau:", "options": {"A": "Vì chúng đều là kết quả của sự hao phí sức lao động", "B": "Vì chúng đều thỏa mãn nhu cầu nào đó của con người", "C": "Vì tỉ lệ trao đổi giữa hai hàng hóa bằng nhau", "D": "Vì chúng đều có giá trị sử dụng"}, "answer": "A"}, {"chapter": "Chương 2", "num": 11, "id": 31, "prompt": "Giá trị sử dụng của hàng hóa?", "options": {"A": "Là phạm trù vĩnh viễn", "B": "Là phạm trù lịch sử", "C": "Chỉ có trong sản xuất hàng hóa", "D": "Chỉ có trong sản xuất tự nhiên"}, "answer": "A"}, {"chapter": "Chương 2", "num": 12, "id": 32, "prompt": "Giá trị sử dụng của hàng hóa:", "options": {"A": "Là sự kết tinh sức lao động của người sản xuất trong hàng hóa", "B": "Là một phạm trù lịch sử", "C": "Là công dụng của vật có thể thỏa mãn nhu cầu nào đó của con người", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 2", "num": 13, "id": 33, "prompt": "Giá trị sử dụng của hàng hóa là:", "options": {"A": "Là hao phí sức lao động cá biệt của người sản xuất", "B": "Là giá trị sử dụng xã hội", "C": "Là cơ sở để trao đổi sản phẩm với nhau", "D": "Là cái tạo nên nội dung và ý nghĩa của giá trị hàng hóa"}, "answer": "B"}, {"chapter": "Chương 2", "num": 14, "id": 34, "prompt": "Giá trị hàng hóa là:", "options": {"A": "Lao động xã hội của người sản xuất ra hàng hóa kết tinh trong hàng hóa", "B": "Do lao động cụ thể tạo ra", "C": "Một quan hệ về lượng giữa những giá trị sử dụng khác nhau", "D": "Là công dụng của nó nhằm thỏa mãn nhu cầu nào đó của con người"}, "answer": "A"}, {"chapter": "Chương 2", "num": 15, "id": 35, "prompt": "Giá cả hàng hóa là:", "options": {"A": "Biểu hiện bằng tiền của giá trị hàng hóa", "B": "Giá trị của hàng hóa", "C": "Quan hệ về lượng giữa hàng và tiền", "D": "Giá trị tự nhiên của hàng hóa"}, "answer": "A"}, {"chapter": "Chương 2", "num": 16, "id": 36, "prompt": "Giá trị của hàng hóa là?", "options": {"A": "Là phạm trù vĩnh viễn", "B": "Là phạm trù lịch sử", "C": "Là giá trị của hàng hóa sức lao động", "D": "Chỉ có trong nền sản xuất tự nhiên"}, "answer": "B"}, {"chapter": "Chương 2", "num": 17, "id": 37, "prompt": "Giá trị của hàng hóa được quyết định nhất bởi yếu tố nào?", "options": {"A": "Sự khan hiếm của hàng hóa", "B": "Sự hao phí sức lao động cá biệt của người sản xuất", "C": "Lao động trừu tượng của người sản xuất kết tinh trong hàng hóa", "D": "Công dụng của hàng hóa"}, "answer": "C"}, {"chapter": "Chương 2", "num": 18, "id": 38, "prompt": "Nhân tố nào ảnh hưởng tới giá cả hàng hóa?", "options": {"A": "Giá trị hàng hóa", "B": "Quan hệ cung - cầu", "C": "Mức độ khan hiếm của hàng hóa", "D": "Tất cả đáp án"}, "answer": "D"}, {"chapter": "Chương 2", "num": 19, "id": 39, "prompt": "Yếu tố quyết định nhất đến giá cả hàng hóa là?", "options": {"A": "Quan hệ cung cầu", "B": "Thị hiếu và tâm lý xã hội của mỗi thời kỳ", "C": "Giá trị sử dụng của hàng hóa", "D": "Giá trị của hàng hóa"}, "answer": "D"}, {"chapter": "Chương 2", "num": 20, "id": 40, "prompt": "Hai hàng hóa trao đổi được với nhau trên cơ sở:", "options": {"A": "Đều có giá trị sử dụng", "B": "Đều là sản phẩm của lao động", "C": "Phân công lao động xã hội", "D": "Có hao phí vật tư kỹ thuật cụ thể bằng nhau"}, "answer": "B"}, {"chapter": "Chương 2", "num": 21, "id": 41, "prompt": "Giá trị hàng hóa được tạo ra từ đâu:", "options": {"A": "Từ quá trình sản xuất", "B": "Từ quá trình trao đổi", "C": "Từ quá trình sản xuất, phân phối và trao đổi", "D": "Từ trao đổi, mua bán"}, "answer": "A"}, {"chapter": "Chương 2", "num": 22, "id": 42, "prompt": "Yếu tố quan trọng nhất để hai hàng hóa trao đổi được với nhau là?", "options": {"A": "Chúng cùng là sản phẩm của lao động", "B": "Có giá trị sử dụng ngang nhau", "C": "Có lượng thời gian hao phí lao động xã hội cần thiết để sản xuất ra chúng khác nhau", "D": "Không có đáp án đúng"}, "answer": "A"}, {"chapter": "Chương 2", "num": 23, "id": 43, "prompt": "Hàng hóa có hai thuộc tính giá trị sử dụng và giá trị là do?", "options": {"A": "Công dụng của hàng hóa", "B": "Hóa tính và lý tính của hàng hóa", "C": "Tính hai mặt của lao động sản xuất hàng hóa", "D": "Không có đáp án đúng"}, "answer": "C"}, {"chapter": "Chương 2", "num": 24, "id": 44, "prompt": "Tính hai mặt của lao động sản xuất hàng hóa phản ánh:", "options": {"A": "Tính chất tư nhân của người sản xuất hàng hóa", "B": "Tính chất tư nhân và tính chất xã hội của người sản xuất hàng hóa", "C": "Tính chất xã hội của người sản xuất hàng hóa", "D": "Lao động tư nhân"}, "answer": "B"}, {"chapter": "Chương 2", "num": 25, "id": 45, "prompt": "Nhân tố nào là cơ bản và lâu dài nhất để tăng sản phẩm cho xã hội?", "options": {"A": "Tăng năng suất lao động", "B": "Tăng số người lao động", "C": "Kéo dài thời gian lao động", "D": "Tăng cường độ lao động"}, "answer": "A"}, {"chapter": "Chương 2", "num": 26, "id": 46, "prompt": "Giá trị của hàng hóa gồm:", "options": {"A": "Giá trị hàng hóa = c + v + m", "B": "Giá trị hàng hóa = c + v", "C": "Giá trị hàng hóa = p + m", "D": "Giá trị hàng hóa = k + v"}, "answer": "A"}, {"chapter": "Chương 2", "num": 27, "id": 47, "prompt": "Khi năng suất lao động xã hội tăng lên thì:", "options": {"A": "Giá trị của 1 đơn vị hàng hóa tăng", "B": "Giá trị của 1 đơn vị hàng hóa giảm", "C": "Giá trị của 1 đơn vị hàng hóa không đổi", "D": "Số lượng hàng hóa sản xuất ra trong một đơn vị thời gian giảm"}, "answer": "B"}, {"chapter": "Chương 2", "num": 28, "id": 48, "prompt": "Khi năng suất lao động tăng thì:", "options": {"A": "Lượng giá trị một đơn vị hàng hóa giảm", "B": "Lượng giá trị một đơn vị hàng hóa tăng", "C": "Lượng giá trị một đơn vị hàng hóa không đổi", "D": "Tổng giá trị của hàng hóa được sản xuất ra trong cùng một đơn vị thời gian không đổi"}, "answer": "A"}, {"chapter": "Chương 2", "num": 29, "id": 49, "prompt": "Khi cường độ lao động tăng:", "options": {"A": "Giá trị của hàng hóa không thay đổi", "B": "Giá trị của hàng hoá tăng", "C": "Giá trị của hàng hoá giảm", "D": "Tổng giá trị hàng hóa giảm"}, "answer": "A"}, {"chapter": "Chương 2", "num": 30, "id": 50, "prompt": "Trong một xí nghiệp, biện pháp quan trọng nhất để nâng cao năng suất lao động của công nhân là gì?", "options": {"A": "Phải đổi mới thiết bị kỹ thuật", "B": "Phải tổ chức học tập để nâng cao trình độ lành nghề của công nhân", "C": "Phải tăng thời gian lao động của công nhân", "D": "Phải tổ chức thi tay nghề để nâng cao trình độ lành nghề của công nhân"}, "answer": "A"}, {"chapter": "Chương 2", "num": 31, "id": 51, "prompt": "Điểm khác nhau giữa tăng năng suất lao động và tăng cường độ lao động:", "options": {"A": "Tăng năng suất lao động làm tăng lượng giá trị hàng hóa, còn tăng cường độ lao động làm giảm lượng giá trị hàng hóa", "B": "Tăng năng suất lao động làm tăng lượng giá trị hàng hóa, còn tăng cường độ lao động không ảnh hưởng đến lượng giá trị hàng hóa", "C": "Tăng năng suất lao động làm giảm lượng giá trị hàng hóa, còn tăng cường độ lao động không làm ảnh hưởng đến lượng giá trị hàng hóa", "D": "Tăng năng suất lao động làm giảm lượng giá trị hàng hóa, còn tăng cường độ lao động làm tăng lượng giá trị hàng hóa"}, "answer": "C"}, {"chapter": "Chương 2", "num": 32, "id": 52, "prompt": "Nhân tố nào là cơ bản và lâu dài nhất để tăng sản phẩm cho xã hội?", "options": {"A": "Tăng năng suất lao động", "B": "Tăng số người lao động", "C": "Kéo dài thời gian lao động", "D": "Tăng cường độ lao động"}, "answer": "A"}, {"chapter": "Chương 2", "num": 33, "id": 53, "prompt": "Khi năng suất lao động tăng thì:", "options": {"A": "Lượng giá trị một đơn vị hàng hóa giảm", "B": "Lượng giá trị một đơn vị hàng hóa tăng", "C": "Lượng giá trị một đơn vị hàng hóa không đổi", "D": "Tổng giá trị của hàng hóa được sản xuất ra trong cùng một đơn vị thời gian không đổi"}, "answer": "A"}, {"chapter": "Chương 2", "num": 34, "id": 54, "prompt": "Trong một xí nghiệp, biện pháp quan trọng nhất để nâng cao năng suất lao động của công nhân là gì?", "options": {"A": "Phải đổi mới thiết bị kỹ thuật", "B": "Phải tổ chức học tập để nâng cao trình độ lành nghề của công nhân", "C": "Phải tăng thời gian lao động của công nhân", "D": "Phải tổ chức thi tay nghề để nâng cao trình độ lành nghề của công nhân"}, "answer": "A"}, {"chapter": "Chương 2", "num": 35, "id": 55, "prompt": "Điểm khác nhau giữa tăng năng suất lao động và tăng cường độ lao động:", "options": {"A": "Tăng năng suất lao động làm tăng lượng giá trị hàng hóa, còn tăng cường độ lao động làm giảm lượng giá trị hàng hóa", "B": "Tăng năng suất lao động làm tăng lượng giá trị hàng hóa, còn tăng cường độ lao động không ảnh hưởng đến lượng giá trị hàng hóa", "C": "Tăng năng suất lao động làm giảm lượng giá trị hàng hóa, còn tăng cường độ lao động không làm ảnh hưởng đến lượng giá trị hàng hóa", "D": "Tăng năng suất lao động làm giảm lượng giá trị hàng hóa, còn tăng cường độ lao động làm tăng lượng giá trị hàng hóa"}, "answer": "C"}, {"chapter": "Chương 2", "num": 36, "id": 56, "prompt": "Ai là người đầu tiên phát hiện ra tính chất hai mặt của lao động sản xuất hàng hóa?", "options": {"A": "C.Mác", "B": "Ph. Ănghen", "C": "V.Lênin", "D": "Ricardo"}, "answer": "A"}, {"chapter": "Chương 2", "num": 37, "id": 57, "prompt": "Lao động cụ thể là:", "options": {"A": "Là phạm trù lịch sử", "B": "Lao động tạo ra giá trị của hàng hóa", "C": "Tạo ra giá trị sử dụng của hàng hóa", "D": "Sự hao phí sức lực thần kinh để tạo ra hàng hóa"}, "answer": "C"}, {"chapter": "Chương 2", "num": 38, "id": 58, "prompt": "Đặc điểm của lao động trừu tượng:", "options": {"A": "Là phạm trù vĩnh viễn", "B": "Là lao động tạo ra giá trị sử dụng của hàng hóa", "C": "Là phạm trù riêng chỉ có trong chủ nghĩa tư bản", "D": "Là lao động tạo ra giá trị của hàng hóa"}, "answer": "D"}, {"chapter": "Chương 2", "num": 39, "id": 59, "prompt": "Lao động cụ thể là:", "options": {"A": "Là phạm trù vĩnh viễn", "B": "Tạo ra giá trị sử dụng của hàng hóa", "C": "Là lao động có ích dưới một hình thức cụ thể của những nghề nghiệp chuyên môn nhất định", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 2", "num": 40, "id": 60, "prompt": "Lao động cụ thể:", "options": {"A": "Tạo ra giá trị sử dụng của hàng hóa", "B": "Tạo ra giá trị của hàng hóa", "C": "Là phạm trù lịch sử chỉ tồn tại trong nền sản xuất hàng hóa", "D": "Biểu hiện tính chất xã hội của người sản xuất hàng hóa"}, "answer": "A"}, {"chapter": "Chương 2", "num": 41, "id": 61, "prompt": "Lao động cụ thể là:", "options": {"A": "Phạm trù lịch sử", "B": "Nguồn gốc của giá trị trao đổi", "C": "Sự hao phí sức lực nói chung", "D": "Lao động có ích dưới một hình thức cụ thể của những nghề nghiệp chuyên môn nhất định"}, "answer": "D"}, {"chapter": "Chương 2", "num": 42, "id": 62, "prompt": "Lao động trừu tượng là:", "options": {"A": "Là hao phí sức lực nói chung của những người sản xuất hàng hoá khi gạt bỏ đi những hình thức cụ thể nhất định", "B": "Là lao động có ích dưới những hình thức cụ thể nhất định", "C": "Biểu hiện tính chất cá nhân của người sản xuất hàng hóa", "D": "Tạo ra giá trị sử dụng của hàng hoá"}, "answer": "A"}, {"chapter": "Chương 2", "num": 43, "id": 63, "prompt": "Lao động trừu tượng là:", "options": {"A": "Là lao động có ích dưới những hình thức cụ thể", "B": "Tạo ra giá trị sử dụng của hàng hóa", "C": "Là sự hao phí sức lực nói chung của những người sản xuất hàng hóa khi gạt bỏ đi những hình thức cụ thể nhất định", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 2", "num": 44, "id": 64, "prompt": "Yếu tố nào quan trọng nhất làm giảm lượng giá trị của một đơn vị hàng hóa?", "options": {"A": "Giảm chi phí tiền lương trên một đơn vị sản phẩm", "B": "Tăng năng suất lao động xã hội", "C": "Tăng thời gian lao động để giảm chi phí tiền lương trên một đơn vị sản phẩm", "D": "Tăng thêm những trang thiết bị vật chất và kỹ thuật cho lao động"}, "answer": "B"}, {"chapter": "Chương 2", "num": 45, "id": 65, "prompt": "Lượng giá trị của hàng hóa được đo bằng?", "options": {"A": "Thời gian lao động xã hội cần thiết", "B": "Thời gian lao động của một nhóm người sản xuất", "C": "Thời gian hao phí lao động cá biệt", "D": "Không có đáp án đúng"}, "answer": "A"}, {"chapter": "Chương 2", "num": 46, "id": 66, "prompt": "Tìm đáp án ĐÚNG NHẤT: Thời gian lao động xã hội cần thiết là thời gian sản xuất ra hàng hóa với?", "options": {"A": "Với trình độ khoa học kỹ thuật trung bình", "B": "Với cường độ lao động trung bình", "C": "Với trình độ thành thạo trung bình, cường độ lao động trung bình của xã hội", "D": "Trong điều kiện sản xuất bình thường xét trên phạm vi quốc tế"}, "answer": "C"}, {"chapter": "Chương 2", "num": 47, "id": 67, "prompt": "Thời gian lao động cá biệt là:", "options": {"A": "Thời gian lao động xã hội cần thiết", "B": "Thời gian lao động trung bình để sản xuất ra hàng hóa", "C": "Thời gian lao động hao phí của mỗi chủ thể trong việc sản xuất hàng hóa", "D": "Thời gian lao động hao phí được xã hội thừa nhận"}, "answer": "C"}, {"chapter": "Chương 2", "num": 48, "id": 68, "prompt": "Các nhân tố ảnh hưởng tới lượng giá trị của hàng hóa:", "options": {"A": "Năng suất lao động và cường độ lao động", "B": "Cường độ lao động và tính chất phức tạp hay giản đơn của lao động", "C": "Năng suất lao động cá biệt", "D": "Năng suất lao động xã hội và mức độ phức tạp của lao động"}, "answer": "D"}, {"chapter": "Chương 2", "num": 49, "id": 69, "prompt": "Lượng giá trị của hàng hóa:", "options": {"A": "Tỷ lệ thuận với năng suất lao động trung bình của xã hội", "B": "Tỷ lệ nghịch với mức độ hao phí vật tư kỹ thuật của xã hội", "C": "Tỷ lệ thuận với năng suất lao động xã hội", "D": "Tỷ lệ nghịch với năng suất lao động xã hội"}, "answer": "D"}, {"chapter": "Chương 2", "num": 50, "id": 70, "prompt": "Các nhân tố ảnh hưởng tới năng suất lao động:", "options": {"A": "Cường độ lao động", "B": "Độ dài ngày lao động", "C": "Trình độ kỹ thuật, công nghệ sản xuất và trình độ tay nghề người lao động", "D": "Kinh nghiệm của người lao động"}, "answer": "C"}, {"chapter": "Chương 2", "num": 51, "id": 71, "prompt": "Điểm giống nhau giữa tăng năng suất lao động và cường độ lao động:", "options": {"A": "Đều làm giá trị của 1 đơn vị hàng hóa giảm", "B": "Đều làm giá trị của 1 đơn vị hàng hóa không thay đổi", "C": "Đều làm cho số lượng sản phẩm được sản xuất ra trong 1 đơn vị thời gian tăng lên", "D": "Đều làm tăng hao phí sức lao động của người lao động"}, "answer": "C"}, {"chapter": "Chương 2", "num": 52, "id": 72, "prompt": "Khi tăng cường độ lao động thì:", "options": {"A": "Lượng lao động hao phí trong cùng một đơn vị thời gian giảm", "B": "Lượng sản phẩm được sản xuất ra giảm xuống", "C": "Lượng giá trị của một đơn vị hàng hóa tăng", "D": "Lượng lao động hao phí trong cùng một đơn vị thời gian tăng lên"}, "answer": "D"}, {"chapter": "Chương 2", "num": 53, "id": 73, "prompt": "Giá trị sử dụng của hàng hóa được phát hiện ngày càng nhiều nhờ vào nhân tố nào?", "options": {"A": "Giá trị của hàng hóa", "B": "Sự phát triển của khoa học - công nghệ", "C": "Sự tiêu dùng của cá nhân", "D": "Do mối quan hệ cung - cầu"}, "answer": "B"}, {"chapter": "Chương 2", "num": 54, "id": 74, "prompt": "Trong hình thái giản đơn hay ngẫu nhiên của giá trị thì:", "options": {"A": "Giá trị của một hàng hóa được biểu hiện ở giá trị sử dụng của một hàng hóa khác", "B": "Giá trị của một hàng hóa được biểu hiện ở giá trị sử dụng của nhiều hàng hóa khác", "C": "Giá trị của nhiều hàng hóa được biểu hiện ở giá trị sử dụng của một hàng hóa khác", "D": "Giá trị của nhiều hàng hóa được biểu hiện ở giá trị sử dụng của nhiều hàng hóa khác"}, "answer": "A"}, {"chapter": "Chương 2", "num": 55, "id": 75, "prompt": "Trong hình thái chung của giá trị thì:", "options": {"A": "Giá trị của một hàng hóa được biểu hiện ở giá trị sử dụng của một hàng hóa khác", "B": "Giá trị của một hàng hóa được biểu hiện ở giá trị sử dụng của nhiều hàng hóa khác", "C": "Giá trị của nhiều hàng hóa được biểu hiện ở giá trị sử dụng của một hàng hóa khác", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 2", "num": 56, "id": 76, "prompt": "Trong hình thái mở rộng của giá trị thì:", "options": {"A": "Giá trị của một hàng hóa được biểu hiện ở giá trị sử dụng của một hàng hóa khác", "B": "Giá trị của một hàng hóa được biểu hiện ở giá trị sử dụng của nhiều hàng hóa khác", "C": "Giá trị của nhiều hàng hóa được biểu hiện ở giá trị sử dụng của một hàng hóa khác", "D": "Tất cả các đáp án"}, "answer": "B"}, {"chapter": "Chương 2", "num": 57, "id": 77, "prompt": "Tiền tệ là hàng hóa nhưng khác với hàng hóa thông thường khác vì?", "options": {"A": "Có giá trị và giá trị sử dụng", "B": "Là thước đo giá trị của các loại hàng hóa khác", "C": "Có thể mua bán được", "D": "Tất cả các đáp án"}, "answer": "B"}, {"chapter": "Chương 2", "num": 58, "id": 78, "prompt": "Chức năng thước đo giá trị của tiền tệ là:", "options": {"A": "Phương tiện mua hàng hóa", "B": "Đo lường giá trị của các hàng hóa", "C": "Thanh toán cho việc mua bán chịu", "D": "Thanh toán quốc tế"}, "answer": "B"}, {"chapter": "Chương 2", "num": 59, "id": 79, "prompt": "Tiền tệ làm chức năng phương tiện lưu thông là dùng để:", "options": {"A": "Đo lường giá trị các hàng hóa", "B": "Làm trung gian, môi giới trong trao đổi", "C": "Thanh toán việc mua bán chịu", "D": "Trao đổi quốc tế"}, "answer": "B"}, {"chapter": "Chương 2", "num": 60, "id": 80, "prompt": "Tiền đóng vai trò làm trung gian, môi giới trong trao đổi là thể hiện chức năng nào?", "options": {"A": "Thước đo giá trị", "B": "Phương tiện lưu thông", "C": "Phương tiện cất trữ", "D": "Phương tiện thanh toán"}, "answer": "B"}, {"chapter": "Chương 2", "num": 61, "id": 81, "prompt": "Tiền tệ làm chức năng phương tiện thanh toán là để:", "options": {"A": "Đo lường giá trị các hàng hóa", "B": "Trung gian, môi giới trong trao đổi", "C": "Thanh toán việc mua bán chịu", "D": "Trao đổi quốc tế"}, "answer": "C"}, {"chapter": "Chương 2", "num": 62, "id": 82, "prompt": "Tiền tệ đóng vai trò thanh toán việc mua bán chịu thể hiện chức năng nào?", "options": {"A": "Thước đo giá trị", "B": "Phương tiện lưu thông", "C": "Phương tiện thanh toán", "D": "Tiền tệ thế giới"}, "answer": "C"}, {"chapter": "Chương 2", "num": 63, "id": 83, "prompt": "Tiền được rút ra khỏi lưu thông và sẵn sang tham gia lưu thông khi cần thiết thực hiện chức năng?", "options": {"A": "Thước đo giá trị", "B": "Phương tiện thanh toán", "C": "Phương tiện cất trữ", "D": "Tiền tệ thế giới"}, "answer": "C"}, {"chapter": "Chương 2", "num": 64, "id": 84, "prompt": "Tiền tệ có mấy chức năng:", "options": {"A": "3 chức năng", "B": "4 chức năng", "C": "5 chức năng", "D": "6 chức năng"}, "answer": "C"}, {"chapter": "Chương 2", "num": 65, "id": 85, "prompt": "Khi tiền thực hiện chức năng phương tiện cất trữ phải thỏa mãn điều kiện nào?", "options": {"A": "Tiền phải đủ giá trị", "B": "Tiền là tiền giấy", "C": "Tiền không đủ giá trị", "D": "Tất cả đáp án đều đúng"}, "answer": "A"}, {"chapter": "Chương 2", "num": 66, "id": 86, "prompt": "Khuyết tật của kinh tế thị trường là?", "options": {"A": "Nền kinh tế thị trường phát huy tốt nhất những khả năng của mọi chủ thể", "B": "Nền kinh tế thị trường không tự khắc phục được hiện tượng phân hóa sâu sắc trong xã hội", "C": "Nền kinh tế thị trường phân bổ nguồn lực một cách hiệu quả", "D": "Nền kinh tế thị trường tạo động lực sáng tạo cho các chủ thể kinh tế"}, "answer": "B"}, {"chapter": "Chương 2", "num": 67, "id": 87, "prompt": "Ưu thế của kinh tế thị trường là?", "options": {"A": "Nền kinh tế thị trường luôn phát huy tốt nhất tiềm năng của mọi chủ thể, các vùng, miền cũng như lợi thế quốc gia", "B": "Nền kinh tế thị trường không tự khắc phục được hiện tượng phân hóa sâu sắc trong xã hội", "C": "Nền kinh tế thị trường không tạo được môi trường rộng mở cho các mô hình kinh doanh mới", "D": "Tất cả các đáp án"}, "answer": "A"}, {"chapter": "Chương 2", "num": 68, "id": 88, "prompt": "Quy luật giá trị là:", "options": {"A": "Quy luật riêng của chủ nghĩa tư bản", "B": "Quy luật kinh tế cơ bản của sản xuất và trao đổi hàng hóa", "C": "Quy luật kinh tế của thời kỳ quá độ lên chủ nghĩa xã hội", "D": "Quy luật riêng của xã hội phong kiến"}, "answer": "B"}, {"chapter": "Chương 2", "num": 69, "id": 89, "prompt": "Quy luật giá trị là quy luật của?", "options": {"A": "Mọi nền sản xuất", "B": "Nền sản xuất hàng hóa", "C": "Nền sản xuất tự cung, tự cấp", "D": "Nền kinh tế tự nhiên"}, "answer": "B"}, {"chapter": "Chương 2", "num": 70, "id": 90, "prompt": "Nội dung của quy luật giá trị?", "options": {"A": "Sản xuất và trao đổi hàng hóa phải căn cứ vào điều kiện sản xuất tốt nhất", "B": "Sản xuất và trao đổi hàng hóa phải căn cứ vào hao phí lao động xã hội cần thiết", "C": "Sản xuất và trao đổi hàng hóa phải căn cứ vào hao phí lao động cá biệt", "D": "Sản xuất và trao đổi hàng hóa phải căn cứ vào điều kiện sản xuất xấu nhất"}, "answer": "B"}, {"chapter": "Chương 2", "num": 71, "id": 91, "prompt": "Quy luật giá trị yêu cầu:", "options": {"A": "Sản xuất phải dựa trên cơ sở hao phí lao động cá biệt", "B": "Sản xuất và trao đổi phải dựa trên cơ sở hao phí lao động cá biệt", "C": "Sản xuất và trao đổi phải dựa trên cơ sở hao phí lao động xã hội cần thiết", "D": "Trao đổi phải dựa trên cơ sở hao phí lao động cá biệt"}, "answer": "C"}, {"chapter": "Chương 2", "num": 72, "id": 92, "prompt": "Tác động của quy luật giá trị:", "options": {"A": "Kìm hãm cạnh tranh", "B": "Điều tiết việc di chuyển hàng hóa từ nơi có giá cao đến nơi có giá thấp", "C": "Hạn chế cải tiến kỹ thuật", "D": "Thúc đẩy cải tiến kỹ thuật, điều tiết sản xuất và phân hóa những người sản xuất hàng hóa"}, "answer": "D"}, {"chapter": "Chương 2", "num": 73, "id": 93, "prompt": "Tác động cơ bản của quy luật giá trị trong nền kinh tế hàng hóa:", "options": {"A": "Điều tiết sản xuất và lưu thông hàng hóa", "B": "Giải quyết được vấn đề cạnh tranh trong nền kinh tế hàng hóa", "C": "Tạo ra sự công bằng trong xã hội", "D": "Không tiềm ẩn nguy cơ khủng hoảng kinh tế"}, "answer": "A"}, {"chapter": "Chương 2", "num": 74, "id": 94, "prompt": "Căn cứ vào phạm vi quan hệ thị trường được chia thành:", "options": {"A": "Thị trường trong nước và thị trường thế giới", "B": "Thị trường cạnh tranh hoàn hảo và thị trường độc quyền", "C": "Thị trường tư liệu tiêu dùng và thị trường tư liệu sản xuất", "D": "Thị trường hàng hóa và thị trường dịch vụ"}, "answer": "A"}, {"chapter": "Chương 2", "num": 75, "id": 95, "prompt": "Căn cứ vào vai trò của các yếu tố trao đổi, mua bán, thị trường được chia thành:", "options": {"A": "Thị trường trong nước và thị trường thế giới", "B": "Thị trường cạnh tranh hoàn hảo và thị trường độc quyền", "C": "Thị trường tư liệu tiêu dùng và thị trường tư liệu sản xuất", "D": "Thị trường hàng hóa và thị trường dịch vụ"}, "answer": "C"}, {"chapter": "Chương 2", "num": 76, "id": 96, "prompt": "Căn cứ vào đối tượng trao đổi mua bán cụ thể, thị trường được chia thành:", "options": {"A": "Thị trường trong nước và thị trường thế giới", "B": "Thị trường cạnh tranh hoàn hảo và thị trường độc quyền", "C": "Thị trường tư liệu tiêu dùng và thị trường tư liệu sản xuất", "D": "Thị trường hàng hóa và thị trường dịch vụ"}, "answer": "D"}, {"chapter": "Chương 2", "num": 77, "id": 97, "prompt": "Theo nghĩa rộng, thị trường là tổng thể các mối quan hệ kinh tế nào?", "options": {"A": "Quan hệ cung - cầu", "B": "Quan hệ hàng - tiền", "C": "Quan hệ hợp tác - cạnh tranh", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 2", "num": 78, "id": 98, "prompt": "Căn cứ vào đâu để phân biệt được thị trường tư liệu sản xuất và thị trường tư liệu tiêu dùng?", "options": {"A": "Căn cứ vào vai trò của các yếu tố trao đổi, mua bán", "B": "Căn cứ vào tính chất và cơ chế vận hành của thị trường", "C": "Căn cứ vào phạm vi hoạt động", "D": "Căn cứ vào đầu vào và đầu ra của sản xuất"}, "answer": "A"}, {"chapter": "Chương 2", "num": 79, "id": 99, "prompt": "Theo quy luật lưu thông tiền tệ yêu cầu:", "options": {"A": "Lưu thông tiền tệ phải căn cứ trên yêu cầu của lưu thông hàng hóa và dịch vụ", "B": "Lưu thông hàng hóa phải phụ thuộc vào lưu thông tiền tệ", "C": "Lưu thông dịch vụ phải phụ thuộc vào lưu thông tiền tệ", "D": "Lưu thông tiền tệ quyết định lưu thông hàng hóa và dịch vụ"}, "answer": "A"}, {"chapter": "Chương 2", "num": 80, "id": 100, "prompt": "Lạm phát xảy ra khi nào?", "options": {"A": "Khi lượng tiền giấy được phát hành phù hợp với lượng tiền cần thiết cho lưu thông", "B": "Khi lượng tiền giấy được phát hành vượt quá lượng tiền cần thiết cho lưu thông", "C": "Khi lượng tiền giấy được phát hành thấp hơn lượng tiền cần thiết cho lưu thông", "D": "Tất cả các đáp án"}, "answer": "B"}, {"chapter": "Chương 3", "num": 1, "id": 101, "prompt": "Cơ sở kinh tế của chủ nghĩa tư bản là:", "options": {"A": "Chế độ công hữu về tư liệu sản xuất", "B": "Chế độ tư hữu về tư liệu sản xuất", "C": "Chế độ chiếm hữu tư nhân về sức lao động", "D": "Tất cả các đáp án"}, "answer": "B"}, {"chapter": "Chương 3", "num": 2, "id": 102, "prompt": "Giá trị tăng thêm được tạo ra:", "options": {"A": "Trong lĩnh vực sản xuất", "B": "Trong lĩnh vực tiêu dùng", "C": "Trong lĩnh vực lưu thông", "D": "Trong lĩnh vực phân phối"}, "answer": "A"}, {"chapter": "Chương 3", "num": 3, "id": 103, "prompt": "Chọn đáp án đúng về hàng hoá sức lao động:", "options": {"A": "Hàng hóa sức lao động tồn tại trong con người", "B": "Hàng hóa sức lao động có thể mua bán nhiều lần", "C": "Giá trị sử dụng của hàng hóa sức lao động có khả năng tạo ra giá trị mới lớn hơn giá trị của bản thân", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 3", "num": 4, "id": 104, "prompt": "Đây là câu nói của ai: \"Sức lao động hay năng lực lao động là toàn bộ những năng lực thể chất và tinh thần tồn tại trong cơ thể, trong một cơ người đang sống, và được người đó đem ra vận dụng mỗi khi sản xuất ra một giá trị sử dụng nào đó\"", "options": {"A": "C.Mác", "B": "Ph.Ănghen", "C": "V.Lênin", "D": "Smith"}, "answer": "A"}, {"chapter": "Chương 3", "num": 5, "id": 105, "prompt": "Chọn đáp án đúng nhất về hàng hóa sức lao động:", "options": {"A": "Hàng hóa sức lao động không thể mua bán được nhiều lần", "B": "Người lao động tạo ra giá trị mới lớn hơn giá trị bản thân họ", "C": "Mua, bán sức lao động đồng thời cũng là mua bán lao động", "D": "Người lao động tạo ra giá trị mới nhỏ hơn giá trị bản thân họ"}, "answer": "B"}, {"chapter": "Chương 3", "num": 6, "id": 106, "prompt": "Hàng hoá sức lao động khác hàng hoá thông thường ở chỗ:", "options": {"A": "Hàng hoá sức lao động bao hàm yếu tố tinh thần", "B": "Hàng hoá sức lao động bao hàm yếu tố lịch sử", "C": "Trong quá trình sử dụng, hàng hoá sức lao động có thể tạo ra lượng giá trị lớn hơn giá trị của bản thân", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 3", "num": 7, "id": 107, "prompt": "Ý nghĩa quan trọng nhất của việc nghiên cứu hàng hóa sức lao động là:", "options": {"A": "Tìm ra giải pháp làm tăng năng suất lao động", "B": "Tìm ra chìa khóa để giải quyết mẫu thuẫn trong công thức chung của tư bản", "C": "Để khẳng định đó là một hàng hóa đặc biệt", "D": "Để phân biệt lao động với sức lao động"}, "answer": "B"}, {"chapter": "Chương 3", "num": 8, "id": 108, "prompt": "Chọn đáp án Đúng nhất: Sức lao động trở thành hàng hoá khi:", "options": {"A": "Người lao động có đầy đủ các tư liệu sản xuất", "B": "Người có sức lao động bị tước đoạt hết tư liệu sản xuất", "C": "Người có sức lao động được tự do về thân thể", "D": "Người có sức lao động phải được tự do về thân thể và không đủ các tư liệu sản xuất cần thiết để tự kết hợp với sức lao động của mình tạo ra hàng hóa để bán"}, "answer": "D"}, {"chapter": "Chương 3", "num": 9, "id": 109, "prompt": "Chọn đáp án SAI về hàng hóa sức lao động:", "options": {"A": "Người bán và người mua sức lao động đều bình đẳng về mặt pháp lý", "B": "Sức lao động được mua và bán theo quy luật giá trị", "C": "Thị trường hàng hóa sức lao động được hình thành và phát triển từ phương thức sản xuất tư bản chủ nghĩa", "D": "Sức lao động được mua bán không tuân theo quy luật giá trị"}, "answer": "D"}, {"chapter": "Chương 3", "num": 10, "id": 110, "prompt": "Người lao động nhận khoán công việc, khi hoàn thành nhận được một số lượng tiền thì đó là?", "options": {"A": "Tiền công tính theo thời gian", "B": "Tiền công thực tế", "C": "Tiền công theo sản phẩm", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 3", "num": 11, "id": 111, "prompt": "Tiền công trong chủ nghĩa tư bản là:", "options": {"A": "Là giá cả của hàng hóa sức lao động", "B": "Là số tiền do nhà tư bản tạo ra", "C": "Là giá trị của hàng hóa", "D": "Là biểu hiện bằng tiền của giá trị hàng hóa"}, "answer": "A"}, {"chapter": "Chương 3", "num": 12, "id": 112, "prompt": "Chọn đáp án SAI:", "options": {"A": "Tiền công là giá trị của lao động", "B": "Tiền công là số tiền nhà tư bản trả cho công nhân làm thuê", "C": "Tiền công là giá cả của hàng hóa sức lao động", "D": "Tiền công là biểu hiện bằng tiền của giá trị hàng hóa sức lao động"}, "answer": "A"}, {"chapter": "Chương 3", "num": 13, "id": 113, "prompt": "Tìm đáp án Đúng nhất về tiền công:", "options": {"A": "Tiền công là biểu hiện bằng tiền của giá trị hàng hóa", "B": "Tiền công do sức lao động của người công nhân làm thuê tạo ra", "C": "Tiền công có nguồn gốc từ hao phí sức lao động của nhà tư bản", "D": "Tiền công là toàn bộ giá trị mới do công nhân làm thuê tạo ra"}, "answer": "A"}, {"chapter": "Chương 3", "num": 14, "id": 114, "prompt": "Mục đích trực tiếp nhất của nhà tư bản là:", "options": {"A": "Sản xuất ra ngày càng nhiều của cải vật chất", "B": "Mở rộng phạm vi thống trị của quan hệ sản xuất tư bản chủ nghĩa", "C": "Tạo ra ngày càng nhiều giá trị thặng dư", "D": "Làm cho lao động ngày càng lệ thuộc vào tư bản"}, "answer": "C"}, {"chapter": "Chương 3", "num": 15, "id": 115, "prompt": "Chọn đáp án SAI: Trong quá trình sản xuất giá trị thặng dư, giá trị tư liệu sản xuất đã tiêu dùng sẽ như thế nào?", "options": {"A": "Được lao động trừu tượng của người sản xuất hàng hoá bảo tồn và chuyển vào giá trị của sản phẩm mới", "B": "Được lao động cụ thể của người sản xuất hàng hoá bảo tồn và chuyển vào giá trị của sản phẩm mới", "C": "Được bảo toàn về mặt hiện vật", "D": "Được chuyển vào giá trị của sản phẩm mới với lượng giá trị tăng lên"}, "answer": "A"}, {"chapter": "Chương 3", "num": 16, "id": 116, "prompt": "Tư bản bất biến là:", "options": {"A": "Là phần giá trị chuyển dần vào sản phẩm qua khấu hao", "B": "Là phần giá trị được tăng lên trong quá trình sản xuất", "C": "Là bộ phận tư bản mà giá trị của nó không thay đổi về lượng và được chuyển nguyên vẹn vào sản phẩm", "D": "Là bộ phận được lao động trừu tượng của công nhân bảo toàn và chuyển nguyên giá trị vào sản phẩm"}, "answer": "C"}, {"chapter": "Chương 3", "num": 17, "id": 117, "prompt": "Giá trị thặng dư là?", "options": {"A": "Giá trị sức lao động của người công nhân làm thuê cho chủ tư bản", "B": "Là giá trị mới được tạo ra trong quá trình sản xuất hàng hóa", "C": "Là giá trị mới đôi ra ngoài giá trị sức lao động", "D": "Là giá trị của tư liệu sản xuất"}, "answer": "C"}, {"chapter": "Chương 3", "num": 18, "id": 118, "prompt": "Chọn đáp án đúng về giá trị thặng dư:", "options": {"A": "Giá trị thặng dư cũng là do nhà tư bản tạo ra", "B": "Giá trị thặng dư do lao động trừu tượng tạo ra", "C": "Giá trị thặng dư là lao động cụ thể kết tinh", "D": "Xét về lượng, giá trị thặng dư lớn hơn giá trị hàng hóa"}, "answer": "B"}, {"chapter": "Chương 3", "num": 19, "id": 119, "prompt": "Chọn đáp án ĐÚNG về vai trò của Máy móc trong quá trình sản xuất giá trị thặng dư:", "options": {"A": "Máy móc là nguồn gốc của giá trị thặng dư", "B": "Máy móc là tiền đề vật chất cho việc tạo ra giá trị thặng dư", "C": "Máy móc và sức lao động đều là nguồn gốc tạo ra giá trị thặng dư", "D": "Máy móc là yếu tố quyết định nhất để tạo ra giá trị thặng dư"}, "answer": "B"}, {"chapter": "Chương 3", "num": 20, "id": 120, "prompt": "Chọn đáp án ĐÚNG về tư bản bất biến:", "options": {"A": "Tư bản bất biến là bộ phận tư bản tồn tại dưới hình thái tư liệu sản xuất", "B": "Tư bản bất biến là một bộ phận của tư bản cố định", "C": "Tư bản bất biến là nguồn gốc tạo ra giá trị thặng dư", "D": "Tất cả các đáp án"}, "answer": "A"}, {"chapter": "Chương 3", "num": 21, "id": 121, "prompt": "Chọn đáp án Đúng nhất: Sản xuất giá trị thặng dư tuyệt đối với điều kiện:", "options": {"A": "Giá trị sức lao động thay đổi", "B": "Thời gian lao động cần thiết thay đổi", "C": "Năng suất lao động xã hội không thay đổi", "D": "Năng suất lao động xã hội thay đổi"}, "answer": "C"}, {"chapter": "Chương 3", "num": 22, "id": 122, "prompt": "Đặc điểm của phương pháp sản xuất giá trị thặng dư tương đối?", "options": {"A": "Chủ yếu áp dụng ở giai đoạn đầu của chủ nghĩa tư bản", "B": "Giá trị sức lao động không thay đổi", "C": "Ngày lao động không thay đổi", "D": "Năng suất lao động xã hội không thay đổi"}, "answer": "C"}, {"chapter": "Chương 3", "num": 23, "id": 123, "prompt": "Giá trị thặng dư tương đối và giá trị thặng dư siêu ngạch giống nhau ở những điểm nào?", "options": {"A": "Đều dựa trên tiền đề tăng năng suất lao động", "B": "Đều kéo dài ngày lao động", "C": "Năng suất lao động không đổi", "D": "Tất cả các đáp án"}, "answer": "A"}, {"chapter": "Chương 3", "num": 24, "id": 124, "prompt": "Chọn đáp án ĐÚNG về giá trị thặng dư tương đối:", "options": {"A": "Giá trị thặng dư tương đối do toàn bộ giai cấp tư bản thu được", "B": "Giá trị thặng dư tương đối được sản xuất bằng cách rút ngắn thời gian lao động tất yếu", "C": "Giá trị thặng dư tương đối được sản xuất với điều kiện ngày lao động không đổi", "D": "Tất cả các đáp án"}, "answer": "B"}, {"chapter": "Chương 3", "num": 25, "id": 125, "prompt": "Trong điều kiện ngày lao động không đổi, muốn sản xuất ra giá trị thặng dư tương đối cần phải:", "options": {"A": "Tăng năng suất lao động xã hội", "B": "Tăng năng suất lao động cá biệt", "C": "Tăng cường độ lao động", "D": "Kéo dài ngày lao động"}, "answer": "A"}, {"chapter": "Chương 3", "num": 26, "id": 126, "prompt": "Phương pháp sản xuất giá trị thặng dư tương đối được sản xuất bằng cách:", "options": {"A": "Kéo dài ngày lao động trong khi thời gian lao động tất yếu không đổi", "B": "Tăng cường độ lao động", "C": "Rút ngắn thời gian lao động tất yếu, giữ nguyên độ dài ngày lao động", "D": "Tăng cường độ lao động và kéo dài thời gian lao động"}, "answer": "C"}, {"chapter": "Chương 3", "num": 27, "id": 127, "prompt": "Sự giống nhau giữa phương pháp sản xuất giá trị thặng dư tuyệt đối và phương pháp sản xuất giá trị thặng dư tương đối?", "options": {"A": "Đều tăng năng suất lao động cá biệt", "B": "Đều tạo ra giá trị thặng dư", "C": "Đều làm giảm giá trị sức lao động của công nhân", "D": "Đều tăng năng suất lao động xã hội"}, "answer": "B"}, {"chapter": "Chương 3", "num": 28, "id": 128, "prompt": "Trong các nhận định sau, nhận định nào là SAI:", "options": {"A": "Giá trị thặng dư tuyệt đối và giá trị thặng dư tương đối biểu hiện mối quan hệ giữa nhà tư bản và người lao động", "B": "Giá trị tặng dư tuyệt đối và giá trị thặng dư tương đối phản ánh mối quan hệ giữa nhà các nhà tư bản", "C": "Giá trị thặng dư siêu ngạch phản ánh mối quan hệ giữa các nhà tư bản", "D": "Giá trị thặng dư siêu ngạch là biến tướng của giá trị thặng dư tương đối"}, "answer": "B"}, {"chapter": "Chương 3", "num": 29, "id": 129, "prompt": "Chọn đáp án đúng về mối quan hệ giữa giá trị thặng dư tương đối và giá trị thặng dư siêu ngạch?", "options": {"A": "Đều dựa trên cơ sở tăng năng suất lao động xã hội", "B": "Giá trị thặng dư tương đối dựa trên cơ sở tăng năng suất lao động xã hội còn giá trị thặng dư siêu ngạch dựa trên cơ sở tăng năng suất lao động cá biệt", "C": "Đều thể hiện mối quan hệ giữa các nhà tư bản", "D": "Đều thể hiện mối quan hệ giữa nhà tư bản với người lao động"}, "answer": "B"}, {"chapter": "Chương 3", "num": 30, "id": 130, "prompt": "Giá trị thặng dư siêu ngạch có được là do:", "options": {"A": "Do tăng năng suất lao động cá biệt cao hơn năng suất lao động xã hội", "B": "Do năng suất lao động cá biệt thấp hơn năng suất lao động xã hội", "C": "Do tăng cường độ lao động", "D": "Do tăng năng suất lao động xã hội"}, "answer": "A"}, {"chapter": "Chương 3", "num": 31, "id": 131, "prompt": "Đâu là công thức của giá trị mới:", "options": {"A": "Giá trị mới do lao động tạo ra = v + m", "B": "Giá trị mới do lao động tạo ra = c + v", "C": "Giá trị mới do lao động tạo ra = c + m", "D": "Giá trị mới do lao động tạo ra = c + v + m"}, "answer": "A"}, {"chapter": "Chương 3", "num": 32, "id": 132, "prompt": "Chọn đáp áp đúng về giá trị hàng hóa:", "options": {"A": "Giá trị hàng hóa = c + v", "B": "Giá trị hàng hóa = giá trị cũ + giá trị mới", "C": "Giá trị hàng hóa = m + v", "D": "Giá trị hàng hóa = Giá trị mới"}, "answer": "B"}, {"chapter": "Chương 3", "num": 33, "id": 133, "prompt": "Lượng giá trị của hàng hoá bao gồm:", "options": {"A": "c + v", "B": "c + v + m", "C": "v + m", "D": "c + m"}, "answer": "B"}, {"chapter": "Chương 3", "num": 34, "id": 134, "prompt": "Khối lượng giá trị thặng dư phản ánh?", "options": {"A": "Quy mô bóc lột của tư bản đối với người lao động", "B": "Trình độ bóc lột của tư bản với người lao động", "C": "Tính chất bóc lột của tư bản với lao động", "D": "Phạm vi bóc lột của tư bản với lao động"}, "answer": "A"}, {"chapter": "Chương 3", "num": 35, "id": 135, "prompt": "Tỷ suất giá trị thặng dư là:", "options": {"A": "Tỷ lệ % giữa giá trị thặng dư với tư bản khả biến", "B": "Tỷ lệ % giữa tư bản khả biến với giá trị thặng dư", "C": "Tỷ lệ % giữa tư bản khả biến với tư bản ứng trước", "D": "Tỷ lệ % giữa giá trị thặng dư và chi phí sản xuất tư bản chủ nghĩa"}, "answer": "A"}, {"chapter": "Chương 3", "num": 36, "id": 136, "prompt": "Tư bản lưu động là bộ phận tư bản:", "options": {"A": "Chuyển hết giá trị vào sản phẩm sau mỗi chu kỳ sản xuất", "B": "Tồn tại dưới dạng tư liệu sản xuất", "C": "Giá trị của nó chuyển dần vào sản phẩm", "D": "Tồn tại dưới dạng sức lao động"}, "answer": "A"}, {"chapter": "Chương 3", "num": 37, "id": 137, "prompt": "Tái sản xuất giản đơn:", "options": {"A": "Là quá trình sản xuất được lặp đi lặp lại với quy mô như cũ", "B": "Là quá trình sản xuất được lặp lại với quy mô và trình độ ngày càng tăng lên", "C": "Là sự tái chế, sản xuất lại những sản phẩm đã qua sử dụng để tiết kiệm tài nguyên", "D": "Là sự tái chế những sản phẩm đã qua sử dụng với quy mô ngày càng lớn hơn"}, "answer": "A"}, {"chapter": "Chương 3", "num": 38, "id": 138, "prompt": "Tái sản xuất mở rộng:", "options": {"A": "Là quá trình sản xuất được lặp đi lặp lại với quy mô như cũ", "B": "Là sự lặp lại quá trình sản xuất với quy mô và trình độ ngày càng tăng lên", "C": "Là sự tái chế, sản xuất lại những sản phẩm đã qua sử dụng để tiết kiệm tài nguyên", "D": "Tất cả các đáp án"}, "answer": "B"}, {"chapter": "Chương 3", "num": 39, "id": 139, "prompt": "Bản chất của tích lũy tư bản:", "options": {"A": "Là quá trình tư bản hóa giá trị thặng dư", "B": "Nhà tư bản sử dụng hết giá trị thặng dư thu được cho tiêu dùng cá nhân", "C": "Là quá trình thực hiện tái sản xuất giản đơn", "D": "Tất cả các đáp án"}, "answer": "A"}, {"chapter": "Chương 3", "num": 40, "id": 140, "prompt": "Ký hiệu của cấu tạo hữu cơ của tư bản:", "options": {"A": "c/m", "B": "c/v", "C": "m/v", "D": "v/c"}, "answer": "B"}, {"chapter": "Chương 3", "num": 41, "id": 141, "prompt": "Nguồn gốc của tích lũy tư bản là từ:", "options": {"A": "Giá trị thặng dư", "B": "Giá trị mới", "C": "Tư bản cố định", "D": "Tư bản lưu động"}, "answer": "A"}, {"chapter": "Chương 3", "num": 42, "id": 142, "prompt": "Để tăng quy mô tích lũy tư bản, các nhà tư bản sử dụng biện pháp nào?", "options": {"A": "Tăng tỷ suất giá trị thặng dư", "B": "Giảm năng suất lao động", "C": "Tăng thời gian lao động tất yếu", "D": "Giảm cường độ lao động"}, "answer": "A"}, {"chapter": "Chương 3", "num": 43, "id": 143, "prompt": "Nếu thị trường thuận lợi, để tăng quy mô tích lũy tư bản, các nhà tư bản sử dụng biện pháp nào?", "options": {"A": "Tăng giá trị sức lao động", "B": "Tăng thời gian lao động tất yếu", "C": "Giảm đại lượng tư bản ứng trước", "D": "Tăng đại lượng tư bản ứng trước"}, "answer": "D"}, {"chapter": "Chương 3", "num": 44, "id": 144, "prompt": "Hệ quả của tích lũy tư bản:", "options": {"A": "Làm tăng cấu tạo hữu cơ tư bản", "B": "Làm tăng tích tụ và tập trung tư bản", "C": "Làm tăng khoảng cách giàu nghèo", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 3", "num": 45, "id": 145, "prompt": "Nâng cao tỷ suất giá trị thặng dư góp phần làm:", "options": {"A": "Tăng quy mô giá trị thặng dư", "B": "Giảm quy mô tích lũy", "C": "Giảm cấu tạo hữu cơ của tư bản", "D": "Giảm khoảng cách chênh lệch giàu nghèo"}, "answer": "A"}, {"chapter": "Chương 3", "num": 46, "id": 146, "prompt": "Tìm đáp án SAI: Nâng cao năng suất lao động góp phần làm:", "options": {"A": "Tăng quy mô tích lũy", "B": "Giảm quy mô tích lũy", "C": "Tăng cấu tạo hữu cơ của tư bản", "D": "Tăng khoảng cách chênh lệch giàu nghèo"}, "answer": "B"}, {"chapter": "Chương 3", "num": 47, "id": 147, "prompt": "Cấu tạo hữu cơ của tư bản:", "options": {"A": "Qua hình thái hiện vật, là mối quan hệ tỷ lệ giữa số lượng tư liệu sản xuất và số lượng sức lao động", "B": "Qua hình thái giá trị, là mối quan hệ tỷ lệ giữa tư bản bất biến và tư bản khả biến", "C": "Phản ánh sự thay đổi của cấu tạo kỹ thuật", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 3", "num": 48, "id": 148, "prompt": "Tìm đáp án SAI, tích tụ tư bản là:", "options": {"A": "Làm tăng quy mô của tư bản cá biệt bằng cách tư bản hóa giá trị thặng dư", "B": "Là sự hợp nhất nhiều tư bản cá biệt nhỏ thành một tư bản cá biệt lớn", "C": "Làm tăng quy mô tư bản xã hội", "D": "Là kết quả của quá trình tích lũy tư bản"}, "answer": "B"}, {"chapter": "Chương 3", "num": 49, "id": 149, "prompt": "Để tăng quy mô tích lũy tư bản, các nhà tư bản sử dụng biện pháp nào?", "options": {"A": "Tăng năng suất lao động", "B": "Tăng thời gian lao động tất yếu", "C": "Giảm đại lượng tư bản ứng trước", "D": "Tăng giá trị sức lao động"}, "answer": "A"}, {"chapter": "Chương 3", "num": 50, "id": 150, "prompt": "Quan hệ nào thuộc phạm trù cấu tạo kỹ thuật của tư bản?", "options": {"A": "Phản ánh mặt hiện vật của tư bản", "B": "Phản ánh mặt giá trị của tư bản", "C": "Phản ánh mối quan hệ giữa tư bản bất biến và tư bản khả biến", "D": "Không có đáp án đúng"}, "answer": "A"}, {"chapter": "Chương 3", "num": 51, "id": 151, "prompt": "Cấu tạo giá trị của tư bản là:", "options": {"A": "Là quan hệ giữa số lượng tư liệu sản xuất và số lượng sức lao động", "B": "Quan hệ giữa tư bản cố định và tư bản lưu động", "C": "Phản ánh mặt hiện vật của tư bản", "D": "Tỷ lệ về số lượng giá trị tư bản bất biến và tư bản khả biến để tiến hành sản xuất"}, "answer": "D"}, {"chapter": "Chương 3", "num": 52, "id": 152, "prompt": "Quá trình tích lũy tư bản:", "options": {"A": "Làm tăng cấu tạo hữu cơ tư bản", "B": "Làm giảm cấu tạo hữu cơ tư bản", "C": "Làm tăng cường độ lao động", "D": "Làm giảm tư bản bất biến"}, "answer": "A"}, {"chapter": "Chương 3", "num": 53, "id": 153, "prompt": "Tích tụ tư bản là:", "options": {"A": "Làm tăng quy mô của tư bản cá biệt bằng cách tư bản hóa giá trị thặng dư", "B": "Là sự hợp nhất nhiều tư bản cá biệt nhỏ thành một tư bản cá biệt lớn", "C": "Không làm tăng quy mô tư bản xã hội", "D": "Làm giảm quy mô tư bản xã hội"}, "answer": "A"}, {"chapter": "Chương 3", "num": 54, "id": 154, "prompt": "Tập trung tư bản là:", "options": {"A": "Là sự hợp nhất nhiều tư bản cá biệt nhỏ thành một tư bản cá biệt lớn", "B": "Làm tăng quy mô tư bản xã hội", "C": "Là kết quả của quá trình tích lũy tư bản", "D": "Làm tăng quy mô tư bản cá biệt bằng cách tư bản hóa giá trị thặng dư"}, "answer": "A"}, {"chapter": "Chương 3", "num": 55, "id": 155, "prompt": "Chọn đáp án ĐÚNG, tập trung tư bản sẽ:", "options": {"A": "Làm tăng quy mô của tư bản xã hội", "B": "Làm giảm quy mô của tư bản cá biệt", "C": "Làm tăng quy mô của tư bản cá biệt", "D": "Làm giảm quy mô của tư bản xã hội"}, "answer": "C"}, {"chapter": "Chương 3", "num": 56, "id": 156, "prompt": "Chọn đáp án trả lời Đúng nhất: Lợi nhuận có nguồn gốc từ:", "options": {"A": "Lao động cụ thể", "B": "Lao động giản đơn", "C": "Lao động không được trả công của người công nhân", "D": "Lao động phức tạp"}, "answer": "C"}, {"chapter": "Chương 3", "num": 57, "id": 157, "prompt": "Nhân tố nào sau đây ảnh hưởng tới tỷ suất lợi nhuận:", "options": {"A": "Tỷ suất giá trị thặng dư", "B": "Cấu tạo hữu cơ của tư bản", "C": "Tốc độ chu chuyển của tư bản", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 3", "num": 58, "id": 158, "prompt": "Chọn câu trả lời Đúng nhất: Kết quả của cạnh tranh giữa các ngành hình thành:", "options": {"A": "Giá trị thị trường", "B": "Lợi nhuận bình quân", "C": "Lợi nhuận", "D": "Tỷ suất lợi nhuận"}, "answer": "B"}, {"chapter": "Chương 3", "num": 59, "id": 159, "prompt": "Chọn câu trả lời Đúng nhất: Lợi nhuận bình quân được hình thành do:", "options": {"A": "Cạnh tranh giữa các xí nghiệp sản xuất các ngành khác nhau", "B": "Cạnh tranh trong nội bộ ngành", "C": "Cạnh tranh giữa các doanh nghiệp", "D": "Cạnh tranh giữa cung và cầu"}, "answer": "A"}, {"chapter": "Chương 3", "num": 60, "id": 160, "prompt": "Chi phí sản xuất tư bản chủ nghĩa là:", "options": {"A": "Là giá cả của những tư liệu sản xuất cần thiết để sản xuất hàng hóa", "B": "Giá cả của sức lao động đã được sử dụng để sản xuất ra hàng hóa đó", "C": "Giá cả của tư liệu tiêu dùng cần thiết để sản xuất hàng hóa", "D": "Phần giá trị của hàng hóa, bù lại giá cả của những tư liệu sản xuất đã tiêu dùng và giá cả của sức lao động đã được sử dụng để sản xuất ra hàng hóa đó"}, "answer": "D"}, {"chapter": "Chương 3", "num": 61, "id": 161, "prompt": "Khi xuất hiện phạm trù chi phí sản xuất tư bản chủ nghĩa (k), giá trị hàng hóa biểu hiện thành:", "options": {"A": "G = c + m", "B": "G = k + m", "C": "G = c + v", "D": "G = k + v"}, "answer": "B"}, {"chapter": "Chương 3", "num": 62, "id": 162, "prompt": "Lợi nhuận là:", "options": {"A": "Do tư bản ứng trước sinh ra", "B": "Do tư bản bất biến sinh ra", "C": "Do tư bản cố định sinh ra", "D": "Do tư bản lưu động sinh ra"}, "answer": "A"}, {"chapter": "Chương 3", "num": 63, "id": 163, "prompt": "Chọn đáp án SAI về lợi nhuận:", "options": {"A": "Lợi nhuận là hình thức biến tướng của giá trị thặng dư", "B": "Lợi nhuận là con đẻ của tư bản khả biến", "C": "Lợi nhuận là hiệu số giữa tổng doanh thu trừ đi tổng chi phí", "D": "Là con đẻ của tư bản ứng trước"}, "answer": "B"}, {"chapter": "Chương 3", "num": 64, "id": 164, "prompt": "Lợi nhuận là hình thái biểu hiện của:", "options": {"A": "Giá cả sức lao động", "B": "Giá trị thặng dư", "C": "Giá cả tư liệu sản xuất", "D": "Chi phí sản xuất tư bản chủ nghĩa"}, "answer": "B"}, {"chapter": "Chương 3", "num": 65, "id": 165, "prompt": "Mối quan hệ giữa lợi nhuận và giá trị thặng dư:", "options": {"A": "Lợi nhuận và giá trị thặng dư khác nhau về nguồn gốc", "B": "Cùng phản ánh quy mô bóc lột của nhà tư bản", "C": "Cùng bản chất nhưng khác nhau về nguồn gốc", "D": "Lợi nhuận là hình thức biến tướng của giá trị thặng dư"}, "answer": "D"}, {"chapter": "Chương 3", "num": 66, "id": 166, "prompt": "Tỷ suất lợi nhuận phản ánh:", "options": {"A": "Trình độ bóc lột của nhà tư bản đối với công nhân", "B": "Quy mô bóc lột của nhà tư bản đối với công nhân", "C": "Mức doanh lợi của việc đầu tư tư bản", "D": "Trình độ và quy mô bóc lột của nhà tư bản đối với công nhân"}, "answer": "C"}, {"chapter": "Chương 3", "num": 67, "id": 167, "prompt": "Nguyên nhân dẫn đến sự bình quân hóa tỷ suất lợi nhuận là do:", "options": {"A": "Cạnh tranh giữa các nước và các khu vực", "B": "Cạnh tranh trong nội bộ ngành", "C": "Cạnh tranh giữa các xí nghiệp sản xuất các ngành khác nhau", "D": "Do mọi nhà tư bản đều có xu hướng cải tiến kỹ thuật nhằm chiếm lợi nhuận siêu ngạch"}, "answer": "C"}, {"chapter": "Chương 3", "num": 68, "id": 168, "prompt": "Khi quy luật giá trị thặng dư chuyển hoá thành quy luật lợi nhuận bình quân thì:", "options": {"A": "Giá trị hàng hoá chuyển hoá thành giá cả", "B": "Giá trị hàng hoá chuyển hoá thành giá cả sản xuất", "C": "Giá trị hàng hoá chuyển hoá thành giá trị trao đổi", "D": "Giá trị hàng hoá chuyển hoá thành giá cả độc quyền"}, "answer": "B"}, {"chapter": "Chương 3", "num": 69, "id": 169, "prompt": "So sánh về lượng giữa tỷ suất giá trị thặng dư và tỷ suất lợi nhuận:", "options": {"A": "Tỷ suất giá trị thặng dư luôn bằng tỷ suất lợi nhuận", "B": "Tỷ suất giá trị thặng dư nhỏ hơn tỷ suất lợi nhuận", "C": "Tỷ suất giá trị thặng dư lớn hơn tỷ suất lợi nhuận", "D": "Tỷ suất giá trị thặng dư luôn nhỏ hơn hoặc bằng tỷ suất lợi nhuận"}, "answer": "C"}, {"chapter": "Chương 3", "num": 70, "id": 170, "prompt": "Chọn đáp án ĐÚNG:", "options": {"A": "Lợi tức là một phần của lợi nhuận bình quân mà người đi vay phải trả cho người cho vay", "B": "Lợi tức là một phần của giá trị thặng dư mà người đi vay nhận được", "C": "Lợi tức cao hơn lợi nhuận bình quân", "D": "Lợi tức là toàn bộ giá trị thặng dư mà người đi vay trả cho người cho vay"}, "answer": "A"}, {"chapter": "Chương 3", "num": 71, "id": 171, "prompt": "Nhân tố nào sau đây ảnh hưởng lớn nhất tới tỷ suất lợi tức?", "options": {"A": "Tỷ suất lợi nhuận bình quân", "B": "Quan hệ cung - cầu về hàng hóa", "C": "Quy luật cạnh tranh", "D": "Giá trị sức lao động"}, "answer": "A"}, {"chapter": "Chương 3", "num": 72, "id": 172, "prompt": "Nguồn gốc của lợi nhuận thương nghiệp là từ:", "options": {"A": "Lợi nhuận", "B": "Lợi tức", "C": "Tư bản ứng trước", "D": "Giá trị thặng dư"}, "answer": "D"}, {"chapter": "Chương 3", "num": 73, "id": 173, "prompt": "Lợi tức là:", "options": {"A": "Một phần của lợi nhuận", "B": "Một phần của tư bản ứng trước", "C": "Một phần của tư bản cho vay", "D": "Một phần của lợi nhuận bình quân"}, "answer": "D"}, {"chapter": "Chương 3", "num": 74, "id": 174, "prompt": "Tư bản cho vay vận động theo công thức nào sau đây:", "options": {"A": "H-H'", "B": "H-T-H", "C": "T-T'", "D": "H-T"}, "answer": "C"}, {"chapter": "Chương 3", "num": 75, "id": 175, "prompt": "Tỷ suất giá trị thặng dư phản ánh?", "options": {"A": "Quy mô bóc lột của nhà tư bản đối với công nhân", "B": "Trình độ bóc lột của nhà tư bản đối với công nhân", "C": "Trình độ doanh lợi của nhà tư bản đối với công nhân", "D": "Phản ánh mức doanh lợi của việc đầu tư tư bản"}, "answer": "B"}, {"chapter": "Chương 3", "num": 76, "id": 176, "prompt": "Chọn đáp án ĐÚNG, địa tô chênh lệch 1 là:", "options": {"A": "Địa tô có được do thâm canh tăng năng suất", "B": "Địa tô thuộc về nhà tư bản kinh doanh ruộng đất", "C": "Địa tô thu được trên ruộng đất xấu", "D": "Địa tô có được do ruộng đất có độ màu mở tự nhiên thuận lợi"}, "answer": "D"}, {"chapter": "Chương 3", "num": 77, "id": 177, "prompt": "Chọn đáp án ĐÚNG, địa tô chênh lệch 1 là:", "options": {"A": "Địa tô thuộc về nhà tư bản", "B": "Địa tô thuộc về chủ sở hữu ruộng đất", "C": "Địa tô thu được trên ruộng đất do thâm canh tăng năng suất", "D": "Địa tô thu được trên ruộng đất xấu"}, "answer": "B"}, {"chapter": "Chương 3", "num": 78, "id": 178, "prompt": "Chọn đáp án ĐÚNG, địa tô chênh lệch 2 thu được trên:", "options": {"A": "Ruộng đất có độ màu mỡ tự nhiên cao", "B": "Ruộng đất đã được đầu tư thâm canh làm tăng độ màu mở của đất", "C": "Ruộng đất xấu", "D": "Ruộng đất có vị trí tự nhiên thuận lợi"}, "answer": "B"}, {"chapter": "Chương 3", "num": 79, "id": 179, "prompt": "Chọn đáp án ĐÚNG về địa tô chênh lệch:", "options": {"A": "Địa tô chênh lệch bằng giá cả sản xuất chung", "B": "Địa tô chênh lệch gắn với chế độ độc quyền kinh doanh ruộng đất", "C": "Địa tô chênh lệch gắn với chế độ độc quyền sở hữu ruộng đất", "D": "Địa tô chênh lệch có được trên tất cả các loại ruộng đất"}, "answer": "B"}, {"chapter": "Chương 3", "num": 80, "id": 180, "prompt": "Những hình thức nào là hiểu hiện của giá trị thặng dư?", "options": {"A": "Tiền lương, lợi tức, địa tô", "B": "Lợi nhuận, lợi tức, địa tô", "C": "Tiền lương, lợi nhuận, địa tô", "D": "Lợi tức, lợi nhuận, tiền lương"}, "answer": "B"}, {"chapter": "Chương 4", "num": 1, "id": 181, "prompt": "Chủ nghĩa tư bản độc quyền là:", "options": {"A": "Do cuộc đấu tranh của giai cấp công nhân và nhân dân lao động", "B": "Do sự phát triển của lực lượng sản xuất", "C": "Do cuộc đấu tranh của giai cấp tư sản", "D": "Do cuộc đấu tranh của giai cấp chủ nô"}, "answer": "B"}, {"chapter": "Chương 4", "num": 2, "id": 182, "prompt": "Dự báo sau đây là của ai: Tự do cạnh tranh sẽ dẫn đến tích tụ và tập trung sản xuất, tích tụ và tập trung sản xuất phát triển đến một mức độ nào đó sẽ dẫn đến độc quyền.", "options": {"A": "C.Mác", "B": "Ph.Ănghen", "C": "V.Lênin", "D": "C.Mác và Ph.Ănghen"}, "answer": "D"}, {"chapter": "Chương 4", "num": 3, "id": 183, "prompt": "Điền từ vào chỗ trống. V.Lênin viết: \"trước mắt chúng ta cạnh tranh tự do biến thành độc quyền và tạo ra nền sản xuất lớn, loại bỏ nền sản xuất nhỏ, thay thế …… bằng một …… hơn nữa\"", "options": {"A": "Nền sản xuất tự cung tự cấp …..nền sản xuất hàng hoá lớn", "B": "Nền sản xuất lớn…..nền sản xuất lớn", "C": "Nền sản xuất tự cung tự cấp …..nền sản xuất thị trường lớn", "D": "Nền sản xuất hàng hoá …..nền sản xuất thị trường lớn"}, "answer": "B"}, {"chapter": "Chương 4", "num": 4, "id": 184, "prompt": "Độc quyền trong chủ nghĩa tư bản có mấy đặc điểm:", "options": {"A": "Hai", "B": "Ba", "C": "Bốn", "D": "Năm"}, "answer": "D"}, {"chapter": "Chương 4", "num": 5, "id": 185, "prompt": "Chọn đáp án Đúng về lợi nhuận độc quyền:", "options": {"A": "Lợi nhuận độc quyền do cạnh tranh tự do hình thành", "B": "Lợi nhuận độc quyền là kết quả của cạnh tranh giữa các ngành", "C": "Lợi nhuận độc quyền là lợi nhuận thu được cao hơn lợi nhuận bình quân, do sự thống trị của các tổ chức độc quyền đem lại", "D": "Lợi nhuận độc quyền là lợi nhuận thu được bằng lợi nhuận bình quân, do sự thống trị của các tổ chức độc quyền đem lại"}, "answer": "C"}, {"chapter": "Chương 4", "num": 6, "id": 186, "prompt": "Lợi nhuận độc quyền là:", "options": {"A": "Lợi nhuận thu được cao hơn lợi nhuận bình quân", "B": "Lợi nhuận thu được do cạnh tranh giữa các ngành", "C": "Lợi nhuận thu được do cạnh tranh trong nội bộ ngành", "D": "Tất cả các đáp án"}, "answer": "A"}, {"chapter": "Chương 4", "num": 7, "id": 187, "prompt": "Nguồn gốc của lợi nhuận độc quyền cao là:", "options": {"A": "Do tiết kiệm trong chi phí sản xuất", "B": "Do áp đặt giá bán hàng hóa cao", "C": "Do giá mua hàng hóa (nguyên nhiên vật liệu thấp)", "D": "Do lao động không công của công nhân làm việc trong các xí nghiệp độc quyền và ngoài độc quyền tạo ra"}, "answer": "D"}, {"chapter": "Chương 4", "num": 8, "id": 188, "prompt": "Mối quan hệ giữa cạnh tranh và độc quyền được thể hiện như thế nào trong giai đoạn chủ nghĩa tư bản độc quyền:", "options": {"A": "Độc quyền sinh ra từ cạnh tranh, nó đối lập với cạnh tranh và thủ tiêu cạnh tranh", "B": "Độc quyền sinh ra từ cạnh tranh, nó đối lập với cạnh tranh nhưng không thủ tiêu cạnh tranh mà làm cạnh tranh ngày càng gay gắt hơn", "C": "Độc quyền thủ tiêu cạnh tranh mà làm cạnh tranh trở nên gay gắt hơn", "D": "Tất cả các đáp án"}, "answer": "B"}, {"chapter": "Chương 4", "num": 9, "id": 189, "prompt": "Tổ chức độc quyền ở các nước tư bản chủ nghĩa xuất hiện vào khoảng thời gian nào:", "options": {"A": "Giữa thế kỷ XVII đầu thế kỷ XVIII", "B": "Giữa thế kỷ XVIII đầu thế kỷ XIX", "C": "Cuối thế kỷ XIX đầu thế kỷ XX", "D": "Cuối thế kỷ XX"}, "answer": "C"}, {"chapter": "Chương 4", "num": 10, "id": 190, "prompt": "Độc quyền nhà nước trong chủ nghĩa tư bản:", "options": {"A": "Ra đời trước chủ nghĩa tư bản tự do cạnh tranh", "B": "Ra đời sau độc quyền", "C": "Ra đời trước độc quyền", "D": "Ra đời cùng lúc với độc quyền"}, "answer": "B"}, {"chapter": "Chương 4", "num": 11, "id": 191, "prompt": "Nguyên nhân ra đời của Độc quyền nhà nước trong chủ nghĩa tư bản:", "options": {"A": "Do sự phát triển của phân công lao động xã hội", "B": "Xu hướng quốc tế hóa đời sống kinh tế", "C": "Do quá trình tích tụ và tập trung vốn ngày càng lớn", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 4", "num": 12, "id": 192, "prompt": "Độc quyền nhà nước trong chủ nghĩa tư bản hình thành nhằm:", "options": {"A": "Phục vụ lợi ích của các tổ chức độc quyền tư nhân và duy trì, phát triển CNTB", "B": "Phục vụ lợi ích của giai cấp công nhân", "C": "Giảm bớt khoảng cách giàu nghèo", "D": "Giảm bớt sự bóc lột của chủ nghĩa tư bản"}, "answer": "A"}, {"chapter": "Chương 4", "num": 13, "id": 193, "prompt": "Một trong những nguyên nhân chủ yếu hình thành độc quyền:", "options": {"A": "Do khủng hoảng và sự phát triển của hệ thống tín dụng", "B": "Do cuộc đấu tranh của giai cấp chủ nô", "C": "Do cuộc đấu tranh của giai cấp công nhân và nhân dân lao động", "D": "Do sự phân công lao động xã hội"}, "answer": "A"}, {"chapter": "Chương 4", "num": 14, "id": 194, "prompt": "Chọn đáp án Đúng về: Tác động tích cực của độc quyền:", "options": {"A": "Tăng tổng lợi ích của xã hội", "B": "Tăng năng suất lao động, nâng cao năng lực cạnh tranh của các tổ chức độc quyền", "C": "Phát triển xã hội theo hướng công bằng, dân chủ", "D": "Cải thiện môi trường"}, "answer": "B"}, {"chapter": "Chương 4", "num": 15, "id": 195, "prompt": "Tác động tích cực của độc quyền đối với nền kinh tế:", "options": {"A": "Cải thiện môi trường kinh doanh lành mạnh", "B": "Đem lại hiệu quả kinh tế cao", "C": "Tạo được sức mạnh kinh tế góp phần thúc đẩy nền kinh tế phát triển theo hướng sản xuất lớn hiện đại", "D": "Thúc đẩy tăng trưởng kinh tế"}, "answer": "C"}, {"chapter": "Chương 4", "num": 16, "id": 196, "prompt": "Sự ra đời của tư bản tài chính là kết quả của:", "options": {"A": "Sự phát triển của thị trường tài chính", "B": "Sự hợp nhất giữa tư bản ngân hàng của một số ít ngân hàng độc quyền lớn nhất, với tư bản của những liên minh độc quyền các nhà công nghiệp", "C": "Sự phát triển của độc quyền ngân hàng", "D": "Sự phát triển của độc quyền công nghiệp"}, "answer": "B"}, {"chapter": "Chương 4", "num": 17, "id": 197, "prompt": "Điền từ vào chỗ trống: \"Tư bản tài chính là kết quả của sự..........giữa tư bản ngân hàng của một số ít ngân hàng độc quyền lớn nhất, với tư bản của những liên minh độc quyền các nhà công nghiệp\"", "options": {"A": "Mâu thuẫn", "B": "Hợp nhất", "C": "Phát triển", "D": "Đồng nhất"}, "answer": "B"}, {"chapter": "Chương 4", "num": 18, "id": 198, "prompt": "Đây là câu nói của ai: \"…tư bản tài chính là kết quả của sự hợp nhất giữa tư bản ngân hàng của một số ít ngân hàng độc quyền lớn nhất, với tư bản của những liên minh độc quyền các nhà công nghiệp\"", "options": {"A": "C.Mác", "B": "Ph. Ănghen", "C": "V.Lênin", "D": "C.Mác và Ph. Ănghen"}, "answer": "C"}, {"chapter": "Chương 4", "num": 19, "id": 199, "prompt": "Vai trò mới của ngân hàng trong giai đoạn chủ nghĩa tư bản độc quyền:", "options": {"A": "Trung gian trong việc thanh toán", "B": "Trung gian trong việc tín dụng", "C": "Không chế mọi hoạt động trong nền kinh tế xã hội", "D": "Đầu tư tư bản"}, "answer": "C"}, {"chapter": "Chương 4", "num": 20, "id": 200, "prompt": "Mối quan hệ giữa độc quyền và cạnh tranh:", "options": {"A": "Làm thủ tiêu cạnh tranh", "B": "Làm cạnh tranh giảm đi", "C": "Làm cạnh tranh ngày càng trở nên gay gắt", "D": "Làm cạnh tranh biến mất"}, "answer": "C"}, {"chapter": "Chương 4", "num": 21, "id": 201, "prompt": "Các xí nghiệp tư bản tham gia hình thức tổ chức độc quyền Cartel:", "options": {"A": "Phụ thuộc về sản xuất và lưu thông hàng hóa", "B": "Độc lập về sản xuất và lưu thông hàng hóa", "C": "Phụ thuộc về sản xuất", "D": "Phụ thuộc về lưu thông"}, "answer": "B"}, {"chapter": "Chương 4", "num": 22, "id": 202, "prompt": "Xuất khẩu tư bản là:", "options": {"A": "Xuất khẩu hàng hóa ra nước ngoài bán", "B": "Đưa hàng hóa bán ra nước ngoài để thực hiện giá trị", "C": "Xuất khẩu giá trị ra nước ngoài", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 4", "num": 23, "id": 203, "prompt": "Mục đích của xuất khẩu tư bản là:", "options": {"A": "Chiếm đoạt giá trị thặng dư và các nguồn lợi nhuận khác ở các nước nhập khẩu tư bản", "B": "Nhằm chuyển giao công nghệ hiện đại cho các nước nhập khẩu tư bản", "C": "Giúp đỡ các nước nhập khẩu tư bản phát triển", "D": "Cải thiện môi trường cho các nước nhập khẩu tư bản"}, "answer": "A"}, {"chapter": "Chương 4", "num": 24, "id": 204, "prompt": "Đặc điểm cơ bản của xuất khẩu tư bản tư nhân là:", "options": {"A": "Đầu tư vào quân sự", "B": "Đầu tư vào các ngành yêu cầu sử dụng công nghệ hiện đại cao", "C": "Đầu tư vào các ngành có vốn chu chuyển chậm nhưng lợi nhuận cao", "D": "Đầu tư vào các ngành có vốn quay vòng vốn ngắn nhưng thu được lợi nhuận độc quyền cao"}, "answer": "D"}, {"chapter": "Chương 4", "num": 25, "id": 205, "prompt": "Biểu hiện mới của xuất khẩu tư bản trong chủ nghĩa tư bản ngày nay:", "options": {"A": "Các nước tư bản phát triển xuất khẩu lẫn nhau", "B": "Các nước kém phát triển xuất khẩu lẫn", "C": "Các nước tư bản phát triển xuất khẩu sang các nước kém phát triển", "D": "Tất cả các đáp án"}, "answer": "A"}, {"chapter": "Chương 4", "num": 26, "id": 206, "prompt": "Về kinh tế, xuất khẩu tư bản nhà nước thường hướng vào:", "options": {"A": "Ngành có lợi nhuận thấp", "B": "Ngành thuộc kết cấu hạ tầng", "C": "Ngành công nghệ kỹ thuật mới", "D": "Ngành có vốn chu chuyển nhanh"}, "answer": "B"}, {"chapter": "Chương 4", "num": 27, "id": 207, "prompt": "Về chính trị, xuất khẩu tư bản nhà nước nhằm mục đích:", "options": {"A": "Tăng cường sự phụ thuộc của các nước nhập khẩu tư bản, thực hiện chủ nghĩa thực dân", "B": "Tạo sự ngăn cách giữa các nước giàu, nghèo", "C": "Phân hóa giàu nghèo trong xã hội", "D": "Giải quyết mâu thuẫn giữa giai cấp công nhân và nhà tư bản"}, "answer": "A"}, {"chapter": "Chương 4", "num": 28, "id": 208, "prompt": "Chọn đáp án ĐÚNG:", "options": {"A": "Lợi nhuận độc quyền có được do sự thống trị của các tổ chức độc quyền", "B": "Cạnh tranh giữa các ngành hình thành giá cả độc quyền", "C": "Cạnh tranh trong nội bộ ngành hình thành giá cả độc quyền", "D": "Lợi nhuận độc quyền là một phần của lợi nhuận bình quân"}, "answer": "A"}, {"chapter": "Chương 4", "num": 29, "id": 209, "prompt": "Xuất khẩu hàng hóa là đặc điểm cơ bản của:", "options": {"A": "Chủ nghĩa tư bản", "B": "Chủ nghĩa tư bản tự do cạnh tranh", "C": "Chủ nghĩa tư bản độc quyền", "D": "Độc quyền nhà nước trong chủ nghĩa tư bản"}, "answer": "B"}, {"chapter": "Chương 4", "num": 30, "id": 210, "prompt": "Sở hữu nhà nước được hình thành dưới hình thức nào:", "options": {"A": "Xây dựng doanh nghiệp nhà nước bằng vốn của ngân sách", "B": "Quốc hữu hóa các doanh nghiệp tư nhân bằng cách mua lại", "C": "Nhà nước mua cổ phần của các doanh nghiệp tư nhân", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 1, "id": 211, "prompt": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam:", "options": {"A": "Là nền kinh tế vận hành theo các quy luật của thị trường", "B": "Hướng tới một xã hội dân giàu, nước mạnh, dân chủ, công bằng, văn minh", "C": "Có sự điều tiết của Nhà nước, do Đảng cộng sản Việt Nam lãnh đạo", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 2, "id": 212, "prompt": "Xét về thực chất, giá trị dân giàu, nước mạnh, dân chủ, công bằng, văn minh là hệ giá trị của:", "options": {"A": "Của các nước tư bản phát triển hiện nay", "B": "Của các nước tư bản trước đây", "C": "Của xã hội tương lai mà loài người còn phải phấn đấu", "D": "Của các nước chủ nghĩa xã hội hiện nay"}, "answer": "C"}, {"chapter": "Chương 5", "num": 3, "id": 213, "prompt": "Mô hình kinh tế thị trường ở Việt Nam là mô hình:", "options": {"A": "Mô hình kinh tế thị trường xã hội chủ nghĩa", "B": "Mô hình kinh tế thị trường tự do mới", "C": "Mô hình kinh tế thị trường định hướng xã hội chủ nghĩa", "D": "Mô hình kinh tế thị trường xã hội"}, "answer": "C"}, {"chapter": "Chương 5", "num": 4, "id": 214, "prompt": "Mô hình kinh tế thị trường ở Trung Quốc là:", "options": {"A": "Mô hình kinh tế thị trường xã hội chủ nghĩa", "B": "Mô hình kinh tế thị trường tự do mới", "C": "Mô hình kinh tế thị trường định hướng xã hội chủ nghĩa", "D": "Mô hình kinh tế thị trường xã hội"}, "answer": "A"}, {"chapter": "Chương 5", "num": 5, "id": 215, "prompt": "Mô hình kinh tế thị trường ở Mỹ là:", "options": {"A": "Mô hình kinh tế thị trường xã hội chủ nghĩa", "B": "Mô hình kinh tế thị trường tự do mới", "C": "Mô hình kinh tế thị trường định hướng xã hội chủ nghĩa", "D": "Mô hình kinh tế thị trường xã hội"}, "answer": "B"}, {"chapter": "Chương 5", "num": 6, "id": 216, "prompt": "Mô hình kinh tế thị trường ở Nhật Bản là:", "options": {"A": "Mô hình kinh tế thị trường xã hội chủ nghĩa", "B": "Mô hình kinh tế thị trường tự do mới", "C": "Mô hình kinh tế thị trường định hướng xã hội chủ nghĩa", "D": "Mô hình kinh tế thị trường xã hội"}, "answer": "D"}, {"chapter": "Chương 5", "num": 7, "id": 217, "prompt": "Phát triển kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam là tất yếu khách quan do:", "options": {"A": "Phù hợp với quy luật phát triển khách quan", "B": "Tính ưu việt của kinh tế thị trường trong thúc đẩy phát triển", "C": "Đó là mô hình phù hợp với nguyện vọng của nhân dân mong muốn dân giàu, nước mạnh, dân chủ, công bằng, văn minh", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 8, "id": 218, "prompt": "Tính định hướng xã hội chủ nghĩa trong nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam thực chất là:", "options": {"A": "Hướng tới các giá trị cốt lõi của xã hội xã hội chủ nghĩa: dân giàu, nước mạnh, xã hội dân chủ, công bằng, văn minh", "B": "Hướng tới những giá trị văn hóa xã hội", "C": "Hướng tới những giá trị đạo đức xã hội", "D": "Hướng tới mục tiêu: độc lập, tự do, hạnh phúc"}, "answer": "A"}, {"chapter": "Chương 5", "num": 9, "id": 219, "prompt": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam được thể hiện ở:", "options": {"A": "Các hoạt động kinh tế của các chủ thể chủ yếu hướng tới lợi ích cá nhân", "B": "Các hoạt động kinh tế của các chủ thể chủ yếu hướng tới lợi ích cá nhân được các giá trị xã hội thực tế góp phần xác lập", "C": "Các hoạt động kinh tế của các chủ thể từ các nhà tư bản hướng tới góp phần xác lập các giá trị xã hội", "D": "Các hoạt động kinh tế của các tập thể hướng tới lợi ích nhóm"}, "answer": "B"}, {"chapter": "Chương 5", "num": 10, "id": 220, "prompt": "Chọn đáp án đúng nhất, phát triển kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam là:", "options": {"A": "Sự lựa chọn chủ quan của Đảng cộng sản Việt Nam", "B": "Sự lựa chọn chủ quan của nhân dân Việt Nam", "C": "Tất yếu khách quan trong thời kỳ quá độ lên chủ nghĩa xã hội ở Việt Nam", "D": "Sự lựa chọn của Chủ tịch Hồ Chí Minh"}, "answer": "C"}, {"chapter": "Chương 5", "num": 11, "id": 221, "prompt": "Mục tiêu của nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam?", "options": {"A": "Là để phù hợp với nền kinh tế nhiều thành phần", "B": "Là phương thức để nâng cao đời sống của nhân dân", "C": "Là phương thức để thực hiện mục tiêu: dân giàu, nước mạnh, dân chủ, công bằng, văn minh", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 5", "num": 12, "id": 222, "prompt": "Sự khác biệt cơ bản của kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam so với kinh tế thị trường tư bản chủ nghĩa thể hiện ở?", "options": {"A": "Thể hiện ở mục tiêu của nền kinh tế", "B": "Thể hiện ở quan hệ sở hữu", "C": "Thể hiện ở quan hệ quản lý kinh tế", "D": "Tất cả đáp án"}, "answer": "A"}, {"chapter": "Chương 5", "num": 13, "id": 223, "prompt": "Sở hữu được hiểu là:", "options": {"A": "Quan hệ giữa con người với con người trong quá trình sản xuất và tái sản xuất xã hội trên cơ sở chiếm hữu nguồn lực của quá trình sản xuất", "B": "Quan hệ giữa con người với tự nhiên trong quá trình sản xuất và tái sản xuất xã hội trên cơ sở chiếm hữu nguồn lực của quá trình sản xuất", "C": "Quan hệ giữa người với người trong quản lý sản xuất", "D": "Quan hệ giữa người với người trong phân phối sản phẩm"}, "answer": "A"}, {"chapter": "Chương 5", "num": 14, "id": 224, "prompt": "Sở hữu chịu sự quy định trực tiếp của:", "options": {"A": "Quan hệ sản xuất", "B": "Trình độ lực lượng sản xuất", "C": "Cơ sở hạ tầng", "D": "Kiến trúc thượng tầng"}, "answer": "B"}, {"chapter": "Chương 5", "num": 15, "id": 225, "prompt": "Nội dung kinh tế của sở hữu được biểu hiện ở:", "options": {"A": "Lợi ích kinh tế mà các chủ thể sở hữu được hưởng thụ", "B": "Quyền hạn của các chủ thể sở hữu", "C": "Địa vị của các chủ thể sở hữu", "D": "Những quy định mang tính chất pháp luật về quyền hạn và nghĩa vụ của chủ thể sở hữu"}, "answer": "A"}, {"chapter": "Chương 5", "num": 16, "id": 226, "prompt": "Nội dung pháp lý của sở hữu được biểu hiện ở:", "options": {"A": "Lợi ích mà các chủ thể sở hữu được biểu hiện ở", "B": "Lợi ích kinh tế mà chủ thể sở hữu được hưởng thụ", "C": "Địa vị của các chủ thể sở hữu thu được từ đối tượng sở hữu", "D": "Những quy định mang tính chất pháp luật về quyền hạn và nghĩa vụ của chủ thể sở hữu"}, "answer": "D"}, {"chapter": "Chương 5", "num": 17, "id": 227, "prompt": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam là nền kinh tế nhiều thành phần, trong đó:", "options": {"A": "Kinh tế Nhà nước đóng vai trò chủ đạo", "B": "Kinh tế tư nhân đóng vai trò chủ đạo", "C": "Kinh tế tư bản nhà nước đóng vai trò chủ đạo", "D": "Kinh tế có vốn đầu tư nước ngoài đóng vai trò chủ đạo"}, "answer": "A"}, {"chapter": "Chương 5", "num": 18, "id": 228, "prompt": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam là nền kinh tế nhiều thành phần, trong đó:", "options": {"A": "Kinh tế Nhà nước là động lực quan trọng", "B": "Kinh tế tư nhân là động lực quan trọng", "C": "Kinh tế tư bản nhà nước là động lực quan trọng", "D": "Kinh tế có vốn đầu tư nước ngoài là động lực quan trọng"}, "answer": "B"}, {"chapter": "Chương 5", "num": 19, "id": 229, "prompt": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam lấy:", "options": {"A": "Kinh tế nhà nước làm chủ đạo, kinh tế tư nhân là động lực quan trọng", "B": "Kinh tế Nhà nước là chủ đạo, kinh tế có vốn đầu tư nước ngoài là động lực quan trọng", "C": "Kinh tế tư nhân là chủ đạo, kinh tế nhà nước là động lực quan trọng", "D": "Kinh tế tư nhân là chủ đạo, cùng với kinh tế có vốn đầu tư nước ngoài là động lực quan trọng"}, "answer": "A"}, {"chapter": "Chương 5", "num": 20, "id": 230, "prompt": "Để đảm bảo đúng định hướng xã hội chủ nghĩa của nền kinh tế thị trường cần phải:", "options": {"A": "Lấy kinh tế nhà nước làm chủ đạo, kết hợp với kinh tế tư nhân để trở thành nền tảng vững chắc của nền kinh tế quốc dân", "B": "Lấy kinh tế Nhà nước là chủ đạo, cùng với kinh tế tập thể ngày càng trở thành nền tảng vững chắc của nền kinh tế quốc dân", "C": "Lấy kinh tế Nhà nước là chủ đạo, cùng với kinh tế cá thể ngày càng trở thành nền tảng vững chắc của nền kinh tế quốc dân", "D": "Lấy kinh tế tư nhân là chủ đạo, cùng nhà nước ngày càng trở thành nền tảng vững chắc của nền kinh tế quốc dân"}, "answer": "B"}, {"chapter": "Chương 5", "num": 21, "id": 231, "prompt": "Chọn đáp án Đúng:", "options": {"A": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam lấy kinh tế nhà nước đóng vai trò chủ đạo, kết hợp với kinh tế tư nhân để trở thành nền tảng vững chắc của nền kinh tế quốc dân", "B": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam lấy kinh tế Nhà nước đóng vai trò chủ đạo chủ đạo, cùng với kinh tế tập thể ngày càng trở thành nền tảng vững chắc của nền kinh tế quốc dân", "C": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam lấy kinh tế Nhà nước là chủ đạo, cùng với kinh tế cá thể ngày càng trở thành nền tảng vững chắc của nền kinh tế quốc dân", "D": "Nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam lấy kinh tế tư nhân là chủ đạo, cùng nhà nước ngày càng trở thành nền tảng vững chắc của nền kinh tế quốc dân"}, "answer": "B"}, {"chapter": "Chương 5", "num": 22, "id": 232, "prompt": "Chọn đáp án SAI: Trong quan hệ quản lý, nền kinh tế thị trường định hướng xã hội chủ nghĩa là nền kinh tế:", "options": {"A": "Do nhà nước quản lý và thực hành cơ chế quản lý", "B": "Đặt dưới sự lãnh đạo của Đảng cộng sản", "C": "Đặt dưới sự quản lý của Đảng cộng sản", "D": "Có sự giám sát của nhân dân"}, "answer": "C"}, {"chapter": "Chương 5", "num": 23, "id": 233, "prompt": "Quan hệ phân phối bị chi phối và quyết định bởi:", "options": {"A": "Trình độ của lực lượng sản xuất", "B": "Lợi ích kinh tế của chủ thể kinh tế", "C": "Quan hệ sở hữu về tư liệu sản xuất", "D": "Quan hệ tổ chức quản lý"}, "answer": "C"}, {"chapter": "Chương 5", "num": 24, "id": 234, "prompt": "Quan hệ sở hữu về tư liệu sản xuất quyết định:", "options": {"A": "Quan hệ phân phối", "B": "Trình độ lực lượng sản xuất", "C": "Tính chất của lực lượng sản xuất", "D": "Sự phát triển của phương thức sản xuất"}, "answer": "A"}, {"chapter": "Chương 5", "num": 25, "id": 235, "prompt": "Hình thức phân phối nào không phản ánh tính định hướng xã hội chủ nghĩa của nền kinh tế thị trường:", "options": {"A": "Phân phối theo lao động", "B": "Phân phối theo tài sản", "C": "Phân phối theo hiệu quả kinh tế", "D": "Phân phối theo phúc lợi"}, "answer": "B"}, {"chapter": "Chương 5", "num": 26, "id": 236, "prompt": "Trong nền kinh tế thị trường định hướng xã hội chủ nghĩa ở nước ta, hình thức phân phối nào là chủ đạo:", "options": {"A": "Phân phối theo lao động", "B": "Phân phối theo tài sản", "C": "Phân phối theo cổ phần", "D": "Phân phối theo phúc lợi"}, "answer": "A"}, {"chapter": "Chương 5", "num": 27, "id": 237, "prompt": "Tính định hướng xã hội chủ nghĩa của nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam được thể hiện ở đặc trưng nào?", "options": {"A": "Quan hệ sở hữu", "B": "Quan hệ giữa gắn tăng trưởng kinh tế với công bằng xã hội", "C": "Quan hệ quản lý kinh tế", "D": "Quan hệ giữa gắn tăng trưởng kinh tế với văn hóa - xã hội"}, "answer": "B"}, {"chapter": "Chương 5", "num": 28, "id": 238, "prompt": "Chọn đáp án SAI: Đặc trưng gắn tăng trưởng kinh tế với công bằng xã hội của nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam được thể hiện ở?", "options": {"A": "Việc thực hiện gắn tăng trưởng kinh tế với công bằng xã hội", "B": "Việc thực hiện gắn tăng trưởng kinh tế với phát triển văn hóa - xã hội", "C": "Việc thực hiện gắn tăng trưởng kinh tế với tiến bộ và công bằng xã hội ngay trong từng chính sách, chiến lược, quy hoạch, kế hoạch, ngay trong từng giai đoạn phát triển", "D": "Việc thực hiện gắn tăng trưởng kinh tế với tăng sự phân hóa giai cấp trong xã hội"}, "answer": "D"}, {"chapter": "Chương 5", "num": 29, "id": 239, "prompt": "Việc gắn tăng trưởng kinh tế với công bằng xã hội được thực hiện như thế nào trong nền kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam?", "options": {"A": "Chỉ thực hiện ở giai đoạn đầu của thời kỳ quá độ lên chủ nghĩa xã hội", "B": "Chỉ thực hiện khi nước ta đã có nền kinh tế phát triển cao", "C": "Thực hiện ở bất cứ giai đoạn nào, ở mỗi chính sách xã hội, ở việc giải quyết các vấn đề xã hội", "D": "Chỉ thực hiện trong một lĩnh vực, ở một giai đoạn phát triển nhất định"}, "answer": "C"}, {"chapter": "Chương 5", "num": 30, "id": 240, "prompt": "Thể chế là gì?", "options": {"A": "Là những quy tắc, luật pháp, bộ máy quản lý và cơ chế vận hành nhằm điều chỉnh các hoạt động của con người trong chế độ xã hội phong kiến", "B": "Là những quy tắc, luật pháp, bộ máy quản lý và cơ chế vận hành nhằm điều chỉnh các hoạt động của con người trong một chế độ xã hội", "C": "Là những quy tắc, luật pháp, bộ máy quản lý và cơ chế vận hành nhằm điều chỉnh các hoạt động của con người trong chế độ xã hội tư bản chủ nghĩa", "D": "Là những quy tắc, luật pháp, bộ máy quản lý và cơ chế vận hành nhằm điều chỉnh các hoạt động của con người trong chế độ xã hội xã hội chủ nghĩa"}, "answer": "B"}, {"chapter": "Chương 5", "num": 31, "id": 241, "prompt": "Thể chế kinh tế là gì?", "options": {"A": "Là hệ thống bộ máy quản lý nhằm điều chỉnh hành vi của một số chủ thể kinh tế", "B": "Là hệ thống quy tắc và cơ chế vận hành nhằm điều chỉnh hành vi của một số các quan hệ kinh tế", "C": "Là các quy luật chi phối nền kinh tế", "D": "Là hệ thống quy tắc, luật pháp, bộ máy quản lý và cơ chế vận hành nhằm điều chỉnh hành vi của các chủ thể kinh tế, các hành vi sản xuất kinh doanh và các quan hệ kinh tế"}, "answer": "D"}, {"chapter": "Chương 5", "num": 32, "id": 242, "prompt": "Chọn đáp án ĐÚNG về hệ thống thể chế kinh tế thị trường định hướng xã hội chủ nghĩa ở nước ta:", "options": {"A": "Hệ thống thể chế kinh tế thị trường định hướng xã hội chủ nghĩa ở nước ta chưa đồng bộ", "B": "Hệ thống thể chế kinh tế thị trường định hướng xã hội chủ nghĩa ở nước ta chưa đầy đủ", "C": "Hệ thống thể chế kinh tế thị trường định hướng xã hội chủ nghĩa ở nước ta còn kém hiệu lực, hiệu quả", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 33, "id": 243, "prompt": "Hoàn thiện thể chế kinh tế thị trường định hướng xã hội chủ nghĩa ở Việt Nam gồm những nội dung nào:", "options": {"A": "Hoàn thiện thể chế về sở hữu và phát triển các thành phần kinh tế", "B": "Hoàn thiện thể chế để phát triển đồng bộ các loại thị trường; đảm bảo gắn tăng trưởng kinh tế với công bằng xã hội", "C": "Hoàn thiện thể chế để thúc đẩy hội nhập kinh tế quốc tế; nâng cao năng lực hệ thống chính trị", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 34, "id": 244, "prompt": "Các bộ phận cơ bản của thể chế kinh tế bao gồm:", "options": {"A": "Hệ thống pháp luật về kinh tế của Nhà Nước và các quy tắc xã hội được Nhà nước thừa nhận", "B": "Hệ thống các chủ thể thực hiện các hoạt động kinh tế", "C": "Cơ chế, phương pháp, thủ tục thực hiện các quy định và vận hành nền kinh tế", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 35, "id": 245, "prompt": "Phải hoàn thiện thể chế kinh tế thị trường định hướng xã hội chủ nghĩa là do:", "options": {"A": "Hệ thống thể chế còn chưa đồng bộ", "B": "Hệ thống thể chế chưa đầy đủ", "C": "Hệ thống thể chế còn kém hiệu lực, hiệu quả", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 36, "id": 246, "prompt": "Trong quá trình tồn tại của con người và đời sống xã hội thì:", "options": {"A": "Lợi ích kinh tế quyết định thúc đẩy hoạt động của mỗi cá nhân, tổ chức và xã hội", "B": "Lợi ích tinh thần quyết định thúc đẩy hoạt động của mỗi cá nhân, tổ chức và xã hội", "C": "Lợi ích cá nhân quyết định thúc đẩy hoạt động của mỗi cá nhân, tổ chức và xã hội", "D": "Lợi ích nhóm quyết định thúc đẩy hoạt động của mỗi cá nhân, tổ chức và xã hội"}, "answer": "A"}, {"chapter": "Chương 5", "num": 37, "id": 247, "prompt": "Xét về bản chất, lợi ích phản ánh mục đích và động cơ của các quan hệ giữa các chủ thể trong nền sản xuất xã hội là:", "options": {"A": "Lợi ích tinh thần", "B": "Lợi ích cá nhân", "C": "Lợi ích kinh tế", "D": "Lợi ích nhóm"}, "answer": "C"}, {"chapter": "Chương 5", "num": 38, "id": 248, "prompt": "Điền vào chỗ trống: Ph. Ăngghen viết: \"Những … của một xã hội nhất định nào đó biểu hiện trước hết dưới hình thái lợi ích\".", "options": {"A": "Quan hệ xã hội", "B": "Lợi ích kinh tế", "C": "Quan hệ kinh tế", "D": "Lợi ích tinh thần"}, "answer": "C"}, {"chapter": "Chương 5", "num": 39, "id": 249, "prompt": "Tính thống nhất của quan hệ lợi ích kinh tế được thể hiện:", "options": {"A": "Lợi ích của chủ thể này được thực hiện thì lợi ích của chủ thể khác cũng được thực hiện", "B": "Thu nhập của chủ thể này tăng thì thu nhập của chủ thể khác giảm", "C": "Việc thực hiện lợi ích của chủ thể này sẽ làm tổn hại đến lợi ích của chủ thể khác", "D": "Không có đáp án đúng"}, "answer": "A"}, {"chapter": "Chương 5", "num": 40, "id": 250, "prompt": "Mâu thuẫn trong quan hệ lợi ích kinh tế được thể hiện:", "options": {"A": "Lợi ích của chủ thể này được thực hiện thì lợi ích của chủ thể khác cũng được thực hiện", "B": "Thu nhập của chủ thể này tăng thì thu nhập của chủ thể khác cũng tăng", "C": "Việc thực hiện lợi ích của chủ thể này sẽ làm tổn hại đến lợi ích của chủ thể khác", "D": "Không có đáp án đúng"}, "answer": "C"}, {"chapter": "Chương 5", "num": 41, "id": 251, "prompt": "Chọn đáp án đúng: Quan hệ lợi ích kinh tế giữa người lao động và người sử dụng lao động:", "options": {"A": "Luôn thống nhất với nhau", "B": "Luôn mâu thuẫn với nhau", "C": "Vừa thống nhất, vừa mâu thuẫn với nhau", "D": "Luôn bài trừ nhau"}, "answer": "C"}, {"chapter": "Chương 5", "num": 42, "id": 252, "prompt": "Các quan hệ lợi ích kinh tế:", "options": {"A": "Luôn thống nhất với nhau", "B": "Luôn mâu thuẫn với nhau", "C": "Vừa thống nhất, vừa mâu thuẫn với nhau", "D": "Luôn bài trừ nhau"}, "answer": "C"}, {"chapter": "Chương 5", "num": 43, "id": 253, "prompt": "Trong các hình thức lợi ích kinh tế, lợi ích nào là cơ sở, nền tảng của các lợi ích khác?", "options": {"A": "Lợi ích xã hội", "B": "Lợi ích cá nhân", "C": "Lợi ích doanh nghiệp", "D": "Lợi ích nhóm"}, "answer": "B"}, {"chapter": "Chương 5", "num": 44, "id": 254, "prompt": "Trong mối quan hệ giữa lợi ích cá nhân và lợi ích xã hội thì:", "options": {"A": "Lợi ích xã hội là nền tảng của lợi ích cá nhân", "B": "Lợi ích xã hội đóng vai trò định hướng cho lợi ích cá nhân", "C": "Lợi ích cá nhân đóng vai trò định hướng cho lợi ích xã hội", "D": "Lợi ích xã hội là cơ sở cho lợi ích cá nhân"}, "answer": "B"}, {"chapter": "Chương 5", "num": 45, "id": 255, "prompt": "Trong mối quan hệ giữa lợi ích cá nhân và lợi ích xã hội thì:", "options": {"A": "Lợi ích cá nhân là cơ sở, nền tảng của lợi ích xã hội", "B": "Lợi ích cá nhân đóng vai trò định hướng cho lợi ích xã hội", "C": "Lợi ích xã hội là nền tảng cho lợi ích cá nhân", "D": "Lợi ích xã hội là cơ sở cho lợi ích cá nhân"}, "answer": "A"}, {"chapter": "Chương 5", "num": 46, "id": 256, "prompt": "Nhân tố nào sau đây ảnh hưởng đến quan hệ lợi ích kinh tế:", "options": {"A": "Trình độ phát triển của lực lượng sản xuất", "B": "Địa vị của chủ thể trong hệ thống quan hệ sản xuất xã hội", "C": "Chính sách phân phối thu nhập của nhà nước và hội nhập kinh tế quốc tế", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 47, "id": 257, "prompt": "Trong nền kinh tế thị trường định hướng xã hội chủ nghĩa, phương thức cơ bản để thực hiện lợi ích kinh tế là:", "options": {"A": "Theo nguyên tắc thị trường", "B": "Theo bình quân chủ nghĩa", "C": "Theo chính sách của nhà nước", "D": "Theo vai trò của các tổ chức xã hội"}, "answer": "A"}, {"chapter": "Chương 5", "num": 48, "id": 258, "prompt": "Lợi ích kinh tế là kết quả trực tiếp của:", "options": {"A": "Sở hữu tư liệu sản xuất", "B": "Quản lý tư liệu sản xuất", "C": "Phân phối thu nhập", "D": "Quan hệ trao đổi"}, "answer": "C"}, {"chapter": "Chương 5", "num": 49, "id": 259, "prompt": "Vai trò của nhà nước trong đảm bảo hài hoà các quan hệ lợi ích:", "options": {"A": "Bảo vệ lợi ích hợp pháp, tạo môi trường thuận lợi cho các hoạt động tìm kiếm lợi ích của các chủ thể kinh tế", "B": "Điều hoà lợi ích giữa cá nhân-doanh nghiệp-xã hội; Giải quyết mâu thuẫn trong quan hệ lợi ích kinh tế", "C": "Kiểm soát, ngăn ngừa các quan hệ lợi ích có ảnh hưởng tiêu cực đối với sự phát triển xã hội", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 5", "num": 50, "id": 260, "prompt": "Nguyên tắc giải quyết mâu thuẫn giữa các lợi ích kinh tế là:", "options": {"A": "Có sự tham gia của các bên liên quan", "B": "Có nhân nhượng", "C": "Đặt lợi ích của đất nước lên trên hết", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 6", "num": 1, "id": 261, "prompt": "Cách mạng công nghiệp là:", "options": {"A": "Là những bước phát triển nhảy vọt về chất trình độ của tư liệu lao động trên cơ sở những phát minh đột phá về kỹ thuật và công nghệ", "B": "Là những bước phát triển về lượng của tư liệu lao động trên cơ sở những phát minh đột phá về kỹ thuật và công nghệ", "C": "Là những bước phát triển nhảy vọt về chất trình độ của các đối tượng lao động", "D": "Là những bước phát triển nhảy vọt về chất trình độ của tư liệu lao động trên cơ sở những phương thức sản xuất nông nghiệp"}, "answer": "A"}, {"chapter": "Chương 6", "num": 2, "id": 262, "prompt": "Chọn đáp án đúng nhất, cách mạng công nghiệp kéo theo sự thay đổi căn bản về:", "options": {"A": "Phân công lao động xã hội", "B": "Năng suất lao động", "C": "Đối tượng lao động", "D": "Phân công lao động xã hội và năng suất lao động"}, "answer": "D"}, {"chapter": "Chương 6", "num": 3, "id": 263, "prompt": "C.Mác đã khái quát tính quy luật của cách mạng công nghiệp lần thứ nhất lần lượt qua ba giai đoạn phát triển là:", "options": {"A": "Hiệp tác giản đơn, công trường thủ công và đại công nghiệp", "B": "Hiệp tác giản đơn, đại công nghiệp và công trường thủ công", "C": "Đại công nghiệp, công trường thủ công và hiệp tác giản đơn", "D": "Công trường thủ công, hiệp tác giản đơn và đại công nghiệp"}, "answer": "A"}, {"chapter": "Chương 6", "num": 4, "id": 264, "prompt": "Nội dung cơ bản của cuộc cách mạng công nghiệp lần thứ nhất:", "options": {"A": "Sử dụng chủ yếu năng lượng nước và hơi nước để cơ khí hoá sản xuất", "B": "Sử dụng năng lượng điện và động cơ điện để tạo ra dây chuyền sản xuất hàng loạt", "C": "Sử dụng công nghệ thông tin và máy tính để tự động hoá sản xuất", "D": "Tất cả các đáp án"}, "answer": "A"}, {"chapter": "Chương 6", "num": 5, "id": 265, "prompt": "Cuộc cách mạng công nghiệp lần thứ mấy đã hình thành giai cấp cơ bản trong xã hội là tư sản và vô sản?", "options": {"A": "Cuộc cách mạng lần thứ nhất", "B": "Cuộc cách mạng lần thứ hai", "C": "Cuộc cách mạng lần thứ ba", "D": "Cuộc cách mạng lần thứ tư"}, "answer": "A"}, {"chapter": "Chương 6", "num": 6, "id": 266, "prompt": "Điền vào chỗ trống, C.Mác đã dự báo: \"Theo đà phát triển của …, việc tạo ra của cải sẽ trở nên ít phụ thuộc vào thời gian lao động và số lượng lao động đã chi phí mà phụ thuộc vào việc ứng dụng khoa học ấy vào sản xuất\"", "options": {"A": "Đại công nghiệp", "B": "Phương thức sản xuất lạc hậu", "C": "Phương thức sản xuất hiện đại", "D": "Nền sản xuất thủ công nghiệp"}, "answer": "A"}, {"chapter": "Chương 6", "num": 7, "id": 267, "prompt": "Tìm đáp án đúng nhất, theo C.Mác, quá trình sản xuất trong cuộc cách mạng công nghiệp lần thứ nhất lần lượt diễn ra:", "options": {"A": "Từ sản xuất nhỏ, thủ công, phân tán lên sản xuất lớn, tập trung, hiện đại", "B": "Từ sản xuất thủ công lên sản xuất hiện đại", "C": "Từ sản xuất phân tán lên sản xuất tập trung", "D": "Từ sản xuất lớn chuyển sang sản xuất nhỏ"}, "answer": "A"}, {"chapter": "Chương 6", "num": 8, "id": 268, "prompt": "Cuộc cách mạng công nghiệp lần thứ hai diễn ra trong thời gian nào?", "options": {"A": "Thế kỷ XVI đến giữa thế kỷ XVII", "B": "Giữa thế kỷ XVII đến giữa thế kỷ XVIII", "C": "Nửa cuối thế kỷ XVIII đến giữa thế kỷ XIX", "D": "Nửa cuối thế kỷ XIX đến đầu thế kỷ XX"}, "answer": "D"}, {"chapter": "Chương 6", "num": 9, "id": 269, "prompt": "Nội dung cơ bản của cuộc cách mạng công nghiệp lần thứ hai:", "options": {"A": "Sử dụng chủ yếu năng lượng nước và hơi nước để cơ khí hoá sản xuất", "B": "Sử dụng chủ yếu năng lượng điện và động cơ điện để tạo ra dây chuyền sản xuất hàng loạt", "C": "Sử dụng công nghệ thông tin và máy tính để tự động hoá sản xuất", "D": "Sử dụng chủ yếu năng lượng nước, hơi nước để cơ khí hóa sản xuất đồng thời sử dụng công nghệ thông tin và máy tính để tự động hóa sản xuất"}, "answer": "B"}, {"chapter": "Chương 6", "num": 10, "id": 270, "prompt": "Cuộc cách mạng công nghiệp lần thứ nhất (1.0) được khởi phát từ nước nào?", "options": {"A": "Anh", "B": "Mỹ", "C": "Pháp", "D": "Đức"}, "answer": "A"}, {"chapter": "Chương 6", "num": 11, "id": 271, "prompt": "Cuộc cách mạng công nghiệp lần thứ nhất diễn ra trong thời gian nào?", "options": {"A": "Thế kỷ XVI đến giữa thế kỷ XVII", "B": "Giữa thế kỷ XVII đến giữa thế kỷ XVIII", "C": "Giữa thế kỷ XVIII đến giữa thế kỷ XIX", "D": "Giữa thế kỷ XIX đến đầu thế kỷ XX"}, "answer": "C"}, {"chapter": "Chương 6", "num": 12, "id": 272, "prompt": "Cuộc cách mạng công nghiệp lần thứ 1 được diễn ra đầu tiên tại ngành nào?", "options": {"A": "Ngành dệt", "B": "Ngành cơ khí", "C": "Ngành giày da", "D": "Ngành khai thác khoáng sản"}, "answer": "A"}, {"chapter": "Chương 6", "num": 13, "id": 273, "prompt": "Chọn đáp án đúng nhất, cuộc cách mạng công nghiệp lần thứ nhất bắt đầu từ:", "options": {"A": "Bắt đầu từ ngành dệt ở nước Anh", "B": "Bắt đầu từ ngành cơ khí ở nước Anh", "C": "Bắt đầu từ ngành dệt ở nước Pháp", "D": "Bắt đầu từ ngành dệt ở nước Đức"}, "answer": "A"}, {"chapter": "Chương 6", "num": 14, "id": 274, "prompt": "Cuộc cách mạng công nghiệp lần thứ tư (4.0) lần đầu tiên được đề cập tại:", "options": {"A": "Mỹ", "B": "Đức", "C": "Anh", "D": "Nhật Bản"}, "answer": "B"}, {"chapter": "Chương 6", "num": 15, "id": 275, "prompt": "Đặc trưng cơ bản của cuộc cách mạng công nghiệp lần thứ tư:", "options": {"A": "Sử dụng năng lượng nước và hơi nước để cơ khí hoá sản xuất", "B": "Sử dụng năng lượng điện và động cơ điện để tạo ra dây chuyền sản xuất hàng loạt", "C": "Liên kết giữa thế giới thực và ảo để thực hiện công việc thông minh và hiệu quả nhất", "D": "Sử dụng công nghệ thông tin và máy tính để tự động hoá sản xuất"}, "answer": "C"}, {"chapter": "Chương 6", "num": 16, "id": 276, "prompt": "Cuộc cách mạng công nghiệp lần thứ ba diễn ra trong thời gian nào?", "options": {"A": "Giữa thế kỷ XVIII đến giữa thế kỷ XIX", "B": "Nửa cuối thế kỷ XIX đến thập niên 50 của thế kỷ XX", "C": "Những năm đầu thập niên 60 của thế kỷ XX đến cuối thế kỷ XX", "D": "Đầu thế kỷ XXI"}, "answer": "C"}, {"chapter": "Chương 6", "num": 17, "id": 277, "prompt": "Đặc trưng cơ bản của cuộc cách mạng công nghiệp lần thứ ba:", "options": {"A": "Sử dụng năng lượng nước và hơi nước để cơ khí hoá sản xuất", "B": "Sử dụng năng lượng điện và động cơ điện để tạo ra dây chuyền sản xuất hàng loạt", "C": "Sử dụng công nghệ thông tin và máy tính để tự động hoá sản xuất", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 6", "num": 18, "id": 278, "prompt": "Thuật ngữ \"cách mạng công nghiệp lần thứ tư (4.0)\" được đề cập lần đầu tiên vào năm nào?", "options": {"A": "2010", "B": "2011", "C": "2012", "D": "2014"}, "answer": "B"}, {"chapter": "Chương 6", "num": 19, "id": 279, "prompt": "Cách mạng công nghiệp lần thứ tư tác động đến phương thức quản trị và điều hành của nhà nước như thế nào?", "options": {"A": "Nhà nước điều hành và quản trị thông qua hạ tầng số và internet truyền thống", "B": "Nhà nước điều hành và quản trị thông qua hệ thống hành chính", "C": "Nhà nước điều hành và quản trị thông qua thư tín", "D": "Nhà nước điều hành và quản trị thông qua con người"}, "answer": "A"}, {"chapter": "Chương 6", "num": 20, "id": 280, "prompt": "Vai trò của cách mạng công nghiệp đối với phát triển?", "options": {"A": "Thúc đẩy lực lượng sản xuất phát triển", "B": "Thúc đẩy hoàn thiện quan hệ sản xuất", "C": "Thúc đẩy đổi mới phương thức quản trị phát triển", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 6", "num": 21, "id": 281, "prompt": "Tác động tiêu cực của cuộc cách mạng công nghiệp 4.0 là:", "options": {"A": "Nạn thất nghiệp tăng cao", "B": "Phân hóa thu nhập ngày càng gay gắt hơn", "C": "Gia tăng bất bình đẳng trong xã hội", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 6", "num": 22, "id": 282, "prompt": "Tác động của cuộc cách mạng công nghiệp 4.0 đến nền kinh tế toàn cầu:", "options": {"A": "Tác động nhỏ", "B": "Tác động lớn và đa diện", "C": "Tác động một mặt", "D": "Tác động nhỏ và tác động một mặt"}, "answer": "B"}, {"chapter": "Chương 6", "num": 23, "id": 283, "prompt": "Mô hình công nghiệp hoá kiểu Liên Xô (cũ) được bắt đầu từ:", "options": {"A": "Ưu tiên phát triển ngành công nghiệp nặng", "B": "Ưu tiên phát triển ngành công nghiệp nhẹ", "C": "Ưu tiên phát triển công nghiệp dệt may", "D": "Ưu tiên phát triển công nghiệp dịch vụ"}, "answer": "A"}, {"chapter": "Chương 6", "num": 24, "id": 284, "prompt": "Mô hình công nghiệp hoá của Nhật Bản và các nước công nghiệp mới (NICs) được tiến hành theo:", "options": {"A": "Chiến lược phát triển công nghiệp hóa đẩy mạnh nhập khẩu", "B": "Chiến lược công nghiệp hóa tiệm tiến theo từng bước nhỏ", "C": "Chiến lược công nghiệp hóa rút ngắn, đẩy mạnh xuất khẩu, phát triển sản xuất trong nước để thay thế hàng nhập khẩu", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 6", "num": 25, "id": 285, "prompt": "Chọn đáp án đúng nhất: Nhật Bản và các nước NICs đã tiếp thu và phát triển khoa học - công nghệ theo con đường nào?", "options": {"A": "Thông qua đầu tư nghiên cứu, chế tạo và hoàn thiện dần trình độ công nghệ", "B": "Tiếp nhận chuyển giao công nghệ hiện đại từ các nước phát triển", "C": "Xây dựng chiến lược phát triển khoa học - công nghệ nhiều tầng, kết hợp cả công nghệ truyền thống và hiện đại", "D": "Tự nghiên cứu công nghệ, không tiếp nhận chuyển giao từ các nước"}, "answer": "C"}, {"chapter": "Chương 6", "num": 26, "id": 286, "prompt": "Mô hình công nghiệp hóa cổ điển diễn ra trong khoảng bao nhiêu năm?", "options": {"A": "60 - 80 năm", "B": "80 - 100 năm", "C": "100 - 200 năm", "D": "Trên 200 năm"}, "answer": "A"}, {"chapter": "Chương 6", "num": 27, "id": 287, "prompt": "Thế nào là công nghiệp hóa, hiện đại hóa?", "options": {"A": "Thủ công sang áp dụng công nghệ, phương tiện, phương pháp tiên tiến hiện đại.", "B": "Là quá trình chuyển đổi căn bản, toàn diện từ thủ công sang áp dụng công nghệ, phương tiện, phương pháp tiên tiến, hiện đại", "C": "Là quá trình chuyển đổi căn bản, toàn diện các hoạt động sản xuất kinh doanh từ thủ công sang áp dụng công nghệ, phương tiện, phương pháp tiên tiến, hiện đại", "D": "Không có trong đề cương, Chúc bạn thi tốt nhé by: tungmarketing.id.vn"}, "answer": "B"}, {"chapter": "Chương 6", "num": 28, "id": 288, "prompt": "Đặc điểm của công nghiệp hoá, hiện đại hoá (CNH, HĐH) ở Việt Nam:", "options": {"A": "CNH, HĐH theo định hướng xã hội chủ nghĩa, thực hiện mục tiêu \"dân giàu, nước mạnh, dân chủ, công bằng, văn minh\"", "B": "CNH, HĐH gắn với phát triển kinh tế tri thức", "C": "CNH, HĐH trong điều kiện kinh tế thị trường định hướng xã hội chủ nghĩa; trong bối cảnh toàn cầu hoá kinh tế", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 6", "num": 29, "id": 289, "prompt": "Thực hiện công nghiệp hoá, hiện đại hoá ở Việt Nam là để:", "options": {"A": "Xây dựng cơ sở vật chất - kỹ thuật của Chủ nghĩa xã hội", "B": "Phát triển lực lượng sản xuất", "C": "Tăng cường, củng cố khối liên minh công nhân, nông dân và trí thức; đồng thời nâng cao vai trò lãnh đạo của giai cấp công nhân", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 6", "num": 30, "id": 290, "prompt": "Đảng và Nhà nước ta xác định nhiệm vụ trung tâm trong suốt thời kỳ quá độ là:", "options": {"A": "Phát triển nền kinh tế bao cấp", "B": "Xây dựng kinh tế tư nhân trở thành thành phần kinh tế chủ đạo", "C": "Công nghiệp hóa, hiện đại hóa đất nước", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 6", "num": 31, "id": 291, "prompt": "Trong nền kinh tế tri thức:", "options": {"A": "Tri thức là yếu tố phụ đối với lực lượng sản xuất", "B": "Tri thức chưa phản ánh trình độ phát triển của lực lượng sản xuất", "C": "Tri thức trở thành lực lượng sản xuất trực tiếp", "D": "Tri thức chưa trở thành lực lượng sản xuất trực tiếp"}, "answer": "C"}, {"chapter": "Chương 6", "num": 32, "id": 292, "prompt": "Trong nền kinh tế tri thức:", "options": {"A": "Nguồn nhân lực nhanh chóng được tri thức hoá", "B": "Thông tin trở thành tài nguyên quan trọng nhất của nền kinh tế", "C": "Tri thức trở thành lực lượng sản xuất trực tiếp", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 6", "num": 33, "id": 293, "prompt": "Để Công nghiệp hoá, hiện đại hoá ở Việt Nam thích ứng với cuộc cách mạng công nghiệp lần thứ 4, chúng ta cần phải:", "options": {"A": "Hoàn thiện thể chế, xây dựng nền kinh tế dựa trên nền tảng sáng tạo", "B": "Nắm bắt và đẩy mạnh việc ứng dụng những thành tựu của cuộc cách mạng công nghiệp 4.0", "C": "Chuẩn bị những điều kiện cần thiết để ứng phó với những tác động tiêu cực của cách mạng 4.0", "D": "Tất cả các đáp án"}, "answer": "D"}, {"chapter": "Chương 6", "num": 34, "id": 294, "prompt": "Cơ cấu kinh tế hợp lý, hiện đại, hiệu quả phải đáp ứng được yêu cầu nào?", "options": {"A": "Giữ nguyên phương thức sản xuất truyền thống cũ", "B": "Tập trung phát triển các nguồn lực trong nước, không chú trọng nguồn lực bên ngoài", "C": "Cho phép ứng dụng những thành tựu khoa học, công nghệ mới, hiện đại", "D": "Tất cả đáp án"}, "answer": "C"}, {"chapter": "Chương 6", "num": 35, "id": 295, "prompt": "Chọn đáp án ĐÚNG NHẤT: Để thích ứng với cách mạng công nghiệp lần thứ tư, trong lĩnh vực công nghiệp ở Việt Nam cần phải?", "options": {"A": "Ưu tiên phát triển tất cả các ngành, lĩnh vực công nghiệp hiện đại", "B": "Ưu tiên phát triển ngành công nghiệp cơ khí, chế tạo phục vụ cho nông nghiệp, công nghiệp chế biến, công nghiệp hàng tiêu dùng lịch", "C": "Ưu tiên phát triển các ngành dịch vụ như hàng không, logistic, du lịch", "D": "Ưu tiên phát triển các khu công nghiệp truyền thống"}, "answer": "B"}, {"chapter": "Chương 6", "num": 36, "id": 296, "prompt": "Trong hệ thống các cơ cấu kinh tế, cơ cấu kinh tế nào giữ vị trí quan trọng nhất:", "options": {"A": "Cơ cấu kinh tế vùng", "B": "Cơ cấu kinh tế thành phần", "C": "Cơ cấu kinh tế ngành", "D": "Cơ cấu kinh tế thành phần và cơ cấu kinh tế vùng"}, "answer": "C"}, {"chapter": "Chương 6", "num": 37, "id": 297, "prompt": "Hội nhập kinh tế quốc tế của một quốc gia là:", "options": {"A": "Là quá trình quốc gia đó thực hiện gắn kết nền kinh tế của mình với nền kinh tế thế giới dựa trên sự chia sẻ lợi ích đồng thời tuân thủ các chuẩn mực quốc tế chung", "B": "Là quá trình quốc gia đó chỉ thực hiện gắn kết kinh tế của mình với một quốc gia kém phát triển", "C": "Là quá trình quốc gia đó chỉ thực hiện gắn kết kinh tế của mình với nền kinh tế của một quốc gia phát triển hơn", "D": "Tất cả các đáp án"}, "answer": "A"}, {"chapter": "Chương 6", "num": 38, "id": 298, "prompt": "Lĩnh vực nào của toàn cầu hoá vừa là trung tâm, vừa là cơ sở và cũng là động lực thúc đẩy toàn cầu hoá các lĩnh vực khác?", "options": {"A": "Lĩnh vực chính trị", "B": "Lĩnh vực kinh tế", "C": "Lĩnh vực văn hoá", "D": "Lĩnh vực xã hội"}, "answer": "B"}, {"chapter": "Chương 6", "num": 39, "id": 299, "prompt": "Xét về vai trò của chủ thể tham gia hội nhập kinh tế quốc tế, chủ thể nào sau đây là lực lượng nòng cốt?", "options": {"A": "Nhà nước", "B": "Người dân", "C": "Doanh nghiệp và đội ngũ doanh nhân", "D": "Tất cả các đáp án"}, "answer": "C"}, {"chapter": "Chương 6", "num": 40, "id": 300, "prompt": "Toàn cầu hóa diễn ra trên nhiều phương diện, trong đó nổi trội nhất là:", "options": {"A": "Toàn cầu hóa về kinh tế", "B": "Toàn cầu hóa về chính trị", "C": "Toàn cầu hóa về văn hóa", "D": "Toàn cầu hóa về môi trường"}, "answer": "A"}, {"chapter": "Chương 6", "num": 41, "id": 301, "prompt": "Tìm đáp án SAI: Tác động tích cực của hội nhập kinh tế quốc tế?", "options": {"A": "Tạo động lực thúc đẩy chuyển dịch cơ cấu kinh tế theo hướng hợp lý, hiện đại và hiệu quả hơn", "B": "Nâng cao trình độ nguồn nhân lực và tiềm lực khoa học công nghệ quốc gia", "C": "Làm gia tăng sự phụ thuộc của nền kinh tế quốc gia vào thị trường bên ngoài", "D": "Tăng cơ hội cho các doanh nghiệp trong nước tiếp cận thị trường quốc tế"}, "answer": "C"}];
-
-    // APP STATE
-    let state = {
-      mode: 'study', // 'study', 'exam', 'wrong', 'starred'
-      activeList: [],
-      currentIndex: 0,
-      userAnswers: {}, // { qId: selectedOptLetter }
-      starred: JSON.parse(localStorage.getItem('ktct_starred') || '[]'),
-      wrongList: JSON.parse(localStorage.getItem('ktct_wrong') || '[]'),
-      history: JSON.parse(localStorage.getItem('ktct_history') || '{}'),
-      shuffleQ: false,
-      shuffleOpt: false,
-      selectedChapter: 'all',
-      searchKeyword: '',
-      soundEnabled: true,
-      examTimer: null,
-      examSecondsLeft: 1800,
-      examStartTime: null,
-      examFinished: false,
-    };
-
-    // AUDIO CONTEXT FOR SOUND EFFECTS
-    let audioCtx = null;
-    function playBeep(isCorrect) {
-      if (!state.soundEnabled) return;
-      try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        
-        if (isCorrect) {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-          osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.08); // A5
-          gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.28);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.28);
-        } else {
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
-          osc.frequency.setValueAtTime(164.81, audioCtx.currentTime + 0.1); // E3
-          gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.25);
-        }
-      } catch (e) {
-        console.warn('Audio error:', e);
-      }
-    }
-
-    // SHUFFLE HELPER
-    function shuffleArray(arr) {
-      const copy = [...arr];
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
-      }
-      return copy;
-    }
-
-    // FILTER QUESTIONS
-    function filterQuestions() {
-      let list = [...RAW_QUESTIONS];
-
-      // Filter by mode
-      if (state.mode === 'wrong') {
-        const wrongSet = new Set(state.wrongList);
-        list = list.filter(q => wrongSet.has(q.id));
-      } else if (state.mode === 'starred') {
-        const starSet = new Set(state.starred);
-        list = list.filter(q => starSet.has(q.id));
-      }
-
-      // Filter by chapter
-      if (state.selectedChapter !== 'all') {
-        list = list.filter(q => q.chapter === state.selectedChapter);
-      }
-
-      // Filter by search
-      if (state.searchKeyword) {
-        const kw = state.searchKeyword.toLowerCase();
-        list = list.filter(q => {
-          if (q.prompt.toLowerCase().includes(kw)) return true;
-          for (let opt in q.options) {
-            if (q.options[opt].toLowerCase().includes(kw)) return true;
-          }
-          return false;
-        });
-      }
-
-      // In Exam mode, take 40 questions by default if full list is large
-      if (state.mode === 'exam' && !state.examFinished) {
-        list = shuffleArray(list).slice(0, 40);
-      } else if (state.shuffleQ) {
-        list = shuffleArray(list);
-      }
-
-      state.activeList = list;
-      state.currentIndex = 0;
-      updateBadges();
-      renderPalette();
-      renderCurrentQuestion();
-      updateStats();
-    }
-
-    function updateBadges() {
-      document.getElementById('wrongCountBadge').textContent = state.wrongList.length;
-      document.getElementById('starredCountBadge').textContent = state.starred.length;
-    }
-
-    // RENDER CURRENT QUESTION
-    function renderCurrentQuestion() {
-      const q = state.activeList[state.currentIndex];
-
-      if (!q) {
-        document.getElementById('qPrompt').textContent = 'Không có câu hỏi nào trong danh sách hoặc bộ lọc!';
-        document.getElementById('optionsContainer').innerHTML = '';
-        document.getElementById('feedbackBox').style.display = 'none';
-        document.getElementById('qChapter').textContent = 'Trống';
-        document.getElementById('qId').textContent = 'ID: -';
-        document.getElementById('qIndexBadge').textContent = '0 / 0';
-        document.getElementById('prevBtn').disabled = true;
-        document.getElementById('nextBtn').disabled = true;
-        document.getElementById('revealBtn').disabled = true;
-        return;
-      }
-
-      document.getElementById('prevBtn').disabled = (state.currentIndex === 0);
-      document.getElementById('nextBtn').disabled = (state.currentIndex === state.activeList.length - 1);
-      document.getElementById('revealBtn').disabled = false;
-
-      // Meta
-      document.getElementById('qChapter').textContent = q.chapter;
-      document.getElementById('qId').textContent = `ID: ${q.id}`;
-      document.getElementById('qIndexBadge').textContent = `Câu ${state.currentIndex + 1} / ${state.activeList.length}`;
-      
-      const starBtn = document.getElementById('starToggleBtn');
-      const isStarred = state.starred.includes(q.id);
-      starBtn.textContent = isStarred ? '★' : '☆';
-      starBtn.classList.toggle('active', isStarred);
-
-      // Prompt
-      document.getElementById('qPrompt').textContent = q.prompt;
-
-      // Options
-      const container = document.getElementById('optionsContainer');
-      container.innerHTML = '';
-
-      let optionKeys = ['A', 'B', 'C', 'D'];
-      if (state.shuffleOpt) {
-        optionKeys = shuffleArray(optionKeys);
-      }
-
-      const selectedOpt = state.userAnswers[q.id];
-      const feedbackBox = document.getElementById('feedbackBox');
-      const feedbackText = document.getElementById('feedbackText');
-
-      optionKeys.forEach((key, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'opt-btn';
-        btn.dataset.key = key;
-
-        const keyBadge = document.createElement('span');
-        keyBadge.className = 'opt-key';
-        keyBadge.textContent = String.fromCharCode(65 + idx);
-
-        const textSpan = document.createElement('span');
-        textSpan.style.flex = '1';
-        textSpan.textContent = q.options[key];
-
-        btn.appendChild(keyBadge);
-        btn.appendChild(textSpan);
-
-        // Highlight logic
-        if (state.mode === 'study' || state.examFinished) {
-          if (selectedOpt) {
-            btn.classList.add('locked');
-            if (key === q.answer) {
-              btn.classList.add('correct');
-            } else if (key === selectedOpt) {
-              btn.classList.add('wrong');
-            }
-          }
-        } else {
-          // Exam in-progress mode
-          if (selectedOpt === key) {
-            btn.classList.add('selected');
-          }
-        }
-
-        btn.onclick = () => handleSelectOption(q, key);
-        container.appendChild(btn);
-      });
-
-      // Feedback display in Study Mode
-      if (selectedOpt && (state.mode === 'study' || state.examFinished)) {
-        feedbackBox.style.display = 'block';
-        if (selectedOpt === q.answer) {
-          feedbackBox.className = 'feedback-box correct';
-          feedbackText.textContent = `🎉 Chính xác! Đáp án đúng: ${q.answer}. ${q.options[q.answer]}`;
-        } else {
-          feedbackBox.className = 'feedback-box wrong';
-          feedbackText.textContent = `❌ Chưa đúng! Đáp án đúng là: ${q.answer}. ${q.options[q.answer]}`;
-        }
-      } else {
-        feedbackBox.style.display = 'none';
-        feedbackBox.className = 'feedback-box';
-      }
-
-      updatePaletteCurrent();
-    }
-
-    // HANDLE OPTION CLICK
-    function handleSelectOption(q, selectedKey) {
-      if (state.mode === 'study' && state.userAnswers[q.id]) {
-        return;
-      }
-
-      state.userAnswers[q.id] = selectedKey;
-      const isCorrect = (selectedKey === q.answer);
-
-      state.history[q.id] = { correct: isCorrect, timestamp: Date.now() };
-      localStorage.setItem('ktct_history', JSON.stringify(state.history));
-
-      if (!isCorrect) {
-        if (!state.wrongList.includes(q.id)) {
-          state.wrongList.push(q.id);
-          localStorage.setItem('ktct_wrong', JSON.stringify(state.wrongList));
-        }
-      } else {
-        if (state.mode === 'wrong') {
-          state.wrongList = state.wrongList.filter(id => id !== q.id);
-          localStorage.setItem('ktct_wrong', JSON.stringify(state.wrongList));
-        }
-      }
-
-      updateBadges();
-
-      if (state.mode === 'study' || state.examFinished) {
-        playBeep(isCorrect);
-      }
-
-      renderCurrentQuestion();
-      updatePaletteItem(q.id);
-      updateStats();
-
-      // Auto advance in exam mode
-      if (state.mode === 'exam' && !state.examFinished) {
-        if (state.currentIndex < state.activeList.length - 1) {
-          setTimeout(() => {
-            state.currentIndex++;
-            renderCurrentQuestion();
-          }, 200);
-        }
-      }
-    }
-
-    // PALETTE GRID
-    function renderPalette() {
-      const palette = document.getElementById('questionPalette');
-      palette.innerHTML = '';
-
-      state.activeList.forEach((q, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'q-palette-btn';
-        btn.id = `palette-item-${q.id}`;
-        btn.textContent = idx + 1;
-        btn.onclick = () => {
-          state.currentIndex = idx;
-          renderCurrentQuestion();
-        };
-        updatePaletteItemButton(btn, q);
-        palette.appendChild(btn);
-      });
-      updatePaletteCurrent();
-    }
-
-    function updatePaletteItemButton(btn, q) {
-      if (!btn) return;
-      btn.className = 'q-palette-btn';
-      if (state.starred.includes(q.id)) {
-        btn.classList.add('starred');
-      }
-
-      const ans = state.userAnswers[q.id];
-      if (ans) {
-        if (state.mode === 'exam' && !state.examFinished) {
-          btn.classList.add('answered');
-        } else {
-          if (ans === q.answer) {
-            btn.classList.add('correct');
-          } else {
-            btn.classList.add('wrong');
-          }
-        }
-      }
-    }
-
-    function updatePaletteItem(qId) {
-      const btn = document.getElementById(`palette-item-${qId}`);
-      const q = state.activeList.find(x => x.id === qId);
-      if (btn && q) {
-        updatePaletteItemButton(btn, q);
-      }
-    }
-
-    function updatePaletteCurrent() {
-      document.querySelectorAll('.q-palette-btn').forEach((btn, idx) => {
-        btn.classList.toggle('current', idx === state.currentIndex);
-      });
-    }
-
-    // STATS UPDATE
-    function updateStats() {
-      const total = state.activeList.length;
-      let answered = 0;
-      let correct = 0;
-      let wrong = 0;
-
-      state.activeList.forEach(q => {
-        const ans = state.userAnswers[q.id];
-        if (ans) {
-          answered++;
-          if (ans === q.answer) correct++;
-          else wrong++;
-        }
-      });
-
-      document.getElementById('statProgress').textContent = `${answered} / ${total}`;
-      const pct = total ? Math.round((answered / total) * 100) : 0;
-      document.getElementById('progressBarFill').style.width = `${pct}%`;
-
-      document.getElementById('statCorrect').textContent = correct;
-      document.getElementById('statWrong').textContent = wrong;
-      const rate = answered ? Math.round((correct / answered) * 100) : 0;
-      document.getElementById('statRate').textContent = `${rate}%`;
-    }
-
-    // EXAM TIMER & CONTROLS
-    function startExam() {
-      state.examFinished = false;
-      state.userAnswers = {};
-      state.examSecondsLeft = 1800;
-      state.examStartTime = Date.now();
-      document.getElementById('examBar').style.display = 'flex';
-      document.getElementById('examTotalCount').textContent = '40';
-      
-      clearInterval(state.examTimer);
-      state.examTimer = setInterval(() => {
-        state.examSecondsLeft--;
-        const mins = Math.floor(state.examSecondsLeft / 60);
-        const secs = state.examSecondsLeft % 60;
-        const display = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        const timerEl = document.getElementById('examTimerDisplay');
-        timerEl.textContent = display;
-
-        if (state.examSecondsLeft <= 300) {
-          timerEl.classList.add('timer-danger');
-        }
-
-        if (state.examSecondsLeft <= 0) {
-          clearInterval(state.examTimer);
-          submitExam();
-        }
-      }, 1000);
-
-      filterQuestions();
-    }
-
-    function submitExam() {
-      clearInterval(state.examTimer);
-      state.examFinished = true;
-      document.getElementById('examBar').style.display = 'none';
-
-      let correct = 0;
-      state.activeList.forEach(q => {
-        if (state.userAnswers[q.id] === q.answer) correct++;
-      });
-
-      const total = state.activeList.length;
-      const score = Math.round((correct / total) * 100) / 10;
-      const spentSecs = 1800 - state.examSecondsLeft;
-      const spentMins = Math.floor(spentSecs / 60);
-      const spentRemainingSecs = spentSecs % 60;
-
-      document.getElementById('modalScoreCircle').textContent = score;
-      document.getElementById('modalCorrectCount').textContent = `${correct}/${total}`;
-      document.getElementById('modalTimeSpent').textContent = `${spentMins}m ${spentRemainingSecs}s`;
-      document.getElementById('modalAccuracyRate').textContent = `${Math.round((correct / total) * 100)}%`;
-
-      let grade = 'CẦN CỐ GẮNG';
-      if (score >= 9) grade = 'XUẤT SẮC! 🏆';
-      else if (score >= 8) grade = 'GIỎI! 🌟';
-      else if (score >= 6.5) grade = 'KHÁ! 👍';
-      else if (score >= 5) grade = 'ĐẠT YÊU CẦU ✅';
-      document.getElementById('modalScoreGrade').textContent = grade;
-
-      document.getElementById('examModal').classList.add('active');
-
-      renderPalette();
-      renderCurrentQuestion();
-      updateStats();
-    }
-
-    // EVENT LISTENERS
-    document.addEventListener('DOMContentLoaded', () => {
-      // Theme Toggle
-      const themeToggle = document.getElementById('themeToggle');
-      const savedTheme = localStorage.getItem('ktct_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.setAttribute('data-theme', savedTheme);
-      themeToggle.onclick = () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('ktct_theme', next);
-      };
-
-      // Sound Toggle
-      const soundBtn = document.getElementById('soundToggle');
-      soundBtn.onclick = () => {
-        state.soundEnabled = !state.soundEnabled;
-        soundBtn.textContent = state.soundEnabled ? '🔊 Âm thanh' : '🔇 Đã tắt âm';
-      };
-
-      // Mode Tabs
-      document.querySelectorAll('.mode-tab').forEach(tab => {
-        tab.onclick = () => {
-          document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          state.mode = tab.dataset.mode;
-
-          if (state.mode === 'exam') {
-            startExam();
-          } else {
-            clearInterval(state.examTimer);
-            document.getElementById('examBar').style.display = 'none';
-            filterQuestions();
-          }
-        };
-      });
-
-      // Chapter Filter
-      document.getElementById('chapterFilter').onchange = (e) => {
-        state.selectedChapter = e.target.value;
-        filterQuestions();
-      };
-
-      // Search Input
-      let searchTimeout = null;
-      document.getElementById('searchInput').oninput = (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          state.searchKeyword = e.target.value.trim();
-          filterQuestions();
-        }, 200);
-      };
-
-      // Shuffle Toggles
-      document.getElementById('shuffleQuestionsToggle').onchange = (e) => {
-        state.shuffleQ = e.target.checked;
-        filterQuestions();
-      };
-
-      document.getElementById('shuffleOptionsToggle').onchange = (e) => {
-        state.shuffleOpt = e.target.checked;
-        renderCurrentQuestion();
-      };
-
-      // Reset Button
-      document.getElementById('resetProgressBtn').onclick = () => {
-        if (confirm('Bạn có chắc muốn đặt lại toàn bộ tiến độ làm bài hiện tại?')) {
-          state.userAnswers = {};
-          filterQuestions();
-        }
-      };
-
-      // Navigation Buttons
-      document.getElementById('prevBtn').onclick = () => {
-        if (state.currentIndex > 0) {
-          state.currentIndex--;
-          renderCurrentQuestion();
-        }
-      };
-
-      document.getElementById('nextBtn').onclick = () => {
-        if (state.currentIndex < state.activeList.length - 1) {
-          state.currentIndex++;
-          renderCurrentQuestion();
-        }
-      };
-
-      // Reveal Answer Button
-      document.getElementById('revealBtn').onclick = () => {
-        const q = state.activeList[state.currentIndex];
-        if (!q) return;
-        state.userAnswers[q.id] = q.answer;
-        renderCurrentQuestion();
-        updatePaletteItem(q.id);
-        updateStats();
-      };
-
-      // Star / Bookmark Toggle
-      document.getElementById('starToggleBtn').onclick = () => {
-        const q = state.activeList[state.currentIndex];
-        if (!q) return;
-        const idx = state.starred.indexOf(q.id);
-        if (idx >= 0) {
-          state.starred.splice(idx, 1);
-        } else {
-          state.starred.push(q.id);
-        }
-        localStorage.setItem('ktct_starred', JSON.stringify(state.starred));
-        updateBadges();
-        renderCurrentQuestion();
-        updatePaletteItem(q.id);
-      };
-
-      // Exam Buttons
-      document.getElementById('submitExamBtn').onclick = () => {
-        if (confirm('Bạn có chắc chắn muốn nộp bài thi ngay bây giờ?')) {
-          submitExam();
-        }
-      };
-
-      document.getElementById('modalReviewBtn').onclick = () => {
-        document.getElementById('examModal').classList.remove('active');
-      };
-
-      document.getElementById('modalRetakeBtn').onclick = () => {
-        document.getElementById('examModal').classList.remove('active');
-        startExam();
-      };
-
-      // KEYBOARD SHORTCUTS
-      document.addEventListener('keydown', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-
-        const q = state.activeList[state.currentIndex];
-        if (!q) return;
-
-        const key = e.key.toUpperCase();
-        if (['1', '2', '3', '4'].includes(key)) {
-          const optBtns = document.querySelectorAll('.opt-btn');
-          const idx = parseInt(key) - 1;
-          if (optBtns[idx]) optBtns[idx].click();
-        } else if (['A', 'B', 'C', 'D'].includes(key)) {
-          const optBtns = Array.from(document.querySelectorAll('.opt-btn'));
-          const btn = optBtns.find(b => b.dataset.key === key);
-          if (btn) btn.click();
-        } else if (e.key === 'ArrowLeft' || key === 'P') {
-          document.getElementById('prevBtn').click();
-        } else if (e.key === 'ArrowRight' || key === 'N' || e.key === ' ') {
-          e.preventDefault();
-          document.getElementById('nextBtn').click();
-        } else if (key === 'S') {
-          document.getElementById('starToggleBtn').click();
-        } else if (key === 'H') {
-          document.getElementById('revealBtn').click();
-        }
-      });
-
-      // Initial filter & load
-      filterQuestions();
-    });
-  </script>
+  <script src="characters/jotaro.js"></script>
+  <script src="characters/dio.js"></script>
+  <script src="characters/kira.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>
