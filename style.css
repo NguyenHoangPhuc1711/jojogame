@@ -1131,6 +1131,38 @@ body {
   display: none;
 }
 
+.p2-layout-setting select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(81, 216, 255, 0.35);
+  border-radius: 9px;
+  background: #171126;
+  color: #f8f5ff;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.setting-help {
+  color: rgba(234, 229, 248, 0.68);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.performance-hud {
+  position: absolute;
+  z-index: 26;
+  top: 10px;
+  right: 12px;
+  padding: 6px 9px;
+  border: 1px solid rgba(81, 216, 255, 0.45);
+  border-radius: 7px;
+  background: rgba(5, 10, 20, 0.78);
+  color: #a5f3fc;
+  font: 700 0.72rem/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+  pointer-events: none;
+}
+
 #hud .hud-actions [data-device-action] {
   display: none;
 }
@@ -1950,43 +1982,43 @@ body.portrait-blocked #rotate-overlay {
   .m-skill-btn.dash {
     right: 6px;
     bottom: 6px;
-    width: 58px;
-    height: 58px;
+    width: 64px;
+    height: 64px;
   }
 
   .m-skill-btn.guard {
     right: 80px;
     bottom: 8px;
-    width: 52px;
-    height: 52px;
+    width: 58px;
+    height: 58px;
   }
 
   .m-skill-btn.skill-e {
     right: 148px;
     bottom: 64px;
-    width: 52px;
-    height: 52px;
+    width: 58px;
+    height: 58px;
   }
 
   .m-skill-btn.skill-r {
     right: 80px;
     bottom: 98px;
-    width: 52px;
-    height: 52px;
+    width: 58px;
+    height: 58px;
   }
 
   .m-skill-btn.ulti {
     right: 8px;
     bottom: 108px;
-    width: 56px;
-    height: 56px;
+    width: 62px;
+    height: 62px;
   }
 
   .m-skill-btn.kira-t {
     right: 12px;
     bottom: 174px;
-    width: 46px;
-    height: 46px;
+    width: 52px;
+    height: 52px;
   }
 
   .m-key {
@@ -2010,6 +2042,96 @@ body.portrait-blocked #rotate-overlay {
 
   #touch-skills-zone {
     transform: scale(0.86);
+  }
+}
+
+#stats-overlay,
+#tutorial-overlay {
+  position: fixed;
+  z-index: 150;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: rgba(3, 2, 8, 0.82);
+}
+
+.tutorial-card {
+  width: min(94vw, 680px);
+}
+
+.tutorial-card ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: rgba(245, 242, 255, 0.9);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.tutorial-card li + li {
+  margin-top: 5px;
+}
+
+.tutorial-open-btn {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.preview-skills .skill-info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(5, 5, 12, 0.72);
+  color: rgba(245, 242, 255, 0.9);
+  font: inherit;
+  font-size: 0.61rem;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.preview-skills .skill-info-chip b {
+  color: var(--scene-gold);
+}
+
+.preview-skills .skill-info-chip small {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.48rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.skill-detail-panel {
+  width: min(740px, 100%);
+  max-height: 2.8em;
+  margin-top: 5px;
+  padding: 4px 8px;
+  overflow: auto;
+  border-left: 2px solid var(--scene-gold);
+  background: rgba(5, 5, 12, 0.56);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.55rem;
+  line-height: 1.35;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 960px) and (orientation: landscape), (pointer: coarse) and (orientation: landscape) {
+  .tutorial-card ul {
+    font-size: 0.72rem;
+    line-height: 1.45;
+  }
+
+  .skill-detail-panel {
+    max-height: 2.5em;
+    font-size: 0.46rem;
   }
 }
 
@@ -3545,9 +3667,257 @@ kbd {
   .char-card {
     transition: none;
   }
-
-  .menu-play-btn:hover,
-  .char-card:hover {
-    transform: none;
-  }
 }
+
+  .game-mode-switch {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .game-mode-btn {
+    min-height: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.72);
+    font: inherit;
+    font-size: 0.58rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+
+  .game-mode-btn.selected {
+    border-color: var(--scene-gold);
+    background: rgba(255, 215, 106, 0.14);
+    color: #ffe9aa;
+  }
+
+  .select-training-options {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.52rem;
+    font-weight: 700;
+  }
+
+  .char-card.is-ai-selected::after {
+    content: attr(data-p2-label);
+  }
+
+  .training-controls {
+    position: absolute;
+    z-index: 24;
+    top: 8px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    max-width: calc(100% - 24px);
+    padding: 6px 9px;
+    transform: translateX(-50%);
+    border: 1px solid rgba(253, 224, 71, 0.5);
+    border-radius: 9px;
+    background: rgba(10, 8, 18, 0.88);
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 800;
+  }
+
+  .training-controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .training-controls input {
+    accent-color: #fde047;
+  }
+
+  .training-controls button,
+  .stats-actions button {
+    min-height: 30px;
+    border: 1px solid rgba(253, 224, 71, 0.42);
+    border-radius: 6px;
+    background: rgba(253, 224, 71, 0.12);
+    color: #ffe9aa;
+    font: inherit;
+    font-size: 0.61rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .stats-card {
+    width: min(94vw, 620px);
+  }
+
+  .stats-summary {
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #f4edff;
+    font-size: 0.86rem;
+    line-height: 1.6;
+  }
+
+  .stats-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  #mobile-controls.local-pvp #touch-skills-zone {
+    position: absolute;
+    right: auto;
+    bottom: 8px;
+    left: clamp(112px, 15vw, 150px);
+    width: 190px;
+    height: 174px;
+  }
+
+  #mobile-controls.local-pvp #touch-p2-joystick-zone {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(108px, 17vw, 132px);
+    height: clamp(108px, 17vw, 132px);
+    padding: 0;
+  }
+
+  #mobile-controls.local-pvp #touch-p2-skills-zone {
+    position: absolute;
+    right: clamp(112px, 15vw, 150px);
+    bottom: 8px;
+    display: block;
+    width: 190px;
+    height: 174px;
+  }
+
+  #mobile-controls.local-pvp #touch-p2-joystick-zone.hidden,
+  #mobile-controls.local-pvp #touch-p2-skills-zone.hidden {
+    display: none;
+  }
+
+  #mobile-controls.local-pvp #touch-joystick-zone {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(108px, 17vw, 132px);
+    height: clamp(108px, 17vw, 132px);
+    padding: 0;
+  }
+
+  #mobile-controls.local-pvp .joystick-base {
+    width: min(100%, 120px);
+    height: min(100%, 120px);
+  }
+
+  #mobile-controls.local-pvp #touch-skills-zone .m-skill-btn,
+  #mobile-controls.local-pvp #touch-p2-skills-zone .m-skill-btn {
+    width: 58px;
+    height: 58px;
+  }
+
+  #mobile-controls.local-pvp #touch-skills-zone .m-skill-btn.skill-e,
+  #mobile-controls.local-pvp #touch-p2-skills-zone .m-skill-btn.skill-e {
+    left: 0;
+    right: auto;
+    bottom: 58px;
+  }
+
+  #mobile-controls.local-pvp #touch-skills-zone .m-skill-btn.skill-r,
+  #mobile-controls.local-pvp #touch-p2-skills-zone .m-skill-btn.skill-r {
+    left: 64px;
+    right: auto;
+    bottom: 58px;
+  }
+
+  #mobile-controls.local-pvp #touch-skills-zone .m-skill-btn.ulti,
+  #mobile-controls.local-pvp #touch-p2-skills-zone .m-skill-btn.ulti {
+    left: 64px;
+    right: auto;
+    bottom: 116px;
+    width: 58px;
+    height: 58px;
+  }
+
+  #mobile-controls.local-pvp #touch-skills-zone .m-skill-btn.dash,
+  #mobile-controls.local-pvp #touch-p2-skills-zone .m-skill-btn.dash {
+    left: 0;
+    right: auto;
+    bottom: 0;
+    width: 58px;
+    height: 58px;
+  }
+
+  #mobile-controls.local-pvp #touch-skills-zone .m-skill-btn.guard,
+  #mobile-controls.local-pvp #touch-p2-skills-zone .m-skill-btn.guard {
+    left: 64px;
+    right: auto;
+    bottom: 0;
+    width: 58px;
+    height: 58px;
+  }
+
+  #mobile-controls.local-pvp #touch-skills-zone .m-skill-btn.kira-t,
+  #mobile-controls.local-pvp #touch-p2-skills-zone .m-skill-btn.kira-t {
+    left: 128px;
+    right: auto;
+    bottom: 58px;
+    width: 52px;
+    height: 52px;
+  }
+
+  #mobile-controls.local-pvp .m-sub {
+    font-size: 0.43rem;
+  }
+
+  @media (max-width: 960px) and (orientation: landscape), (pointer: coarse) and (orientation: landscape) {
+    .game-mode-btn {
+      min-height: 25px;
+      font-size: 0.5rem;
+    }
+
+    .select-training-options {
+      font-size: 0.43rem;
+    }
+
+    .training-controls {
+      top: 2px;
+      gap: 5px;
+      padding: 4px 6px;
+      font-size: 0.53rem;
+    }
+
+    .training-controls button {
+      min-height: 25px;
+      font-size: 0.5rem;
+    }
+
+    .stats-summary {
+      font-size: 0.72rem;
+    }
+  }
+
+  @media (max-height: 365px) and (orientation: landscape) {
+    #mobile-controls.local-pvp #touch-skills-zone,
+    #mobile-controls.local-pvp #touch-p2-skills-zone {
+      transform: scale(0.86);
+      transform-origin: bottom left;
+    }
+
+    #mobile-controls.local-pvp #touch-p2-skills-zone {
+      transform-origin: bottom right;
+    }
+  }

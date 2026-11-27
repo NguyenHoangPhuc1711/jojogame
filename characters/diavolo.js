@@ -16,7 +16,7 @@ window.JOJO_CHARS.diavolo = {
   skills: {
     q: {
       name: "EPITAPH",
-      desc: "CD 30s — Màn hình đỏ 3s; chịu sát thương thì áp sát, bất động 3s và đấm 50 DMG",
+      desc: "CD 25s — Màn hình đỏ 3s; chịu sát thương thì áp sát, bất động 3s và đấm 50 DMG",
       cd: 25,
       duration: 3.0,
       stunDuration: 3.0,

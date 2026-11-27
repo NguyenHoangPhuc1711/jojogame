@@ -25,23 +25,38 @@ let state = null;
 let arenaFloorCache = null;
 let arenaFloorCacheDirty = true;
 const GRAPHICS_STORAGE_KEY = "jojoGraphicsMode";
-let graphicsMode = "normal";
+const MATCH_STATS_STORAGE_KEY = "jojoMatchStats";
+const MATCH_HISTORY_LIMIT = 100;
+const MATCH_STATS_SCHEMA_VERSION = 2;
+let graphicsMode = "high";
 try {
   const savedGraphicsMode = localStorage.getItem(GRAPHICS_STORAGE_KEY);
-  if (savedGraphicsMode === "high") graphicsMode = "high";
+  if (savedGraphicsMode === "low" || savedGraphicsMode === "normal") graphicsMode = "low";
+  else if (savedGraphicsMode === "high") graphicsMode = "high";
 } catch (error) {
   console.warn("Unable to read saved graphics mode:", error);
 }
-let targetFrameInterval = 1000 / (graphicsMode === "high" ? 120 : 60);
+let targetFrameInterval = 1000 / (graphicsMode === "high" && !isTouchDeviceOrSmallScreen() ? 120 : 60);
 let lastRenderTime = 0;
+let performanceHudEnabled = false;
+let performanceSampleTimestamp = 0;
+let performanceSampleFrames = 0;
+let performanceSampleWorkMs = 0;
 const ARENA_MAP_PATHS = Array.from({ length: 15 }, (_, index) => `Map/${index + 1}.png`);
+const DEFAULT_ARENA_MAP_PATH = "Map/1.png";
 let currentArenaMapPath = null;
 let arenaMapImage = null;
 let arenaMapRequestId = 0;
 
+function resolveArenaMapPath(path) {
+  return path === "Map/9.png" ? DEFAULT_ARENA_MAP_PATH : path;
+}
+
 function selectRandomArenaMap() {
-  const choices = ARENA_MAP_PATHS.filter((path) => path !== currentArenaMapPath);
-  const selectedPath = choices[Math.floor(Math.random() * choices.length)] || ARENA_MAP_PATHS[0];
+  const choices = [...new Set(ARENA_MAP_PATHS.map(resolveArenaMapPath))]
+    .filter((path) => path !== currentArenaMapPath);
+  const requestedPath = choices[Math.floor(Math.random() * choices.length)] || ARENA_MAP_PATHS[0];
+  const selectedPath = resolveArenaMapPath(requestedPath);
   const requestId = ++arenaMapRequestId;
   currentArenaMapPath = selectedPath;
   arenaMapImage = null;
@@ -89,7 +104,7 @@ function syncArenaSize() {
   cssH = Math.max(200, cssH);
   const aspect = cssW / cssH;
   const isMobile = isTouchDeviceOrSmallScreen();
-  targetFrameInterval = 1000 / (graphicsMode === "high" ? 120 : 60);
+  targetFrameInterval = 1000 / (graphicsMode === "high" && !isMobile ? 120 : 60);
 
   // Slightly larger character-to-map ratio on mobile screens so fighters are crisp & balanced
   let worldH = isMobile ? 560 : BASE_WORLD_H;
@@ -790,6 +805,9 @@ const endTitle = document.getElementById("end-title");
 const endSubtitle = document.getElementById("end-subtitle");
 const settingsOverlay = document.getElementById("settings-overlay");
 const graphicsModeLabel = document.getElementById("graphics-mode-label");
+const p2ControlLayoutSelect = document.getElementById("p2-control-layout");
+const performanceHud = document.getElementById("performance-hud");
+const performanceHudToggle = document.getElementById("toggle-performance-hud");
 
 const sfxSlider = document.getElementById("sfx-volume");
 const sfxValEl = document.getElementById("sfx-volume-val");
@@ -890,6 +908,12 @@ function loadOrGetCharacterAsset(path) {
 let selectedPlayerChar = "jotaro";
 let selectedAiChar = "dio";
 let selectedAiDifficulty = "hard";
+let selectedGameMode = "cpu";
+const trainingOptions = {
+  regenerateTarget: true,
+  resetCooldowns: true,
+  dummyBehavior: "stand",
+};
 let activeSelectionSide = "p1";
 let lastTime = 0;
 let vsTimerHandle = null;
@@ -897,21 +921,182 @@ let endTimerHandle = null;
 let characterPreviewSwitchTimer = null;
 const keysPressed = new Set();
 const touchInput = { x: 0, y: 0, guarding: false };
+const touchInputP2 = { x: 0, y: 0, guarding: false };
 let touchMode = "auto"; // "auto" | "on" | "off"
+const P2_CONTROL_LAYOUT_STORAGE_KEY = "jojoP2ControlLayout";
+const P1_KEY_BINDINGS = {
+  up: "KeyW",
+  down: "KeyS",
+  left: "KeyA",
+  right: "KeyD",
+  q: "KeyQ",
+  e: "KeyE",
+  r: "KeyR",
+  t: "KeyT",
+  guard: "KeyF",
+  dash: "ShiftLeft",
+};
+const P2_KEY_LAYOUTS = {
+  numpad: {
+    up: "Numpad8",
+    down: "Numpad5",
+    left: "Numpad4",
+    right: "Numpad6",
+    q: "Numpad7",
+    e: "Numpad9",
+    r: "Numpad1",
+    t: "Numpad3",
+    guard: "Numpad0",
+    dash: "NumpadEnter",
+  },
+  arrows: {
+    up: "ArrowUp",
+    down: "ArrowDown",
+    left: "ArrowLeft",
+    right: "ArrowRight",
+    q: "KeyU",
+    e: "KeyI",
+    r: "KeyO",
+    t: "KeyP",
+    guard: "ControlRight",
+    dash: "ShiftRight",
+  },
+};
+let p2ControlLayout = "numpad";
+try {
+  const savedLayout = localStorage.getItem(P2_CONTROL_LAYOUT_STORAGE_KEY);
+  if (savedLayout && Object.prototype.hasOwnProperty.call(P2_KEY_LAYOUTS, savedLayout)) {
+    p2ControlLayout = savedLayout;
+  }
+} catch (error) {
+  console.warn("Unable to read P2 control layout:", error);
+}
+
+function getKeyBindings(slot) {
+  return slot === "p2" ? P2_KEY_LAYOUTS[p2ControlLayout] : P1_KEY_BINDINGS;
+}
+
+function getSkillFromKeyCode(slot, code) {
+  const bindings = getKeyBindings(slot);
+  return ["q", "e", "r", "t"].find((skill) => bindings[skill] === code) || null;
+}
+
+function getInputVector(slot) {
+  const isP2 = slot === "p2";
+  const bindings = getKeyBindings(slot);
+  const input = isP2 ? touchInputP2 : touchInput;
+  let x = (keysPressed.has(bindings.right) ? 1 : 0) - (keysPressed.has(bindings.left) ? 1 : 0);
+  let y = (keysPressed.has(bindings.down) ? 1 : 0) - (keysPressed.has(bindings.up) ? 1 : 0);
+  if (x === 0 && y === 0) {
+    x = input.x;
+    y = input.y;
+  }
+  const length = Math.hypot(x, y);
+  return length > 1 ? { x: x / length, y: y / length } : { x, y };
+}
+
+function isGuardInputDown(slot) {
+  const input = slot === "p2" ? touchInputP2 : touchInput;
+  return keysPressed.has(getKeyBindings(slot).guard) || input.guarding;
+}
+
+function getStoredMatchStats() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MATCH_STATS_STORAGE_KEY) || "{}");
+    return {
+      schemaVersion: MATCH_STATS_SCHEMA_VERSION,
+      matches: Number.isFinite(saved.matches) ? saved.matches : 0,
+      p1Wins: Number.isFinite(saved.p1Wins) ? saved.p1Wins : 0,
+      p2Wins: Number.isFinite(saved.p2Wins) ? saved.p2Wins : 0,
+      p1CurrentStreak: Number.isFinite(saved.p1CurrentStreak)
+        ? saved.p1CurrentStreak
+        : Number.isFinite(saved.currentStreak) ? saved.currentStreak : 0,
+      p2CurrentStreak: Number.isFinite(saved.p2CurrentStreak) ? saved.p2CurrentStreak : 0,
+      p1BestStreak: Number.isFinite(saved.p1BestStreak)
+        ? saved.p1BestStreak
+        : Number.isFinite(saved.bestStreak) ? saved.bestStreak : 0,
+      p2BestStreak: Number.isFinite(saved.p2BestStreak) ? saved.p2BestStreak : 0,
+      history: Array.isArray(saved.history) ? saved.history.slice(-MATCH_HISTORY_LIMIT) : [],
+    };
+  } catch (error) {
+    console.warn("Unable to read match statistics:", error);
+    return {
+      schemaVersion: MATCH_STATS_SCHEMA_VERSION,
+      matches: 0,
+      p1Wins: 0,
+      p2Wins: 0,
+      p1CurrentStreak: 0,
+      p2CurrentStreak: 0,
+      p1BestStreak: 0,
+      p2BestStreak: 0,
+      history: [],
+    };
+  }
+}
+
+function saveMatchStats(stats) {
+  try {
+    localStorage.setItem(MATCH_STATS_STORAGE_KEY, JSON.stringify(stats));
+  } catch (error) {
+    console.warn("Unable to save match statistics:", error);
+  }
+}
+
+function getControlType(fighter) {
+  const slot = fighter.slot;
+  if (isFrozen(slot)) return "timeStop";
+  if (
+    state.diavoloImpales.some((impale) => impale.targetSlot === slot && impale.phase === "pin")
+  ) {
+    return "pin";
+  }
+  if (
+    state.diavoloImpales.some((impale) => impale.targetSlot === slot && impale.phase !== "pin") ||
+    state.stringFingers.some(
+      (finger) =>
+        (finger.phase === "spin" || finger.phase === "slam") &&
+        getOpponent(finger.casterSlot)?.slot === slot
+    )
+  ) {
+    return "grab";
+  }
+  if (
+    fighter.sealedTimer > 0 ||
+    fighter.barrageQueue?.rooted ||
+    state.mobiusCounter?.targetSlot === slot ||
+    state.mobiusCounter?.casterSlot === slot ||
+    state.epitaphCounter?.casterSlot === slot
+  ) {
+    return "root";
+  }
+  if (
+    fighter.stunTimer > 0 ||
+    fighter.knockbackTimer > 0 ||
+    fighter.barrageStunSlot ||
+    state.epitaphCounter?.targetSlot === slot
+  ) {
+    return "stun";
+  }
+  return null;
+}
 
 function getActiveAiDiff() {
   const key = (state && state.aiDifficulty) || selectedAiDifficulty;
-  return AI_DIFFICULTIES[key] || AI_DIFFICULTIES.hard;
+  return state?.mode === "training"
+    ? AI_DIFFICULTIES.easy
+    : AI_DIFFICULTIES[key] || AI_DIFFICULTIES.hard;
 }
 
 function getDamageMultiplier(attackerSlot) {
-  if (attackerSlot !== "p2") return 1.0;
+  if (attackerSlot !== "p2" || state?.mode !== "cpu") return 1.0;
   return getActiveAiDiff().dmgMult || 1.0;
 }
 
 function createFighter(slot, charId, x, y, vx, vy) {
   const cfg = CHAR_CONFIG[charId];
-  const bonusHp = slot === "p2" ? (AI_DIFFICULTIES[selectedAiDifficulty]?.hpBonus || 0) : 0;
+  const bonusHp = slot === "p2" && selectedGameMode === "cpu"
+    ? (AI_DIFFICULTIES[selectedAiDifficulty]?.hpBonus || 0)
+    : 0;
   const maxHp = MAX_HP + bonusHp;
   return {
     slot,
@@ -967,7 +1152,10 @@ function configureHudAndSkillBar(p1Char, p2Char) {
   p1AvatarBox.className = `avatar-box ${pCfg.themeClass}`;
   p1HpFill.className = `hp-bar-fill ${pCfg.fillClass}`;
 
-  p2NameEl.innerHTML = `${aCfg.name} <small>(${diffCfg.hudTag})</small>`;
+  const p2Label = selectedGameMode === "cpu"
+    ? diffCfg.hudTag
+    : selectedGameMode === "training" ? "MỤC TIÊU" : "PLAYER 2";
+  p2NameEl.innerHTML = `${aCfg.name} <small>(${p2Label})</small>`;
   p2AvatarImg.src = encodePath(aCfg.imgPath);
   p2AvatarBox.className = `avatar-box ${aCfg.themeClass}`;
   p2HpFill.className = `hp-bar-fill ${aCfg.fillClass}`;
@@ -999,6 +1187,8 @@ function configureHudAndSkillBar(p1Char, p2Char) {
     skillBtns.t.btn.classList.add("hidden");
     document.getElementById("m-btn-t")?.classList.add("hidden");
   }
+  const p2BombButton = document.getElementById("m-p2-btn-t");
+  p2BombButton?.classList.toggle("hidden", selectedGameMode !== "local" || p2Char !== "kira");
 }
 
 function resolveAiCharacter() {
@@ -1018,7 +1208,7 @@ function startMatchWithIntro() {
   if (endTimerHandle) clearTimeout(endTimerHandle);
 
   const p1Char = selectedPlayerChar;
-  const p2Char = resolveAiCharacter();
+  const p2Char = selectedGameMode === "cpu" ? resolveAiCharacter() : selectedAiChar;
   preloadMatchSounds([p1Char, p2Char]);
 
   selectOverlay.classList.add("hidden");
@@ -1028,7 +1218,10 @@ function startMatchWithIntro() {
 
   const diffCfg = AI_DIFFICULTIES[selectedAiDifficulty] || AI_DIFFICULTIES.hard;
   vsP1Name.textContent = CHAR_CONFIG[p1Char].name;
-  vsP2Name.textContent = `${CHAR_CONFIG[p2Char].name} (${diffCfg.label})`;
+  const p2Label = selectedGameMode === "cpu"
+    ? diffCfg.label
+    : selectedGameMode === "training" ? "MỤC TIÊU" : "PLAYER 2";
+  vsP2Name.textContent = `${CHAR_CONFIG[p2Char].name} (${p2Label})`;
   vsP1Img.src = encodePath(CHARACTER_PORTRAITS[p1Char] || CHAR_CONFIG[p1Char].imgPath);
   vsP2Img.src = encodePath(CHARACTER_PORTRAITS[p2Char] || CHAR_CONFIG[p2Char].imgPath);
   vsP1Img.alt = `${CHAR_CONFIG[p1Char].name} portrait`;
@@ -1038,6 +1231,7 @@ function startMatchWithIntro() {
   vsIntroOverlay.classList.remove("hidden");
 
   initGameState(p1Char, p2Char);
+  updateTrainingControlsVisibility();
   state.running = false;
   syncMobileControlsVisibility();
 
@@ -1081,9 +1275,24 @@ function initGameState(p1Char, p2Char) {
   state = {
     running: false,
     gameOver: false,
+    mode: selectedGameMode,
     aiDifficulty: selectedAiDifficulty,
     p1,
     p2,
+    trainingDummyX: p2.x,
+    trainingDummyY: p2.y,
+    metrics: {
+      elapsed: 0,
+      damageDealt: { p1: 0, p2: 0 },
+      damageBySkill: { p1: {}, p2: {} },
+      hitsLanded: { p1: 0, p2: 0 },
+      controlledSeconds: { p1: 0, p2: 0 },
+      controlByType: {
+        p1: { stun: 0, root: 0, grab: 0, pin: 0, timeStop: 0 },
+        p2: { stun: 0, root: 0, grab: 0, pin: 0, timeStop: 0 },
+      },
+    },
+    activeSkillKey: { p1: null, p2: null },
     cooldowns: {
       p1: { q: 0, e: 0, r: 0, dash: 0, dashMax: DASH_COOLDOWN },
       p2: { q: 0, e: 0, r: 0, dash: 0, dashMax: DASH_COOLDOWN },
@@ -1112,7 +1321,7 @@ function initGameState(p1Char, p2Char) {
     epitaphFists: [],
     mobiusCounter: null,
     mobiusFists: [],
-    pendingOhkos: [], // { targetSlot, timer } — waits for explosion VFX before finishing target
+    pendingOhkos: [], // { targetSlot, casterSlot, timer } — waits for explosion VFX before finishing target
     explosions: [],
     barrageClashes: [],
     starFingerBeams: [],
@@ -1147,9 +1356,11 @@ function initGameState(p1Char, p2Char) {
   };
 
   const diffCfg = getActiveAiDiff();
-  state.cooldowns.p2.q = diffCfg.startDelayQ;
-  state.cooldowns.p2.e = diffCfg.startDelayE;
-  state.cooldowns.p2.r = p2Char === "dio" ? Math.max(diffCfg.startDelayR, diffCfg.id === "super" ? 4.5 : 8.5) : diffCfg.startDelayR;
+  if (selectedGameMode === "cpu") {
+    state.cooldowns.p2.q = diffCfg.startDelayQ;
+    state.cooldowns.p2.e = diffCfg.startDelayE;
+    state.cooldowns.p2.r = p2Char === "dio" ? Math.max(diffCfg.startDelayR, diffCfg.id === "super" ? 4.5 : 8.5) : diffCfg.startDelayR;
+  }
 
   resetUiCache();
   updateHpUI();
@@ -1281,8 +1492,9 @@ function spawnFloatingText(x, y, text, color = "#fde047", size = 22) {
   });
 }
 
-function applyAttackDamage(attackerSlot, target, baseAmount, color = "#ff4d4f", isHeavy = false) {
+function applyAttackDamage(attackerSlot, target, baseAmount, color = "#ff4d4f", isHeavy = false, sourceSkill = null) {
   target.lastAttackerSlot = attackerSlot;
+  target.lastAttackSkill = sourceSkill || state.activeSkillKey?.[attackerSlot] || "basic";
   const scaled = Math.round(baseAmount * getDamageMultiplier(attackerSlot) * 10) / 10;
   applyDamage(target, scaled, color, isHeavy);
 }
@@ -1321,6 +1533,17 @@ function applyDamage(target, amount, color = "#ff4d4f", isHeavy = false) {
   // Taking real damage interrupts Time Stop charge!
   if (finalDmg > 0 && target.isChargingTimeStop) {
     cancelTimeStopCharge(target, "BỊ NGẮT CHIÊU!", 2.5);
+  }
+
+  if (finalDmg > 0) {
+    const attackerSlot = target.lastAttackerSlot;
+    if (state.metrics && (attackerSlot === "p1" || attackerSlot === "p2")) {
+      state.metrics.damageDealt[attackerSlot] += finalDmg;
+      state.metrics.hitsLanded[attackerSlot] += 1;
+      const sourceSkill = target.lastAttackSkill || "basic";
+      state.metrics.damageBySkill[attackerSlot][sourceSkill] =
+        (state.metrics.damageBySkill[attackerSlot][sourceSkill] || 0) + finalDmg;
+    }
   }
 
   // Diavolo Epitaph counter: triggers when Diavolo takes damage during 3s window!
@@ -1363,9 +1586,172 @@ function applyDamage(target, amount, color = "#ff4d4f", isHeavy = false) {
     return;
   }
 
-  if (target.hp <= 0) {
+  if (target.hp <= 0 && state.mode !== "training") {
     endGame(target.slot === "p2" ? "p1" : "p2");
   }
+}
+
+function recordMatchOutcome(winnerSlot) {
+  if (!state || state.mode === "training") return null;
+  const stats = getStoredMatchStats();
+  const winner = getFighter(winnerSlot);
+  const sample = {
+    playedAt: new Date().toISOString(),
+    mode: state.mode,
+    difficulty: state.mode === "cpu" ? state.aiDifficulty : null,
+    p1: state.p1.charId,
+    p2: state.p2.charId,
+    winner: winnerSlot,
+    winnerCharacter: winner?.charId || null,
+    durationSeconds: Math.round(state.metrics.elapsed * 10) / 10,
+    damageDealt: { ...state.metrics.damageDealt },
+    damageBySkill: {
+      p1: { ...state.metrics.damageBySkill.p1 },
+      p2: { ...state.metrics.damageBySkill.p2 },
+    },
+    hitsLanded: { ...state.metrics.hitsLanded },
+    controlledSeconds: { ...state.metrics.controlledSeconds },
+    controlByType: {
+      p1: { ...state.metrics.controlByType.p1 },
+      p2: { ...state.metrics.controlByType.p2 },
+    },
+  };
+  stats.matches += 1;
+  if (winnerSlot === "p1") {
+    stats.p1Wins += 1;
+    stats.p1CurrentStreak += 1;
+    stats.p1BestStreak = Math.max(stats.p1BestStreak, stats.p1CurrentStreak);
+    stats.p2CurrentStreak = 0;
+  } else {
+    stats.p2Wins += 1;
+    stats.p2CurrentStreak += 1;
+    stats.p2BestStreak = Math.max(stats.p2BestStreak, stats.p2CurrentStreak);
+    stats.p1CurrentStreak = 0;
+  }
+  stats.history.push(sample);
+  stats.history = stats.history.slice(-MATCH_HISTORY_LIMIT);
+  saveMatchStats(stats);
+  return sample;
+}
+
+function renderStatsPanel() {
+  const stats = getStoredMatchStats();
+  const summary = document.getElementById("stats-summary");
+  summary.textContent =
+    `Trận đã lưu: ${stats.matches} · Thắng P1: ${stats.p1Wins} · Thắng P2/AI: ${stats.p2Wins} · ` +
+    `Streak P1: ${stats.p1CurrentStreak} (tốt nhất ${stats.p1BestStreak}) · ` +
+    `Streak P2: ${stats.p2CurrentStreak} (tốt nhất ${stats.p2BestStreak}) · ` +
+    `Lưu tối đa ${MATCH_HISTORY_LIMIT} trận gần nhất để xuất dữ liệu cân bằng.`;
+}
+
+function openStatsPanel() {
+  renderStatsPanel();
+  document.getElementById("stats-overlay").classList.remove("hidden");
+}
+
+function exportMatchStats() {
+  const stats = getStoredMatchStats();
+  const controlTypes = ["stun", "root", "grab", "pin", "timeStop"];
+  const byCharacter = {};
+  const byMatchup = {};
+  const byDifficulty = {};
+  for (const match of stats.history) {
+    const matchupKey = `${match.mode}|${match.difficulty || "none"}|${match.p1} vs ${match.p2}`;
+    const matchup = byMatchup[matchupKey] || (byMatchup[matchupKey] = {
+      mode: match.mode,
+      difficulty: match.difficulty,
+      p1: match.p1,
+      p2: match.p2,
+      matches: 0,
+      wins: { p1: 0, p2: 0 },
+      durationSeconds: 0,
+      damageDealt: { p1: 0, p2: 0 },
+      hitsLanded: { p1: 0, p2: 0 },
+      controlledSeconds: { p1: 0, p2: 0 },
+      controlByType: {
+        p1: Object.fromEntries(controlTypes.map((type) => [type, 0])),
+        p2: Object.fromEntries(controlTypes.map((type) => [type, 0])),
+      },
+    });
+    matchup.matches += 1;
+    matchup.wins[match.winner] += 1;
+    matchup.durationSeconds += match.durationSeconds || 0;
+    for (const slot of ["p1", "p2"]) {
+      matchup.damageDealt[slot] += match.damageDealt[slot] || 0;
+      matchup.hitsLanded[slot] += match.hitsLanded[slot] || 0;
+      matchup.controlledSeconds[slot] += match.controlledSeconds[slot] || 0;
+      for (const type of controlTypes) {
+        matchup.controlByType[slot][type] += match.controlByType?.[slot]?.[type] || 0;
+      }
+      const character = byCharacter[match[slot]] || (byCharacter[match[slot]] = {
+        appearances: 0,
+        wins: 0,
+        durationSeconds: 0,
+        damageDealt: 0,
+        hitsLanded: 0,
+        controlledSeconds: 0,
+        controlByType: Object.fromEntries(controlTypes.map((type) => [type, 0])),
+      });
+      character.appearances += 1;
+      character.wins += match.winner === slot ? 1 : 0;
+      character.durationSeconds += match.durationSeconds || 0;
+      character.damageDealt += match.damageDealt[slot] || 0;
+      character.hitsLanded += match.hitsLanded[slot] || 0;
+      character.controlledSeconds += match.controlledSeconds[slot] || 0;
+      for (const type of controlTypes) {
+        character.controlByType[type] += match.controlByType?.[slot]?.[type] || 0;
+      }
+    }
+    if (match.mode === "cpu" && match.difficulty) {
+      const difficulty = byDifficulty[match.difficulty] || (byDifficulty[match.difficulty] = {
+        matches: 0,
+        p1Wins: 0,
+        p2Wins: 0,
+        durationSeconds: 0,
+        damageDealt: { p1: 0, p2: 0 },
+        hitsLanded: { p1: 0, p2: 0 },
+        controlledSeconds: { p1: 0, p2: 0 },
+        controlByType: {
+          p1: Object.fromEntries(controlTypes.map((type) => [type, 0])),
+          p2: Object.fromEntries(controlTypes.map((type) => [type, 0])),
+        },
+      });
+      difficulty.matches += 1;
+      difficulty[match.winner === "p1" ? "p1Wins" : "p2Wins"] += 1;
+      difficulty.durationSeconds += match.durationSeconds || 0;
+      difficulty.damageDealt.p1 += match.damageDealt.p1 || 0;
+      difficulty.damageDealt.p2 += match.damageDealt.p2 || 0;
+      for (const slot of ["p1", "p2"]) {
+        difficulty.hitsLanded[slot] += match.hitsLanded[slot] || 0;
+        difficulty.controlledSeconds[slot] += match.controlledSeconds[slot] || 0;
+        for (const type of controlTypes) {
+          difficulty.controlByType[slot][type] += match.controlByType?.[slot]?.[type] || 0;
+        }
+      }
+    }
+  }
+  const report = {
+    schemaVersion: MATCH_STATS_SCHEMA_VERSION,
+    generatedAt: new Date().toISOString(),
+    totals: {
+      matches: stats.matches,
+      p1Wins: stats.p1Wins,
+      p2Wins: stats.p2Wins,
+      p1BestStreak: stats.p1BestStreak,
+      p2BestStreak: stats.p2BestStreak,
+    },
+    byCharacter,
+    byMatchup,
+    byDifficulty,
+    matches: stats.history,
+  };
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "jojo-arena-match-stats.json";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function endGame(winnerSlot) {
@@ -1383,26 +1769,33 @@ function endGame(winnerSlot) {
   stopBattleBgm();
 
   const playerWon = winnerSlot === "p1";
-  if (playerWon) {
+  const matchSample = recordMatchOutcome(winnerSlot);
+  if (playerWon || state.mode === "local") {
     playVictoryBgm();
   } else {
     _desiredBgmMode = "none";
   }
   const winnerName = CHAR_CONFIG[getFighter(winnerSlot).charId].name;
 
-  resultBanner.className = playerWon ? "victory" : "defeat";
-  resultBannerText.textContent = playerWon ? "VICTORY!" : "DEFEAT!";
-  resultBannerSub.textContent = playerWon
-    ? `${winnerName} CHIẾN THẮNG!`
-    : `${winnerName} ĐÃ HẠ GỤC BẠN`;
+  resultBanner.className = playerWon || state.mode === "local" ? "victory" : "defeat";
+  resultBannerText.textContent = state.mode === "local"
+    ? `${winnerSlot === "p1" ? "PLAYER 1" : "PLAYER 2"} CHIẾN THẮNG!`
+    : playerWon ? "VICTORY!" : "DEFEAT!";
+  resultBannerSub.textContent = state.mode === "local"
+    ? `${winnerName} · ${state.p1.charId.toUpperCase()} ${state.p2.charId.toUpperCase()}`
+    : playerWon
+      ? `${winnerName} CHIẾN THẮNG!`
+      : `${winnerName} ĐÃ HẠ GỤC BẠN`;
   resultBanner.classList.remove("hidden");
 
   endTimerHandle = setTimeout(() => {
     resultBanner.classList.add("hidden");
-    endTitle.textContent = playerWon ? `CHIẾN THẮNG! (${winnerName})` : `THẤT BẠI! (${winnerName})`;
-    endSubtitle.textContent = playerWon
-      ? "Tuyệt vời! Bạn đã hạ gục đối thủ trong đấu trường JoJo."
-      : "Bạn đã bị hạ gục! Hãy chọn chơi lại hoặc quay về Menu chính.";
+    endTitle.textContent = state.mode === "local"
+      ? `${winnerSlot === "p1" ? "PLAYER 1" : "PLAYER 2"} CHIẾN THẮNG!`
+      : playerWon ? `CHIẾN THẮNG! (${winnerName})` : `THẤT BẠI! (${winnerName})`;
+    endSubtitle.textContent = matchSample
+      ? `Trận ${matchSample.durationSeconds}s · Đòn trúng P1/P2: ${matchSample.hitsLanded.p1}/${matchSample.hitsLanded.p2} · Sát thương: ${Math.round(matchSample.damageDealt.p1)}/${Math.round(matchSample.damageDealt.p2)}`
+      : "Hãy chọn chơi lại hoặc quay về Menu chính.";
     endOverlay.classList.remove("hidden");
   }, 2000);
 }
@@ -1434,18 +1827,7 @@ function triggerDash(fighter, dirX = null, dirY = null) {
   let dy = dirY;
 
   if (dx === null || dy === null) {
-    dx = 0;
-    dy = 0;
-    if (fighter.slot === "p1") {
-      if (keysPressed.has("w")) dy -= 1;
-      if (keysPressed.has("s")) dy += 1;
-      if (keysPressed.has("a")) dx -= 1;
-      if (keysPressed.has("d")) dx += 1;
-      if (dx === 0 && dy === 0 && (Math.abs(touchInput.x) > 0.15 || Math.abs(touchInput.y) > 0.15)) {
-        dx = touchInput.x;
-        dy = touchInput.y;
-      }
-    }
+    ({ x: dx, y: dy } = getInputVector(fighter.slot));
     if (dx === 0 && dy === 0) {
       dx = fighter.facing || 1;
       dy = 0;
@@ -1566,8 +1948,22 @@ function castSkill(casterSlot, key) {
     caster.vy = 0;
   }
 
-  charModule.castSkill(
-    {
+  const effectLists = [
+    "firstBombs",
+    "theHandQueue",
+    "josukeRocks",
+    "angeloPunches",
+    "swordProjectiles",
+    "starFingerBeams",
+    "stringFingers",
+    "mobiusWebs",
+    "diavoloTimeSkipZones",
+  ];
+  const priorEffects = new Map(effectLists.map((name) => [name, new Set(state[name])]));
+  state.activeSkillKey[casterSlot] = key;
+  try {
+    charModule.castSkill(
+      {
       state,
       playSound,
       fadeOutAndStopAudio,
@@ -1590,8 +1986,24 @@ function castSkill(casterSlot, key) {
     casterSlot,
     caster,
     opponent,
-    key
-  );
+        key
+      );
+  } finally {
+    for (const name of effectLists) {
+      for (const effect of state[name]) {
+        if (
+          !priorEffects.get(name).has(effect) &&
+          (effect.casterSlot === casterSlot || effect.ownerSlot === casterSlot)
+        ) {
+          effect.skillKey = key;
+        }
+      }
+    }
+    if (state.roadRoller.casterSlot === casterSlot && state.roadRoller.active) {
+      state.roadRoller.skillKey = key;
+    }
+    state.activeSkillKey[casterSlot] = null;
+  }
 }
 
 function plantFirstBomb(caster, opponent, rCfg = CHAR_CONFIG.kira.skills.r) {
@@ -1618,7 +2030,7 @@ function plantFirstBomb(caster, opponent, rCfg = CHAR_CONFIG.kira.skills.r) {
   } else {
     let bx;
     let by;
-    if (caster.slot === "p2") {
+    if (caster.slot === "p2" && state.mode === "cpu") {
       // Smart Kira AI places floor bomb trap right in front of Kira along player's path (cannot teleport on top of player)
       const predX = opponent.x + opponent.vx * 0.2;
       const predY = opponent.y + opponent.vy * 0.2;
@@ -1641,10 +2053,16 @@ function plantFirstBomb(caster, opponent, rCfg = CHAR_CONFIG.kira.skills.r) {
       y: by,
       life: duration,
       maxLife: duration,
-      armTimer: caster.slot === "p2" ? 1.0 : 0, // Kira AI must wait at least 1s after planting before detonating
+      armTimer: caster.slot === "p2" && state.mode === "cpu" ? 1.0 : 0,
       attachedSlot: null,
     });
-    spawnFloatingText(bx, by - 40, caster.slot === "p2" ? "ĐẶT BẪY BOM! (1s)" : "FIRST BOMB! (T KÍCH NỔ)", "#f472b6", 20);
+    spawnFloatingText(
+      bx,
+      by - 40,
+      caster.slot === "p2" && state.mode === "cpu" ? "ĐẶT BẪY BOM! (1s)" : "FIRST BOMB! (T KÍCH NỔ)",
+      "#f472b6",
+      20
+    );
     spawnParticles(bx, by, "#f472b6", 10, 150);
   }
 }
@@ -1673,7 +2091,7 @@ function detonateFirstBomb(casterSlot) {
     spawnFloatingText(bomb.x, bomb.y - 50, "CLICK!", "#fde047", 24);
     const dist = Math.hypot(opponent.x - bomb.x, opponent.y - bomb.y);
     if (!opponent.hidden && dist <= blastRadius + opponent.radius * 0.55) {
-      applyAttackDamage(casterSlot, opponent, rCfg.groundDamage || 30, "#f472b6", true);
+      applyAttackDamage(casterSlot, opponent, rCfg.groundDamage || 30, "#f472b6", true, "t");
     }
   }
 }
@@ -1728,18 +2146,8 @@ function clampArenaY(y, r) {
 function triggerTimeSkip(caster, opponent, cfg) {
   playSound(cfg.soundKey);
   spawnParticles(caster.x, caster.y, "#ef4444", 16, 220);
-  let dx = 0;
-  let dy = 0;
-  if (caster.slot === "p1") {
-    if (keysPressed.has("w")) dy -= 1;
-    if (keysPressed.has("s")) dy += 1;
-    if (keysPressed.has("a")) dx -= 1;
-    if (keysPressed.has("d")) dx += 1;
-    if (dx === 0 && dy === 0 && (Math.abs(touchInput.x) > 0.15 || Math.abs(touchInput.y) > 0.15)) {
-      dx = touchInput.x;
-      dy = touchInput.y;
-    }
-  } else {
+  let { x: dx, y: dy } = getInputVector(caster.slot);
+  if (caster.slot === "p2" && state.mode !== "local") {
     dx = opponent.x - caster.x;
     dy = opponent.y - caster.y;
   }
@@ -1757,7 +2165,7 @@ function triggerTimeSkip(caster, opponent, cfg) {
 
   const radius = cfg.impactRadius || 35;
   const zoneLife = 0.26;
-  const hit = !(caster.slot === "p2" && state.aiDifficulty === "super") &&
+  const hit = !(caster.slot === "p2" && state.mode === "cpu" && state.aiDifficulty === "super") &&
     !opponent.hidden &&
     Math.hypot(opponent.x - caster.x, opponent.y - caster.y) <= radius + opponent.radius * 0.25;
   state.diavoloTimeSkipZones.push({
@@ -1777,7 +2185,7 @@ function triggerTimeSkip(caster, opponent, cfg) {
   const distanceToWall = Math.abs(wallX - opponent.x);
   const alreadyAtWall = distanceToWall <= 1;
   const strikeDuration = 0.12;
-  applyAttackDamage(caster.slot, opponent, cfg.impactDamage || 30, "#ef4444", true);
+  applyAttackDamage(caster.slot, opponent, cfg.impactDamage || 30, "#ef4444", true, "e");
   playDiavoloTimeSkipImpact();
   opponent.barrageStunSlot = null;
   opponent.isGuarding = false;
@@ -1863,6 +2271,7 @@ function triggerEpitaphCounter(diavolo) {
     punchInterval: stunDuration / (CHAR_CONFIG.diavolo.epitaphBarrage.totalPunches || 42),
     punchesSpawned: 0,
     totalPunches: CHAR_CONFIG.diavolo.epitaphBarrage.totalPunches || 42,
+    skillKey: "q",
   };
 }
 
@@ -1926,7 +2335,7 @@ function updateScriptedBarrageCounter(counterKey, fistsKey, dt) {
   state.screenShake = Math.max(state.screenShake, 8);
   spawnParticles(target.x, target.y, counter.color, 22, 300);
   spawnFloatingText(target.x, target.y - target.radius - 24, "FINISH!", counter.color, 24);
-  applyAttackDamage(counter.casterSlot, target, counter.damage, counter.color, true);
+  applyAttackDamage(counter.casterSlot, target, counter.damage, counter.color, true, counter.skillKey || "q");
 }
 
 function updateEpitaphCounter(dt) {
@@ -1965,7 +2374,7 @@ function castTheHandPull(caster, opponent, cfg) {
       opponent.x = pullX;
       opponent.y = pullY;
     }
-    applyAttackDamage(caster.slot, opponent, cfg.damage || 10, "#38bdf8", false);
+    applyAttackDamage(caster.slot, opponent, cfg.damage || 10, "#38bdf8", false, "e");
     opponent.stunTimer = Math.max(opponent.stunTimer, cfg.stunDuration || 0);
     opponent.barrageStunSlot = null;
     opponent.isGuarding = false;
@@ -2223,6 +2632,7 @@ function startMobiusCounter(caster, target, cfg) {
     punchInterval: duration / totalPunches,
     punchesSpawned: 0,
     totalPunches,
+    skillKey: "q",
   };
 }
 
@@ -2295,7 +2705,13 @@ function releaseTimeStopDamage(casterSlot) {
         f.life = 0;
         continue;
       }
-      if (f && !f.isPolnareffClone && f.hp <= 0 && !state.gameOver) {
+      if (
+        f &&
+        !f.isPolnareffClone &&
+        f.hp <= 0 &&
+        !state.gameOver &&
+        !(state.mode === "training" && f.slot === "p2")
+      ) {
         endGame(f.slot === "p2" ? "p1" : "p2");
         break;
       }
@@ -2349,6 +2765,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
           vy: Math.sin(spreadAngle) * speed,
           angle: spreadAngle,
           ownerSlot: fighter.slot,
+          skillKey: fighter.barrageQueue?.skillKey || state.activeSkillKey?.[fighter.slot] || "barrage",
           color: barrageCfg.color || CHAR_CONFIG[fighter.charId].color,
           img: CHAR_CONFIG[fighter.charId].armAsset(),
           life: maxLife,
@@ -2391,6 +2808,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
         vy: Math.sin(spreadAngle) * speed,
         angle: spreadAngle,
         ownerSlot: fighter.slot,
+        skillKey: fighter.barrageQueue?.skillKey || state.activeSkillKey?.[fighter.slot] || "barrage",
         color: barrageCfg.color || CHAR_CONFIG[fighter.charId].color,
         img: CHAR_CONFIG[fighter.charId].armAsset(),
         life: maxLife,
@@ -2452,8 +2870,13 @@ function updateFighterPhysics(f, dt) {
   }
 
   // Guard state & gradual recharge (25 damage pool, 4s lock when broken, 40s full recharge)
-  const wantsGuard =
-    f.slot === "p1" ? keysPressed.has("f") || touchInput.guarding : state.aiGuardTimer > 0;
+  const wantsTrainingGuard =
+    state.mode === "training" &&
+    f.slot === "p2" &&
+    trainingOptions.dummyBehavior === "block";
+  const wantsGuard = state.mode === "cpu" && f.slot === "p2"
+    ? state.aiGuardTimer > 0
+    : wantsTrainingGuard || isGuardInputDown(f.slot);
   if (
     wantsGuard &&
     f.guardBrokenTimer <= 0 &&
@@ -2497,6 +2920,25 @@ function updateFighterPhysics(f, dt) {
       state.screenShake = Math.max(state.screenShake, 3);
       updateHpUI();
     }
+    return;
+  }
+
+  if (
+    state.mode === "training" &&
+    f.slot === "p2" &&
+    trainingOptions.dummyBehavior !== "dodge" &&
+    trainingOptions.dummyBehavior !== "attack"
+  ) {
+    f.x = state.trainingDummyX;
+    f.y = state.trainingDummyY;
+    f.vx = 0;
+    f.vy = 0;
+    f.isGuarding =
+      trainingOptions.dummyBehavior === "block" &&
+      f.guardBrokenTimer <= 0 &&
+      f.guardPool > 0.2 &&
+      f.stunTimer <= 0 &&
+      f.sealedTimer <= 0;
     return;
   }
 
@@ -2571,43 +3013,28 @@ function updateFighterPhysics(f, dt) {
     }
   } else {
     const speedMult = f.charId === "polnareff" && f.armorOffTimer > 0 ? (CHAR_CONFIG.polnareff.skills.q.speedMult || 1.5) : 1.0;
-    if (f.slot === "p1") {
-      let ax = 0;
-      let ay = 0;
-      if (keysPressed.has("w")) ay -= 1;
-      if (keysPressed.has("s")) ay += 1;
-      if (keysPressed.has("a")) ax -= 1;
-      if (keysPressed.has("d")) ax += 1;
-
-      if (ax === 0 && ay === 0 && (Math.abs(touchInput.x) > 0.08 || Math.abs(touchInput.y) > 0.08)) {
-        ax = touchInput.x;
-        ay = touchInput.y;
-      }
-
-      if (ax !== 0 || ay !== 0) {
-        const len = Math.hypot(ax, ay);
-        ax /= len;
-        ay /= len;
-        const accel = (f.isGuarding ? 460 : 800) * speedMult;
-        f.vx += ax * accel * dt;
-        f.vy += ay * accel * dt;
-
-        const spd = Math.hypot(f.vx, f.vy);
-        const maxSpd = (f.isGuarding ? 165 : 250) * speedMult;
-        if (spd > maxSpd) {
-          f.vx = (f.vx / spd) * maxSpd;
-          f.vy = (f.vy / spd) * maxSpd;
-        }
+    if (f.slot === "p1" || state.mode === "local") {
+      const input = getInputVector(f.slot);
+      const maxSpeed = (f.isGuarding ? 165 : 250) * speedMult;
+      if (Math.abs(input.x) + Math.abs(input.y) > 0.08) {
+        const response = 1 - Math.exp(-11 * dt);
+        f.vx += (input.x * maxSpeed - f.vx) * response;
+        f.vy += (input.y * maxSpeed - f.vy) * response;
       } else {
-        const spd = Math.hypot(f.vx, f.vy);
-        if (spd > 190) {
-          const factor = Math.max(180 / spd, 1 - dt * 1.8);
-          f.vx *= factor;
-          f.vy *= factor;
-        }
+        const drag = Math.exp(-8.5 * dt);
+        f.vx *= drag;
+        f.vy *= drag;
+        if (Math.hypot(f.vx, f.vy) < 3) f.vx = f.vy = 0;
+      }
+    } else if (state.mode === "training" && trainingOptions.dummyBehavior !== "attack") {
+      if (trainingOptions.dummyBehavior === "dodge") {
+        applyAiSteering(f, dt);
+      } else {
+        const drag = Math.exp(-8.5 * dt);
+        f.vx *= drag;
+        f.vy *= drag;
       }
     } else {
-      // Smart AI Steering!
       applyAiSteering(f, dt);
     }
 
@@ -2826,6 +3253,7 @@ function applyAiSteering(ai, dt) {
 }
 
 function handleFighterCollision() {
+  if (state.mode === "training") return;
   const a = state.p1;
   const b = state.p2;
   if (a.hidden || b.hidden) return;
@@ -2994,7 +3422,7 @@ function updatePunches(dt) {
           p.hit = true;
           p.life = Math.max(p.life, 0.09);
           if (!p.isVisualOnly && p.damage > 0) {
-            applyAttackDamage(p.ownerSlot, target, p.damage, p.color, false);
+            applyAttackDamage(p.ownerSlot, target, p.damage, p.color, false, p.skillKey || "barrage");
             spawnParticles(p.x, p.y, p.color, 2, 110);
             const attacker = getFighter(p.ownerSlot);
             if (attacker?.barrageQueue && !target.barrageQueue) {
@@ -3048,7 +3476,7 @@ function updateStarFinger(dt) {
         beam.hitDone = true;
         const stunDur = beam.stunDuration || 0.5;
         target.stunTimer = Math.max(target.stunTimer, stunDur);
-        applyAttackDamage(beam.casterSlot, target, beam.damage || 15, "#d8b4fe", false);
+        applyAttackDamage(beam.casterSlot, target, beam.damage || 15, "#d8b4fe", false, beam.skillKey || "e");
         spawnParticles(target.x, target.y, "#c084fc", 16, 230);
         spawnFloatingText(target.x, target.y - target.radius - 34, "CHOÁNG!", "#fde047", 19);
         state.screenShake = Math.max(state.screenShake, 6);
@@ -3151,7 +3579,7 @@ function updateRoadRoller(dt) {
         if (fighter.slot === rr.casterSlot || fighter.ownerSlot === rr.casterSlot || fighter.hidden) continue;
         const dist = Math.hypot(fighter.x - rr.targetX, fighter.y - rr.targetY);
         if (dist <= rr.impactRadius + fighter.radius * 0.5) {
-          applyAttackDamage(rr.casterSlot, fighter, rr.damage || 40, "#facc15", true);
+          applyAttackDamage(rr.casterSlot, fighter, rr.damage || 40, "#facc15", true, rr.skillKey || "r");
           applyRadialKnockback(fighter, rr.targetX, rr.targetY, 780, 0.34);
         }
       }
@@ -3194,7 +3622,11 @@ function updateFirstBombs(dt) {
     if (p.timer <= 0) {
       state.pendingOhkos.splice(i, 1);
       const target = getFighter(p.targetSlot);
-      if (target && !target.hidden) applyDamage(target, target.maxHp, "#ef4444", true);
+      if (target && !target.hidden) {
+        target.lastAttackerSlot = p.casterSlot;
+        target.lastAttackSkill = "t";
+        applyDamage(target, target.maxHp, "#ef4444", true);
+      }
     }
   }
 }
@@ -3860,7 +4292,7 @@ function updateNewCharacterSkills(dt) {
       const dist = Math.hypot(opp.x - caster.x, opp.y - caster.y);
       if (!opp.hidden && dist <= item.range + opp.radius) {
         opp.stunTimer = Math.max(opp.stunTimer, item.stunDuration);
-        applyAttackDamage(item.casterSlot, opp, item.damage, "#38bdf8", item.isLast);
+        applyAttackDamage(item.casterSlot, opp, item.damage, "#38bdf8", item.isLast, item.skillKey || "barrage");
         spawnParticles(opp.x, opp.y, "#38bdf8", 14, 240);
       }
     }
@@ -3883,7 +4315,7 @@ function updateNewCharacterSkills(dt) {
       if (!rock.hit && !opp.hidden && Math.hypot(opp.x - rock.x, opp.y - rock.y) <= rock.radius + opp.radius) {
         rock.hit = true;
         rock.targetSlot = opp.slot;
-        applyAttackDamage(rock.casterSlot, opp, rock.damage, "#f472b6", false);
+        applyAttackDamage(rock.casterSlot, opp, rock.damage, "#f472b6", false, rock.skillKey || "r");
         applyRadialKnockback(opp, rock.originX, rock.originY, 460, 0.32);
         spawnParticles(opp.x, opp.y, "#f472b6", 16, 220);
         spawnFloatingText(opp.x, opp.y - 70, "ĐẨY LÙI!", "#f472b6", 20);
@@ -3935,7 +4367,7 @@ function updateNewCharacterSkills(dt) {
     if (!ap.hit && !opp.hidden && Math.hypot(opp.x - ap.x, opp.y - ap.y) <= opp.radius + 32) {
       ap.hit = true;
       playSound(CHAR_CONFIG.josuke.skills.q.soundKey);
-      applyAttackDamage(ap.casterSlot, opp, ap.damage, "#f472b6", true);
+      applyAttackDamage(ap.casterSlot, opp, ap.damage, "#f472b6", true, ap.skillKey || "q");
       opp.sealedTimer = Math.max(opp.sealedTimer, ap.sealDuration);
       opp.knockbackTimer = 0;
       opp.isGuarding = false;
@@ -3958,7 +4390,7 @@ function updateNewCharacterSkills(dt) {
     sw.life -= dt;
     const opp = getOpponent(sw.casterSlot);
     if (!sw.isVisualOnly && !opp.hidden && Math.hypot(opp.x - sw.x, opp.y - sw.y) <= opp.radius + 26) {
-      applyAttackDamage(sw.casterSlot, opp, sw.damage, "#e2e8f0", false);
+      applyAttackDamage(sw.casterSlot, opp, sw.damage, "#e2e8f0", false, sw.skillKey || "r");
       spawnParticles(sw.x, sw.y, "#e2e8f0", 12, 200);
       state.swordProjectiles.splice(i, 1);
       continue;
@@ -4070,7 +4502,7 @@ function updateNewCharacterSkills(dt) {
           spawnParticles(opp.x, opp.y, "#f8fafc", 14, 190);
           spawnFloatingText(opp.x, opp.y - 78, "ĐẬP ĐẤT!", "#22d3ee", 23);
           state.screenShake = Math.max(state.screenShake, 9);
-          applyAttackDamage(sf.casterSlot, opp, sf.damage, "#22d3ee", true);
+          applyAttackDamage(sf.casterSlot, opp, sf.damage, "#22d3ee", true, sf.skillKey || "r");
           state.stringFingers.splice(i, 1);
           continue;
         }
@@ -4171,6 +4603,7 @@ function update(dt) {
   if (!state || !state.running) return;
   if (isTouchDeviceOrSmallScreen() && window.innerHeight > window.innerWidth) return;
 
+  state.metrics.elapsed += dt;
   ensureDesiredBgmPlaying();
   if (!state.roadRoller.active) {
     if (state.p1.hidden) state.p1.hidden = false;
@@ -4179,10 +4612,15 @@ function update(dt) {
 
   for (const slot of ["p1", "p2"]) {
     for (const k of ["q", "e", "r", "dash"]) {
-      if (state.cooldowns[slot][k] > 0) {
+      if (state.mode === "training" && slot === "p1" && trainingOptions.resetCooldowns) {
+        state.cooldowns[slot][k] = 0;
+      } else if (state.cooldowns[slot][k] > 0) {
         state.cooldowns[slot][k] = Math.max(0, state.cooldowns[slot][k] - dt);
       }
     }
+  }
+  if (state.mode === "training" && trainingOptions.regenerateTarget) {
+    state.p2.hp = Math.min(state.p2.maxHp, state.p2.hp + state.p2.maxHp * 0.3 * dt);
   }
 
   if (state.collisionDamageCooldown > 0) {
@@ -4207,6 +4645,13 @@ function update(dt) {
   updateFighterPhysics(state.p1, dt);
   updateFighterPhysics(state.p2, dt);
   handleFighterCollision();
+  for (const fighter of [state.p1, state.p2]) {
+    const controlType = getControlType(fighter);
+    if (controlType) {
+      state.metrics.controlledSeconds[fighter.slot] += dt;
+      state.metrics.controlByType[fighter.slot][controlType] += dt;
+    }
+  }
 
   updateBarrageQueue(state.p1, state.p2, dt);
   updateBarrageQueue(state.p2, getOpponent("p2"), dt);
@@ -4215,7 +4660,9 @@ function update(dt) {
   updateRoadRoller(dt);
   updateFirstBombs(dt);
   updateNewCharacterSkills(dt);
-  updateAI(dt);
+  if (state.mode === "cpu" || (state.mode === "training" && trainingOptions.dummyBehavior === "attack")) {
+    updateAI(dt);
+  }
   updateEpitaphCounter(dt);
   updateMobiusCounter(dt);
 
@@ -4619,7 +5066,8 @@ function drawFighter(f) {
 
   // Normalize all characters by consistent visual height (+ per-character spriteScale)
   const scale = CHAR_CONFIG[f.charId].spriteScale || 1;
-  const targetH = f.radius * 2.35 * scale;
+  const visualScale = 1.4;
+  const targetH = f.radius * 2.35 * scale * visualScale;
   let activeImg = f.img;
   if (f.sealedTimer > 0) {
     activeImg = ASSETS.josukeAngelo;
@@ -4628,14 +5076,14 @@ function drawFighter(f) {
   } else if (f.charId === "jolyne" && f.jolynePoseTimer > 0) {
     activeImg = ASSETS.jolyneSkillQ;
   }
-  const sprite = getMipSprite(activeImg, 240);
+  const sprite = getMipSprite(activeImg, graphicsMode === "high" ? 640 : 384);
   if (sprite) {
     const sw = sprite.width || activeImg.naturalWidth;
     const sh = sprite.height || activeImg.naturalHeight;
     const aspect = sw / sh;
     let h = targetH;
     let w = targetH * aspect;
-    const maxW = f.radius * 2.85 * scale;
+    const maxW = f.radius * 2.85 * scale * visualScale;
     if (w > maxW) {
       w = maxW;
       h = maxW / aspect;
@@ -5076,19 +5524,19 @@ function drawPolnareffClone(cl) {
   if (cl.hidden) return;
   const owner = getFighter(cl.ownerSlot);
   const activeImg = owner.armorOffTimer > 0 ? ASSETS.polnareffArmorOff : owner.img;
-  const sprite = getMipSprite(activeImg, 200);
+  const sprite = getMipSprite(activeImg, graphicsMode === "high" ? 640 : 384);
   if (!sprite) return;
   ctx.save();
   ctx.translate(cl.x, cl.y);
   ctx.globalAlpha = 0.72;
   const scale = CHAR_CONFIG.polnareff.spriteScale || 1.08;
-  const targetH = cl.radius * 2.35 * scale;
+  const targetH = cl.radius * 2.35 * scale * 1.4;
   const sw = sprite.width;
   const sh = sprite.height;
   const aspect = sw / sh;
   let h = targetH;
   let w = targetH * aspect;
-  const maxW = cl.radius * 2.85 * scale;
+  const maxW = cl.radius * 2.85 * scale * 1.4;
   if (w > maxW) {
     w = maxW;
     h = maxW / aspect;
@@ -5115,12 +5563,12 @@ function drawPolnareffClone(cl) {
 }
 
 function drawDashAfterimage(afterimage) {
-  const sprite = getMipSprite(afterimage.img, 180);
+  const sprite = getMipSprite(afterimage.img, graphicsMode === "high" ? 640 : 384);
   if (!sprite) return;
   const scale = CHAR_CONFIG[afterimage.charId].spriteScale || 1;
-  const targetH = afterimage.radius * 2.35 * scale;
+  const targetH = afterimage.radius * 2.35 * scale * 1.4;
   const aspect = sprite.width / sprite.height;
-  const h = Math.min(targetH, (afterimage.radius * 2.85 * scale) / aspect);
+  const h = Math.min(targetH, (afterimage.radius * 2.85 * scale * 1.4) / aspect);
   const w = h * aspect;
 
   ctx.save();
@@ -5284,6 +5732,20 @@ function updateSkillBarUI() {
         setCachedText(`mtx_${k}`, mCd, "");
       }
     }
+
+    const p2MobileBtn = document.getElementById(`m-p2-btn-${k}`);
+    const p2MobileCd = document.getElementById(`m-p2-cd-${k}`);
+    if (p2MobileBtn && p2MobileCd && state.mode === "local") {
+      const p2Cd = state.cooldowns.p2[k];
+      const p2Max = CHAR_CONFIG[state.p2.charId].skills[k].cd;
+      p2MobileBtn.classList.toggle("on-cooldown", p2Cd > 0);
+      setCachedText(
+        `mp2tx_${k}`,
+        p2MobileCd,
+        p2Cd > 0 ? (p2Cd >= 10 ? `${Math.ceil(p2Cd)}s` : `${p2Cd.toFixed(1)}s`) : ""
+      );
+      if (p2Max <= 0) p2MobileBtn.classList.remove("on-cooldown");
+    }
   }
 
   const dashCd = cds.dash;
@@ -5321,6 +5783,17 @@ function updateSkillBarUI() {
         mTBtn.classList.remove("on-cooldown");
         mTBtn.classList.add("bomb-ready");
         setCachedText("mtx_t", mTCd, txt);
+      }
+
+      if (state.mode === "local" && state.p2.charId === "kira") {
+        const bomb = state.firstBombs.find((entry) => entry.ownerSlot === "p2");
+        const p2BombBtn = document.getElementById("m-p2-btn-t");
+        const p2BombCd = document.getElementById("m-p2-cd-t");
+        if (p2BombBtn && p2BombCd) {
+          p2BombBtn.classList.toggle("bomb-ready", Boolean(bomb));
+          p2BombBtn.classList.toggle("on-cooldown", !bomb);
+          setCachedText("mp2tx_t", p2BombCd, bomb ? `${Math.ceil(bomb.life)}s` : "");
+        }
       }
     } else {
       skillBtns.t.btn.classList.add("on-cooldown");
@@ -5361,34 +5834,74 @@ function gameLoop(timestamp) {
   const dt = Math.min(0.05, (timestamp - lastTime) / 1000 || 0);
   lastTime = timestamp;
   lastRenderTime = timestamp;
+  const frameStart = performanceHudEnabled ? performance.now() : 0;
   update(dt);
   draw();
+  if (performanceHudEnabled) {
+    performanceSampleFrames += 1;
+    performanceSampleWorkMs += performance.now() - frameStart;
+    if (!performanceSampleTimestamp) performanceSampleTimestamp = timestamp;
+    if (timestamp - performanceSampleTimestamp >= 500) {
+      const sampleDuration = timestamp - performanceSampleTimestamp;
+      const fps = (performanceSampleFrames * 1000) / sampleDuration;
+      const averageWorkMs = performanceSampleWorkMs / performanceSampleFrames;
+      performanceHud.textContent = `${fps.toFixed(0)} FPS · ${averageWorkMs.toFixed(1)} ms/frame`;
+      performanceSampleTimestamp = timestamp;
+      performanceSampleFrames = 0;
+      performanceSampleWorkMs = 0;
+    }
+  }
   requestAnimationFrame(gameLoop);
 }
 
 window.addEventListener("keydown", (e) => {
-  const k = e.key.toLowerCase();
-  keysPressed.add(k);
+  keysPressed.add(e.code);
   if (!state || !state.running) return;
-  if (e.key === "Shift") {
+
+  if (
+    e.code === P1_KEY_BINDINGS.dash ||
+    (state.mode !== "local" && e.key === "Shift")
+  ) {
     e.preventDefault();
     triggerDash(state.p1);
     return;
   }
-  if ((k === "q" || k === "e" || k === "r" || k === "t") && e.repeat) return;
-  if (k === "q" || k === "e" || k === "r" || k === "t") {
-    castSkill("p1", k);
+
+  const p2Bindings = getKeyBindings("p2");
+  if (state.mode === "local" && e.code === p2Bindings.dash) {
+    e.preventDefault();
+    triggerDash(state.p2);
+    return;
+  }
+  if (state.mode === "local" && (e.code.startsWith("Arrow") || e.code.startsWith("Numpad"))) {
+    e.preventDefault();
+  }
+  if (e.repeat) return;
+  const p1Skill = getSkillFromKeyCode("p1", e.code);
+  if (p1Skill) castSkill("p1", p1Skill);
+  else if (state.mode === "local") {
+    const p2Skill = getSkillFromKeyCode("p2", e.code);
+    if (p2Skill) castSkill("p2", p2Skill);
   }
 });
 
 window.addEventListener("keyup", (e) => {
-  const k = e.key.toLowerCase();
-  keysPressed.delete(k);
-  if (k === "q" && state?.p1?.isChargingTimeStop) {
+  keysPressed.delete(e.code);
+  const p1Skill = getSkillFromKeyCode("p1", e.code);
+  if (p1Skill === "q" && state?.p1?.isChargingTimeStop) {
     cancelTimeStopCharge(state.p1, "HỦY CHIÊU!");
   }
-  if (state?.p1?.barrageQueue && state.p1.barrageQueue.skillKey === k) {
+  if (state?.p1?.barrageQueue && state.p1.barrageQueue.skillKey === p1Skill) {
     releaseBarrage(state.p1);
+  }
+  if (state?.mode === "local") {
+    const p2Skill = getSkillFromKeyCode("p2", e.code);
+    if (p2Skill === "q" && state.p2.isChargingTimeStop) {
+      cancelTimeStopCharge(state.p2, "HỦY CHIÊU!");
+    }
+    if (p2Skill && state.p2.barrageQueue?.skillKey === p2Skill) {
+      releaseBarrage(state.p2);
+    }
   }
 });
 
@@ -5400,6 +5913,8 @@ window.addEventListener("blur", () => {
   if (state?.p1?.barrageQueue) {
     releaseBarrage(state.p1);
   }
+  if (state?.p2?.isChargingTimeStop) cancelTimeStopCharge(state.p2, "HỦY CHIÊU!");
+  if (state?.p2?.barrageQueue) releaseBarrage(state.p2);
 });
 
 skillBtns.q.btn.addEventListener("pointerdown", (e) => {
@@ -5434,6 +5949,7 @@ function updateSkillPreview(charId) {
   if (!cfg) return;
   const nameEl = document.getElementById("preview-char-name");
   const skillsEl = document.getElementById("preview-char-skills");
+  const detailEl = document.getElementById("skill-detail-panel");
   if (nameEl) nameEl.textContent = cfg.name;
   if (skillsEl) {
     skillsEl.replaceChildren();
@@ -5443,7 +5959,9 @@ function updateSkillPreview(charId) {
       ["R", cfg.skills.r],
     ];
     for (const [key, skill] of skillEntries) {
-      const item = document.createElement("span");
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "skill-info-chip";
       item.title = `${skill.name}: ${skill.desc}`;
       const badge = document.createElement("b");
       badge.textContent = key;
@@ -5451,16 +5969,38 @@ function updateSkillPreview(charId) {
       const cooldown = document.createElement("small");
       cooldown.textContent = `CD ${skill.cd}s`;
       item.append(cooldown);
+      const detailParts = [skill.desc, `Hồi chiêu: ${skill.cd}s.`];
+      const damage = skill.damage ?? skill.impactDamage;
+      if (Number.isFinite(damage)) detailParts.push(`Sát thương: ${damage} DMG.`);
+      else if (skill.isBarrage && cfg.barrage) {
+        const total = cfg.barrage.totalPunches * cfg.barrage.punchDamage + cfg.barrage.lastPunchDamage - cfg.barrage.punchDamage;
+        detailParts.push(`Barrage khoảng ${Math.round(total)} DMG nếu trúng đủ.`);
+      }
+      const range = skill.range ?? skill.distance ?? skill.maxLength;
+      if (Number.isFinite(range)) detailParts.push(`Tầm/độ dài: ${range} đơn vị.`);
+      const stun = skill.stunDuration ?? skill.wallStunDuration;
+      if (Number.isFinite(stun)) detailParts.push(`Choáng: ${stun}s.`);
+      if (skill.chargeTime) detailParts.push(`Giữ ${key} ${skill.chargeTime}s để tụ lực.`);
+      if (skill.isBarrage) detailParts.push(`Giữ ${key} để duy trì, thả phím để dừng.`);
+      item.addEventListener("click", () => {
+        if (detailEl) detailEl.textContent = `${key} · ${skill.name} — ${detailParts.join(" ")}`;
+      });
       skillsEl.append(item);
     }
     if (charId === "kira") {
-      const item = document.createElement("span");
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "skill-info-chip";
       item.title = "Kích nổ First Bomb";
       const badge = document.createElement("b");
       badge.textContent = "T";
       item.append(badge, document.createTextNode(" KÍCH NỔ"));
+      item.addEventListener("click", () => {
+        if (detailEl) detailEl.textContent = "T · Kích nổ First Bomb đã đặt/gắn lên mục tiêu.";
+      });
       skillsEl.append(item);
     }
+    if (detailEl) detailEl.textContent = "Chạm hoặc nhấn Q, E, R để xem chi tiết chiêu.";
   }
 }
 
@@ -5621,13 +6161,13 @@ window.addEventListener("orientationchange", () => {
 updateDeviceActionLabels();
 
 function setGraphicsMode(mode, persist = true) {
-  graphicsMode = mode === "high" ? "high" : "normal";
+  graphicsMode = mode === "high" ? "high" : "low";
   selectOverlay.dataset.graphicsMode = graphicsMode;
-  targetFrameInterval = 1000 / (graphicsMode === "high" ? 120 : 60);
+  targetFrameInterval = 1000 / (graphicsMode === "high" && !isTouchDeviceOrSmallScreen() ? 120 : 60);
   if (graphicsModeLabel) {
     graphicsModeLabel.textContent = graphicsMode === "high"
-      ? "CAO · TỐI ĐA 120 FPS"
-      : "BÌNH THƯỜNG · 60 FPS";
+      ? `CAO · ${isTouchDeviceOrSmallScreen() ? "60" : "TỐI ĐA 120"} FPS`
+      : "THẤP · 60 FPS";
   }
   document.querySelectorAll("[data-graphics-mode]").forEach((button) => {
     if (!button.matches("button")) return;
@@ -5648,6 +6188,29 @@ function setGraphicsMode(mode, persist = true) {
   }
 }
 
+function setP2ControlLayout(layout, persist = true) {
+  p2ControlLayout = Object.prototype.hasOwnProperty.call(P2_KEY_LAYOUTS, layout)
+    ? layout
+    : "numpad";
+  p2ControlLayoutSelect.value = p2ControlLayout;
+  if (persist) {
+    try {
+      localStorage.setItem(P2_CONTROL_LAYOUT_STORAGE_KEY, p2ControlLayout);
+    } catch (error) {
+      console.warn("Unable to save P2 control layout:", error);
+    }
+  }
+}
+
+function setPerformanceHudEnabled(enabled) {
+  performanceHudEnabled = Boolean(enabled);
+  performanceHud.classList.toggle("hidden", !performanceHudEnabled);
+  performanceHudToggle.textContent = performanceHudEnabled ? "FPS OVERLAY: ON" : "FPS OVERLAY: OFF";
+  performanceSampleTimestamp = 0;
+  performanceSampleFrames = 0;
+  performanceSampleWorkMs = 0;
+}
+
 function updateCharacterSelectUI() {
   const p1Cfg = CHAR_CONFIG[selectedPlayerChar];
   const aiCfg = CHAR_CONFIG[selectedAiChar];
@@ -5657,17 +6220,25 @@ function updateCharacterSelectUI() {
   const p1TabNameEl = document.getElementById("active-p1-name");
   const aiTabNameEl = document.getElementById("active-ai-name");
   const sideLabelEl = document.getElementById("preview-side-label");
+  const secondSideLabel = document.getElementById("selection-p2-side-label");
+  const matchupP2Label = document.getElementById("select-p2-label");
+  const p2Label = selectedGameMode === "cpu"
+    ? "CPU"
+    : selectedGameMode === "training" ? "DUMMY" : "PLAYER 2";
 
   if (p1NameEl) p1NameEl.textContent = p1Name;
   if (p1TabNameEl) p1TabNameEl.textContent = p1Name;
   if (aiTabNameEl) aiTabNameEl.textContent = aiName;
   if (aiColHeader) aiColHeader.textContent = aiName;
+  if (secondSideLabel) secondSideLabel.textContent = selectedGameMode === "cpu" ? "CPU / AI" : p2Label;
+  if (matchupP2Label) matchupP2Label.textContent = p2Label;
   if (sideLabelEl) {
     sideLabelEl.textContent = activeSelectionSide === "p1"
       ? "PLAYER 1 · YOUR STAND"
-      : "CPU / AI · OPPONENT STAND";
+      : `${p2Label} · OPPONENT STAND`;
   }
   selectOverlay.dataset.activeSide = activeSelectionSide;
+  selectOverlay.dataset.gameMode = selectedGameMode;
 
   document.querySelectorAll("#player-char-grid .char-card").forEach((card) => {
     const charId = card.dataset.char;
@@ -5678,6 +6249,7 @@ function updateCharacterSelectUI() {
     card.classList.toggle("is-ai-selected", isAi);
     card.classList.toggle("active-choice", isActive);
     card.classList.toggle("ai-choice", isActive && activeSelectionSide === "ai");
+    card.dataset.p2Label = selectedGameMode === "cpu" ? "CPU" : "P2";
     card.setAttribute("aria-pressed", String(isActive));
   });
 
@@ -5686,6 +6258,21 @@ function updateCharacterSelectUI() {
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-selected", String(isActive));
   });
+}
+
+function setGameMode(mode) {
+  selectedGameMode = ["cpu", "local", "training"].includes(mode) ? mode : "cpu";
+  document.querySelectorAll(".game-mode-btn").forEach((button) => {
+    const active = button.dataset.gameMode === selectedGameMode;
+    button.classList.toggle("selected", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  document.querySelector(".difficulty-controls")?.classList.toggle("hidden", selectedGameMode !== "cpu");
+  document.getElementById("select-training-options")?.classList.toggle("hidden", selectedGameMode !== "training");
+  updateCharacterSelectUI();
+  if (!selectOverlay.classList.contains("hidden")) {
+    showCharacterPreviewVideo(activeSelectionSide === "p1" ? selectedPlayerChar : selectedAiChar);
+  }
 }
 
 function setActiveSelectionSide(side) {
@@ -5712,6 +6299,9 @@ document.getElementById("player-char-grid").addEventListener("click", (event) =>
 document.querySelectorAll(".selection-side-btn").forEach((button) => {
   button.addEventListener("click", () => setActiveSelectionSide(button.dataset.side));
 });
+document.querySelectorAll(".game-mode-btn").forEach((button) => {
+  button.addEventListener("click", () => setGameMode(button.dataset.gameMode));
+});
 
 document.getElementById("random-ai-btn").addEventListener("click", () => {
   const pool = Object.keys(CHARACTER_PREVIEW_VIDEOS);
@@ -5734,9 +6324,18 @@ document.querySelectorAll("#ai-diff-bar .diff-btn").forEach((btn) => {
 document.querySelectorAll(".graphics-option").forEach((button) => {
   button.addEventListener("click", () => setGraphicsMode(button.dataset.graphicsMode));
 });
+p2ControlLayoutSelect.addEventListener("change", (event) => {
+  setP2ControlLayout(event.target.value);
+});
+document.getElementById("toggle-performance-hud").addEventListener("click", () => {
+  setPerformanceHudEnabled(!performanceHudEnabled);
+});
 updateCharacterSelectUI();
 updateSkillPreview(selectedPlayerChar);
+setGameMode(selectedGameMode);
 setGraphicsMode(graphicsMode, false);
+setP2ControlLayout(p2ControlLayout, false);
+setPerformanceHudEnabled(false);
 
 const characterRoster = document.getElementById("player-char-grid");
 const rosterPrevBtn = document.getElementById("roster-prev-btn");
@@ -5815,6 +6414,35 @@ document.addEventListener("visibilitychange", () => {
 
 document.getElementById("start-btn").addEventListener("click", startMatchWithIntro);
 document.getElementById("end-replay-btn").addEventListener("click", startMatchWithIntro);
+document.getElementById("menu-stats-btn").addEventListener("click", () => {
+  openStatsPanel();
+  mainMenuVideo?.pause();
+});
+document.getElementById("tutorial-btn").addEventListener("click", () => {
+  document.getElementById("tutorial-overlay").classList.remove("hidden");
+  mainMenuVideo?.pause();
+});
+document.getElementById("close-tutorial-btn").addEventListener("click", () => {
+  document.getElementById("tutorial-overlay").classList.add("hidden");
+  showMainMenuVideo();
+});
+document.getElementById("close-stats-btn").addEventListener("click", () => {
+  document.getElementById("stats-overlay").classList.add("hidden");
+  showMainMenuVideo();
+});
+document.getElementById("export-stats-btn").addEventListener("click", exportMatchStats);
+document.getElementById("stats-overlay").addEventListener("click", (event) => {
+  if (event.target.id === "stats-overlay") {
+    event.currentTarget.classList.add("hidden");
+    showMainMenuVideo();
+  }
+});
+document.getElementById("tutorial-overlay").addEventListener("click", (event) => {
+  if (event.target.id === "tutorial-overlay") {
+    event.currentTarget.classList.add("hidden");
+    showMainMenuVideo();
+  }
+});
 
 function returnToMainMenu() {
   if (state) state.running = false;
@@ -5832,7 +6460,23 @@ function returnToMainMenu() {
   startLobbyBgm();
 }
 
+function returnToCharacterSelect() {
+  if (state) state.running = false;
+  if (vsTimerHandle) clearTimeout(vsTimerHandle);
+  if (endTimerHandle) clearTimeout(endTimerHandle);
+  stopAllSounds();
+  vsIntroOverlay.classList.add("hidden");
+  resultBanner.classList.add("hidden");
+  endOverlay.classList.add("hidden");
+  mainMenuOverlay.classList.add("hidden");
+  selectOverlay.classList.remove("hidden");
+  setActiveSelectionSide("p1");
+  syncMobileControlsVisibility();
+  requestAnimationFrame(syncRosterNavigation);
+}
+
 document.getElementById("end-menu-btn").addEventListener("click", returnToMainMenu);
+document.getElementById("end-select-btn").addEventListener("click", returnToCharacterSelect);
 menuBtn.addEventListener("click", returnToMainMenu);
 
 // Audio & Settings
@@ -5887,7 +6531,48 @@ const mobileControlsEl = document.getElementById("mobile-controls");
 const joystickZoneEl = document.getElementById("touch-joystick-zone");
 const joystickBaseEl = document.getElementById("joystick-base");
 const joystickKnobEl = document.getElementById("joystick-knob");
+const joystickP2ZoneEl = document.getElementById("touch-p2-joystick-zone");
+const joystickP2BaseEl = document.getElementById("joystick-p2-base");
+const joystickP2KnobEl = document.getElementById("joystick-p2-knob");
+const p2SkillsZoneEl = document.getElementById("touch-p2-skills-zone");
 const toggleTouchBtn = document.getElementById("toggle-touch-btn");
+
+document.getElementById("training-dummy-behavior").addEventListener("change", (event) => {
+  const behavior = event.target.value;
+  trainingOptions.dummyBehavior = ["stand", "block", "dodge", "attack"].includes(behavior)
+    ? behavior
+    : "stand";
+  if (state?.mode === "training" && trainingOptions.dummyBehavior !== "attack") {
+    state.p2.barrageQueue = null;
+    state.p2.isGuarding = trainingOptions.dummyBehavior === "block";
+  }
+});
+document.getElementById("training-regen").addEventListener("change", (event) => {
+  trainingOptions.regenerateTarget = event.target.checked;
+});
+document.getElementById("training-cooldowns").addEventListener("change", (event) => {
+  trainingOptions.resetCooldowns = event.target.checked;
+});
+document.getElementById("training-reset-btn").addEventListener("click", () => {
+  if (!state || state.mode !== "training") return;
+  const dummy = state.p2;
+  dummy.hp = dummy.maxHp;
+  dummy.x = state.trainingDummyX;
+  dummy.y = state.trainingDummyY;
+  dummy.vx = 0;
+  dummy.vy = 0;
+  dummy.stunTimer = 0;
+  dummy.sealedTimer = 0;
+  dummy.knockbackTimer = 0;
+  dummy.barrageQueue = null;
+  dummy.barrageStunSlot = null;
+  updateHpUI();
+});
+
+function updateTrainingControlsVisibility() {
+  const controls = document.getElementById("training-controls");
+  controls?.classList.toggle("hidden", state?.mode !== "training" || !state.running);
+}
 
 function syncMobileControlsVisibility() {
   const isTouch = isTouchDeviceOrSmallScreen();
@@ -5906,7 +6591,11 @@ function syncMobileControlsVisibility() {
     Boolean(state?.running) &&
     !isPortrait &&
     (touchMode === "on" || (touchMode === "auto" && isTouch));
+  mobileControlsEl.classList.toggle("local-pvp", state?.mode === "local");
   mobileControlsEl.classList.toggle("hidden", !show);
+  joystickP2ZoneEl?.classList.toggle("hidden", state?.mode !== "local" || !show);
+  p2SkillsZoneEl?.classList.toggle("hidden", state?.mode !== "local" || !show);
+  updateTrainingControlsVisibility();
 }
 
 window.addEventListener("resize", syncMobileControlsVisibility);
@@ -5931,6 +6620,7 @@ toggleTouchBtn.addEventListener("click", () => {
 });
 
 let joystickPointerId = null;
+let joystickP2PointerId = null;
 
 function updateJoystickFromPointer(clientX, clientY) {
   const rect = joystickBaseEl.getBoundingClientRect();
@@ -5958,6 +6648,28 @@ function resetJoystick() {
   joystickKnobEl.style.transform = "translate(0px, 0px)";
 }
 
+function updateP2JoystickFromPointer(clientX, clientY) {
+  const rect = joystickP2BaseEl.getBoundingClientRect();
+  const maxR = rect.width * 0.38;
+  let dx = clientX - (rect.left + rect.width / 2);
+  let dy = clientY - (rect.top + rect.height / 2);
+  const distance = Math.hypot(dx, dy);
+  if (distance > maxR && distance > 0) {
+    dx = (dx / distance) * maxR;
+    dy = (dy / distance) * maxR;
+  }
+  joystickP2KnobEl.style.transform = `translate(${dx}px, ${dy}px)`;
+  touchInputP2.x = dx / maxR;
+  touchInputP2.y = dy / maxR;
+}
+
+function resetP2Joystick() {
+  joystickP2PointerId = null;
+  touchInputP2.x = 0;
+  touchInputP2.y = 0;
+  joystickP2KnobEl.style.transform = "translate(0px, 0px)";
+}
+
 joystickZoneEl.addEventListener("pointerdown", (e) => {
   e.preventDefault();
   if (joystickPointerId !== null) return;
@@ -5979,11 +6691,30 @@ joystickZoneEl.addEventListener("pointercancel", (e) => {
   if (e.pointerId === joystickPointerId) resetJoystick();
 });
 
+joystickP2ZoneEl.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  if (joystickP2PointerId !== null) return;
+  joystickP2PointerId = e.pointerId;
+  joystickP2ZoneEl.setPointerCapture(e.pointerId);
+  updateP2JoystickFromPointer(e.clientX, e.clientY);
+});
+joystickP2ZoneEl.addEventListener("pointermove", (e) => {
+  if (e.pointerId !== joystickP2PointerId) return;
+  e.preventDefault();
+  updateP2JoystickFromPointer(e.clientX, e.clientY);
+});
+for (const eventName of ["pointerup", "pointercancel"]) {
+  joystickP2ZoneEl.addEventListener(eventName, (e) => {
+    if (e.pointerId === joystickP2PointerId) resetP2Joystick();
+  });
+}
+
 for (const k of ["q", "e", "r", "t"]) {
   const mBtn = document.getElementById(`m-btn-${k}`);
   if (!mBtn) continue;
   mBtn.addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    mBtn.setPointerCapture(e.pointerId);
     if (state) castSkill("p1", k);
   });
   if (k === "q") {
@@ -6005,6 +6736,28 @@ for (const k of ["q", "e", "r", "t"]) {
   }
 }
 
+for (const button of document.querySelectorAll('#touch-p2-skills-zone [data-skill]')) {
+  const skill = button.dataset.skill;
+  button.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    button.setPointerCapture(e.pointerId);
+    if (state?.mode === "local") castSkill("p2", skill);
+  });
+  if (skill === "q") {
+    for (const eventName of ["pointerup", "pointercancel"]) {
+      button.addEventListener(eventName, () => {
+        if (state?.p2?.isChargingTimeStop) cancelTimeStopCharge(state.p2, "HỦY CHIÊU!");
+      });
+    }
+  } else if (skill === "e" || skill === "r") {
+    for (const eventName of ["pointerup", "pointercancel", "pointerleave"]) {
+      button.addEventListener(eventName, () => {
+        if (state?.p2?.barrageQueue?.skillKey === skill) releaseBarrage(state.p2);
+      });
+    }
+  }
+}
+
 const mDashBtn = document.getElementById("m-btn-dash");
 if (mDashBtn) {
   mDashBtn.addEventListener("pointerdown", (e) => {
@@ -6012,6 +6765,11 @@ if (mDashBtn) {
     if (state) triggerDash(state.p1);
   });
 }
+
+document.getElementById("m-p2-btn-dash").addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  if (state?.mode === "local") triggerDash(state.p2);
+});
 
 const mGuardBtn = document.getElementById("m-btn-f");
 if (mGuardBtn) {
@@ -6027,6 +6785,15 @@ if (mGuardBtn) {
     touchInput.guarding = false;
   });
 }
+
+const mP2GuardBtn = document.getElementById("m-p2-btn-f");
+mP2GuardBtn.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  touchInputP2.guarding = true;
+  mP2GuardBtn.setPointerCapture(e.pointerId);
+});
+mP2GuardBtn.addEventListener("pointerup", () => { touchInputP2.guarding = false; });
+mP2GuardBtn.addEventListener("pointercancel", () => { touchInputP2.guarding = false; });
 
 showMainMenuVideo();
 draw();

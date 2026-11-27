@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#12090d" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>JOJO Bizarre Arena 2D — Beta v3</title>
-  <link rel="stylesheet" href="style.css?v=10" />
+  <title>JOJO Bizarre Arena 2D — Beta v4</title>
+  <link rel="stylesheet" href="style.css?v=13" />
 </head>
 <body>
   <div id="game-wrapper">
@@ -116,6 +116,20 @@
       <canvas id="arena" width="1680" height="780"></canvas>
       <div id="menacing-overlay" aria-hidden="true">ゴ ゴ ゴ ゴ</div>
       <div id="arena-map-label" aria-live="polite"></div>
+      <section id="training-controls" class="training-controls hidden" aria-label="Điều khiển phòng tập">
+        <label for="training-dummy-behavior">Mục tiêu
+          <select id="training-dummy-behavior">
+            <option value="stand">Đứng yên</option>
+            <option value="block">Block</option>
+            <option value="dodge">Né chiêu</option>
+            <option value="attack">Đánh trả</option>
+          </select>
+        </label>
+        <label><input id="training-regen" type="checkbox" checked /> Hồi máu mục tiêu</label>
+        <label><input id="training-cooldowns" type="checkbox" checked /> Bỏ hồi chiêu</label>
+        <button id="training-reset-btn" type="button">ĐẶT LẠI MỤC TIÊU</button>
+      </section>
+      <div id="performance-hud" class="performance-hud hidden" role="status" aria-live="off"></div>
 
       <!-- VS Intro Splash Overlay -->
       <div id="vs-intro-overlay" class="hidden">
@@ -156,19 +170,19 @@
         </div>
 
         <div id="touch-skills-zone">
-          <button type="button" class="m-skill-btn ulti" id="m-btn-q" data-skill="q">
+          <button type="button" class="m-skill-btn ulti" id="m-btn-q" data-player="p1" data-skill="q">
             <span class="m-key">Q</span>
             <span class="m-sub">Ulti</span>
             <span class="m-cd" id="m-cd-q"></span>
           </button>
 
-          <button type="button" class="m-skill-btn skill-r" id="m-btn-r" data-skill="r">
+          <button type="button" class="m-skill-btn skill-r" id="m-btn-r" data-player="p1" data-skill="r">
             <span class="m-key">R</span>
             <span class="m-sub">Chiêu R</span>
             <span class="m-cd" id="m-cd-r"></span>
           </button>
 
-          <button type="button" class="m-skill-btn skill-e" id="m-btn-e" data-skill="e">
+          <button type="button" class="m-skill-btn skill-e" id="m-btn-e" data-player="p1" data-skill="e">
             <span class="m-key">E</span>
             <span class="m-sub">Chiêu E</span>
             <span class="m-cd" id="m-cd-e"></span>
@@ -185,10 +199,40 @@
             <span class="m-sub" id="m-guard-sub">Block</span>
           </button>
 
-          <button type="button" class="m-skill-btn kira-t hidden" id="m-btn-t" data-skill="t">
+          <button type="button" class="m-skill-btn kira-t hidden" id="m-btn-t" data-player="p1" data-skill="t">
             <span class="m-key">T</span>
             <span class="m-sub">Nổ</span>
             <span class="m-cd" id="m-cd-t"></span>
+          </button>
+        </div>
+
+        <div id="touch-p2-joystick-zone" class="touch-p2-controls">
+          <div class="joystick-base" id="joystick-p2-base" aria-label="Joystick người chơi 2">
+            <span class="joy-dir up">▲</span>
+            <span class="joy-dir right">▶</span>
+            <span class="joy-dir down">▼</span>
+            <span class="joy-dir left">◀</span>
+            <div class="joystick-knob" id="joystick-p2-knob"></div>
+          </div>
+        </div>
+        <div id="touch-p2-skills-zone" class="touch-p2-controls">
+          <button type="button" class="m-skill-btn ulti" id="m-p2-btn-q" data-player="p2" data-skill="q">
+            <span class="m-key">U</span><span class="m-sub">Ulti P2</span><span class="m-cd" id="m-p2-cd-q"></span>
+          </button>
+          <button type="button" class="m-skill-btn skill-r" id="m-p2-btn-r" data-player="p2" data-skill="r">
+            <span class="m-key">O</span><span class="m-sub">Chiêu R</span><span class="m-cd" id="m-p2-cd-r"></span>
+          </button>
+          <button type="button" class="m-skill-btn skill-e" id="m-p2-btn-e" data-player="p2" data-skill="e">
+            <span class="m-key">I</span><span class="m-sub">Chiêu E</span><span class="m-cd" id="m-p2-cd-e"></span>
+          </button>
+          <button type="button" class="m-skill-btn dash p2-dash" id="m-p2-btn-dash">
+            <span class="m-key">⚡</span><span class="m-sub">Dash P2</span>
+          </button>
+          <button type="button" class="m-skill-btn guard p2-guard" id="m-p2-btn-f">
+            <span class="m-key">🛡️</span><span class="m-sub">Block P2</span>
+          </button>
+          <button type="button" class="m-skill-btn kira-t hidden" id="m-p2-btn-t" data-player="p2" data-skill="t">
+            <span class="m-key">P</span><span class="m-sub">Nổ</span><span class="m-cd" id="m-p2-cd-t"></span>
           </button>
         </div>
       </div>
@@ -214,6 +258,7 @@
                 <span class="button-icon">⚔</span><span><small>CHỌN CHIẾN BINH</small>VÀO TRẬN</span><span class="button-arrow">↗</span>
               </button>
               <button id="menu-settings-btn" class="secondary-cta menu-settings-btn">⚙ <span>CÀI ĐẶT</span></button>
+              <button id="menu-stats-btn" class="secondary-cta menu-settings-btn">📊 <span>THỐNG KÊ</span></button>
             </div>
             <div class="menu-controls" aria-label="Điều khiển">
               <span><kbd>WASD</kbd> DI CHUYỂN</span>
@@ -231,13 +276,14 @@
 
         <footer class="main-menu-footer">
           <span>ONE ARENA. EIGHT STANDS. NO SECOND CHANCES.</span>
-          <span class="footer-version">JOJO BIZARRE ARENA <b>•</b> BETA</span>
+          <span class="footer-version">JOJO BIZARRE ARENA <b>•</b> BETA v4</span>
+          <button type="button" id="tutorial-btn" class="tutorial-open-btn">❔ HƯỚNG DẪN</button>
         </footer>
       </div>
     </div>
 
     <!-- Character Select -->
-    <div id="select-overlay" class="hidden select-screen" data-graphics-mode="normal" data-preview-mode="image">
+    <div id="select-overlay" class="hidden select-screen" data-graphics-mode="high" data-preview-mode="video">
       <img id="character-preview-image" class="scene-image" src="Jotaro/Star%20platium.png" alt="" aria-hidden="true" />
       <video id="character-preview-video" class="scene-video character-scene-video" muted loop playsinline preload="none" aria-hidden="true"></video>
       <div class="scene-shade select-shade" aria-hidden="true"></div>
@@ -248,7 +294,7 @@
           <div class="select-matchup" aria-live="polite">
             <span class="matchup-player">P1 <b id="p1-selection-name">JOTARO</b></span>
             <span class="matchup-vs">VS</span>
-            <span class="matchup-ai">CPU <b id="ai-col-header">DIO</b></span>
+            <span class="matchup-ai"><b id="select-p2-label">CPU</b> <b id="ai-col-header">DIO</b></span>
           </div>
         </header>
 
@@ -266,17 +312,25 @@
                 <span><b>E</b> Star Finger (15 DMG / Choáng 0.5s)</span>
                 <span><b>R</b> ORA Barrage (45 DMG / 8s)</span>
               </div>
+              <div id="skill-detail-panel" class="skill-detail-panel" aria-live="polite">
+                Chọn Q, E hoặc R để xem tầm đánh, sát thương và điều kiện.
+              </div>
             </div>
           </section>
 
           <section class="selection-dock" aria-label="Chọn nhân vật và độ khó">
+            <div class="game-mode-switch" role="group" aria-label="Chế độ chơi">
+              <button type="button" class="game-mode-btn selected" data-game-mode="cpu" aria-pressed="true">ĐẤU AI</button>
+              <button type="button" class="game-mode-btn" data-game-mode="local" aria-pressed="false">LOCAL PVP</button>
+              <button type="button" class="game-mode-btn" data-game-mode="training" aria-pressed="false">PHÒNG TẬP</button>
+            </div>
             <div class="selection-toolbar">
               <div class="selection-side-tabs" role="tablist" aria-label="Chọn bên">
                 <button id="select-side-player" class="selection-side-btn player-side active" type="button" role="tab" aria-selected="true" data-side="p1">
                   <span class="side-dot"></span><span>PLAYER 1</span><b id="active-p1-name">JOTARO</b>
                 </button>
                 <button id="select-side-ai" class="selection-side-btn ai-side" type="button" role="tab" aria-selected="false" data-side="ai">
-                  <span class="side-dot"></span><span>CPU / AI</span><b id="active-ai-name">DIO</b>
+                  <span class="side-dot"></span><span id="selection-p2-side-label">CPU / AI</span><b id="active-ai-name">DIO</b>
                 </button>
               </div>
               <div class="difficulty-controls">
@@ -290,6 +344,10 @@
                 <span class="ai-diff-desc" id="ai-diff-desc">Kỹ năng cao, phản xạ nhanh • +50 Máu AI</span>
                 <button id="random-ai-btn" class="random-ai-btn" type="button" title="Chọn ngẫu nhiên nhân vật máy">🎲 RANDOM</button>
               </div>
+            </div>
+            <div id="select-training-options" class="select-training-options hidden">
+              <span>Dummy đứng yên · Không kết thúc trận · Điều chỉnh trong game</span>
+              <span>Chuột/Touch đặt lại mục tiêu · Hoặc dùng nút phòng tập</span>
             </div>
 
             <div class="roster-heading"><span>STAND ROSTER</span><span>CHẠM ĐỂ CHỌN <b>•</b> KÉO ĐỂ XEM</span></div>
@@ -338,6 +396,7 @@
         <p id="end-subtitle">Kết quả trận đấu</p>
         <div class="modal-actions">
           <button id="end-menu-btn" class="secondary-cta">🏠 MAIN MENU</button>
+          <button id="end-select-btn" class="secondary-cta">⚔ CHỌN LẠI</button>
           <button id="end-replay-btn" class="primary-cta">🔄 CHƠI LẠI</button>
         </div>
       </div>
@@ -351,16 +410,33 @@
         <div class="setting-row graphics-setting">
           <div class="setting-header">
             <label>Đồ họa</label>
-            <span class="graphics-current-label" id="graphics-mode-label">BÌNH THƯỜNG · 60 FPS</span>
+            <span class="graphics-current-label" id="graphics-mode-label">CAO · TỐI ĐA 120 FPS</span>
           </div>
           <div class="graphics-options" role="group" aria-label="Chất lượng đồ họa">
-            <button type="button" class="graphics-option selected" data-graphics-mode="normal" aria-pressed="true">
-              <b>BÌNH THƯỜNG</b><small>Ảnh tĩnh · Giới hạn 60 FPS</small>
+            <button type="button" class="graphics-option" data-graphics-mode="low" aria-pressed="false">
+              <b>THẤP</b><small>Ảnh tĩnh · Giới hạn 60 FPS</small>
             </button>
-            <button type="button" class="graphics-option" data-graphics-mode="high" aria-pressed="false">
+            <button type="button" class="graphics-option selected" data-graphics-mode="high" aria-pressed="true">
               <b>CAO</b><small>Video · Tối đa 120 FPS</small>
             </button>
           </div>
+        </div>
+
+        <div class="setting-row p2-layout-setting">
+          <label for="p2-control-layout">Bố trí phím P2 (Local PvP)</label>
+          <select id="p2-control-layout">
+            <option value="numpad">Numpad: di chuyển 8/4/5/6 · chiêu 7/9/1/3 · block 0 · dash Enter</option>
+            <option value="arrows">Arrow + U/I/O/P · block Ctrl phải · dash Shift phải</option>
+          </select>
+          <span class="setting-help">P1: WASD, Q/E/R/T, F, Shift trái. Layout chỉ áp dụng cho bàn phím.</span>
+        </div>
+
+        <div class="setting-row performance-setting">
+          <div class="setting-header">
+            <label>Hiệu năng trận đấu</label>
+            <button type="button" id="toggle-performance-hud" class="toggle-pill">FPS OVERLAY: OFF</button>
+          </div>
+          <span class="setting-help">Hiển thị FPS và thời gian update/render trung bình khi đang chơi.</span>
         </div>
 
         <div class="setting-row device-setting">
@@ -384,7 +460,6 @@
             <span id="sfx-volume-val">30%</span>
           </div>
         </div>
-
         <div class="setting-row">
           <div class="setting-header">
             <label for="bgm-volume">Nhạc nền (Sound Battle)</label>
@@ -408,6 +483,30 @@
         </div>
       </div>
     </div>
+    <div id="stats-overlay" class="hidden">
+      <div class="modal-card stats-card">
+        <h2>THỐNG KÊ TRẬN ĐẤU</h2>
+        <div id="stats-summary" class="stats-summary"></div>
+        <div class="stats-actions">
+          <button id="export-stats-btn" type="button" class="secondary-cta">XUẤT DỮ LIỆU CÂN BẰNG</button>
+          <button id="close-stats-btn" type="button" class="primary-cta">ĐÓNG</button>
+        </div>
+      </div>
+    </div>
+    <div id="tutorial-overlay" class="hidden">
+      <div class="modal-card tutorial-card">
+        <h2>HƯỚNG DẪN NHANH</h2>
+        <ul>
+          <li><b>Di chuyển:</b> P1 dùng WASD; trên điện thoại kéo joystick.</li>
+          <li><b>Kỹ năng:</b> Q/E/R; giữ phím kỹ năng Barrage để tiếp tục đấm. Kira dùng T để kích nổ bom đã gắn.</li>
+          <li><b>Phòng thủ và Dash:</b> giữ F để Block, Shift để lướt né khi còn lượt hồi.</li>
+          <li><b>Đang bị Barrage khóa:</b> bấm Barrage cùng loại để phản đòn và thoát thế bị ghì. Choáng/khống chế khác thường phải chờ hết thời gian.</li>
+          <li><b>Local PvP:</b> P1 WASD + QERT, F, Shift trái. P2 dùng Numpad 8/4/5/6 để di chuyển, 7/9/1/3 dùng chiêu, 0 block, Enter dash. Có thể đổi sang Arrow + UIOP, Ctrl phải block, Shift phải dash trong Cài đặt.</li>
+          <li><b>Phòng tập:</b> chọn mục tiêu đứng yên, block, né hoặc đánh trả; bật/tắt hồi máu và hồi chiêu trên đấu trường.</li>
+        </ul>
+        <div class="modal-actions"><button id="close-tutorial-btn" class="primary-cta" type="button">ĐÃ HIỂU</button></div>
+      </div>
+    </div>
   </div>
 
   <!-- Mobile Portrait Rotate Prompt Overlay (outside game-wrapper, hidden in landscape) -->
@@ -427,11 +526,11 @@
   <script src="characters/jotaro.js?v=7"></script>
   <script src="characters/dio.js?v=7"></script>
   <script src="characters/kira.js?v=8"></script>
-  <script src="characters/diavolo.js?v=8"></script>
+  <script src="characters/diavolo.js?v=9"></script>
   <script src="characters/okuyasu.js?v=8"></script>
   <script src="characters/josuke.js?v=8"></script>
   <script src="characters/polnareff.js?v=7"></script>
   <script src="characters/jolyne.js?v=8"></script>
-  <script src="game.js?v=12"></script>
+  <script src="game.js?v=15"></script>
 </body>
 </html>
