@@ -18,7 +18,7 @@ window.JOJO_CHARS.okuyasu = {
     q: {
       name: "SPACE ERASE",
       desc: "Quẹt 3 lần cách nhau 0.3s + Choáng 0.3s",
-      cd: 20,
+      cd: 18,
       swipes: 3,
       interval: 0.3,
       damagePerSwipe: 17,
@@ -30,10 +30,11 @@ window.JOJO_CHARS.okuyasu = {
     },
     e: {
       name: "BRING TO ME",
-      desc: "Quẹt không gian kéo địch lại gần (né được)",
-      cd: 15,
-      range: 210, // ~1.5x barrage range
-      damage: 10,
+      desc: "Kéo địch từ xa lại gần, gây 20 DMG và choáng 1s",
+      cd: 12,
+      range: 250,
+      damage: 20,
+      stunDuration: 1.0,
       soundKey: "okuyasuSkillE",
       callout: "LẠI ĐÂY NÀO!",
     },

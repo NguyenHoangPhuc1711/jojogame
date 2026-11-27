@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>JOJO Bizarre Arena 2D — Beta v3</title>
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=10" />
 </head>
 <body>
   <div id="game-wrapper">
@@ -85,6 +85,8 @@
         <div class="hud-actions">
           <button id="mute-btn" title="Bật / Tắt toàn bộ âm thanh">🔊</button>
           <button id="settings-btn" title="Cài đặt âm lượng">⚙️</button>
+          <button type="button" data-device-action="fullscreen" title="Bật / tắt toàn màn hình" aria-label="Bật hoặc tắt toàn màn hình">⛶</button>
+          <button type="button" data-device-action="orientation" title="Khóa / mở khóa xoay ngang" aria-label="Khóa hoặc mở khóa xoay ngang">🔒</button>
           <button id="menu-btn" title="Về Menu chính">🏠</button>
         </div>
       </div>
@@ -123,14 +125,14 @@
         </div>
         <div class="vs-fighters-stage">
           <div class="vs-fighter-side left">
-            <img id="vs-p1-img" src="Jotaro/Jotaro_with_stand.png" alt="P1" />
+            <img id="vs-p1-img" src="Jotaro/Star%20platium.png" alt="P1 portrait" />
           </div>
           <div class="vs-bolt-center">
             <div class="lightning-bolt">⚡</div>
             <div class="vs-clash-text"><span class="vs-red">V</span><span class="vs-blue">S</span></div>
           </div>
           <div class="vs-fighter-side right">
-            <img id="vs-p2-img" src="Dio/dio_with_stand.png" alt="P2" />
+            <img id="vs-p2-img" src="Dio/Dio.png" alt="P2 portrait" />
           </div>
         </div>
       </div>
@@ -235,7 +237,8 @@
     </div>
 
     <!-- Character Select -->
-    <div id="select-overlay" class="hidden select-screen">
+    <div id="select-overlay" class="hidden select-screen" data-graphics-mode="normal" data-preview-mode="image">
+      <img id="character-preview-image" class="scene-image" src="Jotaro/Star%20platium.png" alt="" aria-hidden="true" />
       <video id="character-preview-video" class="scene-video character-scene-video" muted loop playsinline preload="none" aria-hidden="true"></video>
       <div class="scene-shade select-shade" aria-hidden="true"></div>
       <div class="select-layout">
@@ -342,8 +345,34 @@
 
     <!-- Settings Overlay -->
     <div id="settings-overlay" class="hidden">
-      <div class="modal-card">
-        <h2>⚙️ CÀI ĐẶT ÂM THANH</h2>
+      <div class="modal-card settings-card">
+        <h2>⚙️ CÀI ĐẶT</h2>
+
+        <div class="setting-row graphics-setting">
+          <div class="setting-header">
+            <label>Đồ họa</label>
+            <span class="graphics-current-label" id="graphics-mode-label">BÌNH THƯỜNG · 60 FPS</span>
+          </div>
+          <div class="graphics-options" role="group" aria-label="Chất lượng đồ họa">
+            <button type="button" class="graphics-option selected" data-graphics-mode="normal" aria-pressed="true">
+              <b>BÌNH THƯỜNG</b><small>Ảnh tĩnh · Giới hạn 60 FPS</small>
+            </button>
+            <button type="button" class="graphics-option" data-graphics-mode="high" aria-pressed="false">
+              <b>CAO</b><small>Video · Tối đa 120 FPS</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="setting-row device-setting">
+          <div class="setting-header">
+            <label>Hiển thị điện thoại</label>
+          </div>
+          <div class="device-setting-actions">
+            <button type="button" class="device-action-btn" data-device-action="fullscreen">⛶ TOÀN MÀN HÌNH</button>
+            <button type="button" class="device-action-btn" data-device-action="orientation">🔒 KHÓA XOAY NGANG</button>
+          </div>
+          <span class="device-action-status" id="device-action-status" aria-live="polite"></span>
+        </div>
 
         <div class="setting-row">
           <div class="setting-header">
@@ -382,22 +411,27 @@
   </div>
 
   <!-- Mobile Portrait Rotate Prompt Overlay (outside game-wrapper, hidden in landscape) -->
-  <div id="rotate-overlay" aria-hidden="true">
+  <div id="rotate-overlay">
     <div class="rotate-card">
       <div class="rotate-phone-icon">📱</div>
       <h2>XOAY NGANG MÀN HÌNH</h2>
       <p>Vui lòng xoay ngang điện thoại để chơi <b>JOJO Bizarre Arena 2D</b> với đầy đủ Joystick và bộ kỹ năng.</p>
+      <div class="rotate-actions">
+        <button type="button" class="device-action-btn" data-device-action="fullscreen">⛶ TOÀN MÀN HÌNH</button>
+        <button type="button" class="device-action-btn" data-device-action="orientation">🔒 KHÓA XOAY NGANG</button>
+      </div>
+      <span class="device-action-status" id="rotate-device-status" aria-live="polite"></span>
     </div>
   </div>
 
   <script src="characters/jotaro.js?v=7"></script>
   <script src="characters/dio.js?v=7"></script>
-  <script src="characters/kira.js?v=7"></script>
-  <script src="characters/diavolo.js?v=7"></script>
-  <script src="characters/okuyasu.js?v=7"></script>
-  <script src="characters/josuke.js?v=7"></script>
+  <script src="characters/kira.js?v=8"></script>
+  <script src="characters/diavolo.js?v=8"></script>
+  <script src="characters/okuyasu.js?v=8"></script>
+  <script src="characters/josuke.js?v=8"></script>
   <script src="characters/polnareff.js?v=7"></script>
-  <script src="characters/jolyne.js?v=7"></script>
-  <script src="game.js?v=11"></script>
+  <script src="characters/jolyne.js?v=8"></script>
+  <script src="game.js?v=12"></script>
 </body>
 </html>

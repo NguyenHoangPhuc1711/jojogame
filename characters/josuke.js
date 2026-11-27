@@ -19,7 +19,7 @@ window.JOJO_CHARS.josuke = {
     q: {
       name: "ANGELO STONE",
       desc: "Phong ấn 2s thành đá Angelo (35 DMG)",
-      cd: 25,
+      cd: 20,
       damage: 35,
       sealDuration: 2.0,
       maxRange: 150,
@@ -29,7 +29,7 @@ window.JOJO_CHARS.josuke = {
     e: {
       name: "DORARA BARRAGE",
       desc: "Giữ E — 35 đấm × 1.0 DMG (35 DMG)",
-      cd: 9,
+      cd: 8,
       isBarrage: true,
     },
     r: {

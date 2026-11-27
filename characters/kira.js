@@ -17,13 +17,10 @@ window.JOJO_CHARS.kira = {
   skills: {
     q: {
       name: "BITE THE DUST",
-      desc: "Tụ lực 1s — 50~70 DMG & Hồi 20% HP",
-      cd: 60,
-      chargeTime: 1.0,
-      blastRadius: 310,
-      minDmg: 50,
-      maxBonusDmg: 20,
-      healPct: 0.2,
+      desc: "Tụ lực 1.5s — Hồi 30% máu",
+      cd: 55,
+      chargeTime: 1.5,
+      healPct: 0.3,
       soundKey: "kiraBiteTheDust",
       callout: "BITES ZA DUSTO...",
     },
@@ -63,6 +60,7 @@ window.JOJO_CHARS.kira = {
       const q = this.skills.q;
       api.playSound(q.soundKey);
       caster.biteTheDustCharge = q.chargeTime;
+      caster.biteTheDustChargeDuration = q.chargeTime;
       caster.vx *= 0.2;
       caster.vy *= 0.2;
       api.spawnFloatingText(caster.x, caster.y - 92, q.callout, this.color, 25);

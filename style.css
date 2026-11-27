@@ -368,30 +368,39 @@ body {
 }
 
 .vs-fighters-stage {
-  width: 100%;
-  display: flex;
+  width: min(1120px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  padding: 0 60px;
+  justify-items: center;
+  gap: clamp(10px, 3vw, 48px);
+  padding: 0 clamp(16px, 4vw, 60px);
 }
 
 .vs-fighter-side {
-  width: 36%;
+  width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .vs-fighter-side img {
-  max-height: 360px;
-  max-width: 100%;
-  object-fit: contain;
+  width: clamp(170px, 29vw, 360px);
+  aspect-ratio: 1;
+  max-height: min(58vh, 360px);
+  border: 2px solid rgba(255, 215, 106, 0.55);
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 34%;
+  box-shadow: 0 0 34px rgba(250, 204, 21, 0.35), 0 0 0 8px rgba(255, 255, 255, 0.04);
   filter: drop-shadow(0 0 22px rgba(250, 204, 21, 0.5));
   animation: slideInVS 0.45s ease-out;
 }
 
 .vs-fighter-side.right img {
   transform: scaleX(-1);
+  object-position: center 34%;
 }
 
 .vs-bolt-center {
@@ -1048,6 +1057,84 @@ body {
   align-items: center;
 }
 
+.graphics-current-label {
+  color: #fde047;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.graphics-options,
+.device-setting-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.graphics-option,
+.device-action-btn {
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8f5ff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.graphics-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+}
+
+.graphics-option b {
+  font-size: 0.78rem;
+}
+
+.graphics-option small {
+  color: rgba(234, 229, 248, 0.68);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.graphics-option.selected {
+  border-color: #fde047;
+  background: rgba(253, 224, 71, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(253, 224, 71, 0.25);
+}
+
+.device-action-btn {
+  min-height: 38px;
+  border-color: rgba(81, 216, 255, 0.45);
+  background: rgba(14, 116, 144, 0.18);
+  font-size: 0.7rem;
+}
+
+.device-action-btn:hover {
+  border-color: #51d8ff;
+  background: rgba(14, 116, 144, 0.3);
+}
+
+.device-action-status {
+  min-height: 1em;
+  color: rgba(255, 233, 170, 0.9);
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.device-action-status:empty {
+  display: none;
+}
+
+#hud .hud-actions [data-device-action] {
+  display: none;
+}
+
 .toggle-pill {
   background: rgba(239, 68, 68, 0.25);
   border: 1.5px solid #ef4444;
@@ -1384,6 +1471,23 @@ body.portrait-blocked #rotate-overlay {
   line-height: 1.45;
 }
 
+.rotate-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.rotate-card .device-action-btn {
+  min-height: 44px;
+}
+
+.settings-card {
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
 @keyframes rotatePhoneAnim {
   0%, 20% { transform: rotate(0deg); }
   55%, 80% { transform: rotate(-90deg); }
@@ -1457,6 +1561,10 @@ body.portrait-blocked #rotate-overlay {
     border-radius: 6px;
   }
 
+  .hud-actions [data-device-action] {
+    display: inline-flex !important;
+  }
+
   #menacing-overlay {
     top: 6px;
     right: 12px;
@@ -1476,6 +1584,7 @@ body.portrait-blocked #rotate-overlay {
   }
 
   .vs-fighter-side img {
+    width: clamp(132px, 24vw, 245px);
     max-height: 52dvh;
   }
 
@@ -1740,6 +1849,62 @@ body.portrait-blocked #rotate-overlay {
     font-size: 0.78rem;
   }
 
+  .settings-card {
+    padding: 14px 16px;
+  }
+
+  .settings-card h2 {
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+  }
+
+  .settings-card .setting-row {
+    padding: 4px 8px;
+    margin-bottom: 4px;
+    gap: 3px;
+  }
+
+  .settings-card .setting-header label {
+    font-size: 0.7rem;
+  }
+
+  .device-setting .setting-header {
+    display: none;
+  }
+
+  .graphics-current-label {
+    font-size: 0.52rem;
+  }
+
+  .graphics-options,
+  .device-setting-actions {
+    gap: 5px;
+  }
+
+  .graphics-option,
+  .device-action-btn {
+    min-height: 28px;
+    padding: 3px 6px;
+  }
+
+  .graphics-option b,
+  .device-action-btn {
+    font-size: 0.54rem;
+  }
+
+  .graphics-option small {
+    font-size: 0.48rem;
+  }
+
+  .settings-card .slider-wrap {
+    gap: 6px;
+  }
+
+  .settings-card .slider-wrap span {
+    min-width: 34px;
+    font-size: 0.78rem;
+  }
+
   .toggle-pill {
     font-size: 0.7rem;
     padding: 3px 9px;
@@ -1877,6 +2042,21 @@ body.portrait-blocked #rotate-overlay {
   object-fit: cover;
   object-position: center top;
   background: radial-gradient(ellipse at 68% 42%, #302054 0%, #11101c 48%, #080711 100%);
+}
+
+.scene-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+  background: radial-gradient(ellipse at 68% 42%, #302054 0%, #11101c 48%, #080711 100%);
+}
+
+#select-overlay[data-preview-mode="image"] #character-preview-video {
+  opacity: 0;
 }
 
 .scene-video[data-video-fallback="true"] {

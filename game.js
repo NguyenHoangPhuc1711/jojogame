@@ -24,7 +24,15 @@ let ARENA_CY = WORLD_H / 2;
 let state = null;
 let arenaFloorCache = null;
 let arenaFloorCacheDirty = true;
-let targetFrameInterval = 1000 / 60;
+const GRAPHICS_STORAGE_KEY = "jojoGraphicsMode";
+let graphicsMode = "normal";
+try {
+  const savedGraphicsMode = localStorage.getItem(GRAPHICS_STORAGE_KEY);
+  if (savedGraphicsMode === "high") graphicsMode = "high";
+} catch (error) {
+  console.warn("Unable to read saved graphics mode:", error);
+}
+let targetFrameInterval = 1000 / (graphicsMode === "high" ? 120 : 60);
 let lastRenderTime = 0;
 const ARENA_MAP_PATHS = Array.from({ length: 15 }, (_, index) => `Map/${index + 1}.png`);
 let currentArenaMapPath = null;
@@ -81,11 +89,7 @@ function syncArenaSize() {
   cssH = Math.max(200, cssH);
   const aspect = cssW / cssH;
   const isMobile = isTouchDeviceOrSmallScreen();
-  const hardwareThreads = navigator.hardwareConcurrency || 8;
-  const deviceMemory = navigator.deviceMemory || 8;
-  targetFrameInterval = isMobile || hardwareThreads <= 4 || deviceMemory <= 4
-    ? 1000 / 45
-    : 1000 / 60;
+  targetFrameInterval = 1000 / (graphicsMode === "high" ? 120 : 60);
 
   // Slightly larger character-to-map ratio on mobile screens so fighters are crisp & balanced
   let worldH = isMobile ? 560 : BASE_WORLD_H;
@@ -97,9 +101,11 @@ function syncArenaSize() {
   }
 
   const dpr = isMobile
-    ? Math.min(window.devicePixelRatio || 1, 1.35)
-    : Math.min(window.devicePixelRatio || 1, 1.75);
-  const maxCanvasPixels = isMobile ? 1800000 : 6000000;
+    ? Math.min(window.devicePixelRatio || 1, graphicsMode === "high" ? 1.35 : 1)
+    : Math.min(window.devicePixelRatio || 1, graphicsMode === "high" ? 1.75 : 1.25);
+  const maxCanvasPixels = isMobile
+    ? (graphicsMode === "high" ? 1800000 : 1200000)
+    : (graphicsMode === "high" ? 6000000 : 3600000);
   const requestedW = cssW * dpr;
   const requestedH = cssH * dpr;
   const pixelScale = Math.min(1, Math.sqrt(maxCanvasPixels / (requestedW * requestedH)));
@@ -775,6 +781,7 @@ const mainMenuOverlay = document.getElementById("main-menu-overlay");
 const selectOverlay = document.getElementById("select-overlay");
 const mainMenuVideo = document.getElementById("main-menu-video");
 const characterPreviewVideo = document.getElementById("character-preview-video");
+const characterPreviewImage = document.getElementById("character-preview-image");
 const aiColHeader = document.getElementById("ai-col-header");
 const aiDiffDesc = document.getElementById("ai-diff-desc");
 const arenaMapLabel = document.getElementById("arena-map-label");
@@ -782,6 +789,7 @@ const endOverlay = document.getElementById("end-overlay");
 const endTitle = document.getElementById("end-title");
 const endSubtitle = document.getElementById("end-subtitle");
 const settingsOverlay = document.getElementById("settings-overlay");
+const graphicsModeLabel = document.getElementById("graphics-mode-label");
 
 const sfxSlider = document.getElementById("sfx-volume");
 const sfxValEl = document.getElementById("sfx-volume-val");
@@ -849,6 +857,27 @@ const CHARACTER_PREVIEW_VIDEOS = {
   polnareff: "Polnareff/Polnareff.mp4",
   jolyne: "Jolyne/Jolyne.mp4",
 };
+const CHARACTER_PREVIEW_IMAGES = {
+  jotaro: "Jotaro/Star platium.png",
+  dio: "Dio/Dio.png",
+  kira: "killerqueen/Kira.png",
+  diavolo: "Diavolo/Diavolo.png",
+  okuyasu: "The hand/Okuyasu.png",
+  josuke: "Josuke/josuke.png",
+  polnareff: "Polnareff/Polnareff.png",
+  jolyne: "Jolyne/Jolyne.png",
+};
+const CHARACTER_PORTRAITS = CHARACTER_PREVIEW_IMAGES;
+const CHARACTER_PORTRAIT_POSITIONS = {
+  jotaro: "35% 36%",
+  dio: "35% 38%",
+  kira: "61% 40%",
+  diavolo: "35% 38%",
+  okuyasu: "55% 40%",
+  josuke: "62% 40%",
+  polnareff: "62% 38%",
+  jolyne: "37% 38%",
+};
 
 const _charAssetCache = {};
 function loadOrGetCharacterAsset(path) {
@@ -904,6 +933,7 @@ function createFighter(slot, charId, x, y, vx, vy) {
     guardBrokenTimer: 0,
     guardRegenDelay: 0,
     biteTheDustCharge: 0,
+    biteTheDustChargeDuration: 0,
     dashTimer: 0,
     dashVx: 0,
     dashVy: 0,
@@ -978,9 +1008,6 @@ function resolveAiCharacter() {
 }
 
 function startMatchWithIntro() {
-  if (isTouchDeviceOrSmallScreen() && screen.orientation?.lock) {
-    screen.orientation.lock("landscape").catch(() => {});
-  }
   syncArenaSize();
   selectRandomArenaMap();
   releaseSceneVideo(mainMenuVideo);
@@ -1002,8 +1029,12 @@ function startMatchWithIntro() {
   const diffCfg = AI_DIFFICULTIES[selectedAiDifficulty] || AI_DIFFICULTIES.hard;
   vsP1Name.textContent = CHAR_CONFIG[p1Char].name;
   vsP2Name.textContent = `${CHAR_CONFIG[p2Char].name} (${diffCfg.label})`;
-  vsP1Img.src = encodePath(CHAR_CONFIG[p1Char].imgPath);
-  vsP2Img.src = encodePath(CHAR_CONFIG[p2Char].imgPath);
+  vsP1Img.src = encodePath(CHARACTER_PORTRAITS[p1Char] || CHAR_CONFIG[p1Char].imgPath);
+  vsP2Img.src = encodePath(CHARACTER_PORTRAITS[p2Char] || CHAR_CONFIG[p2Char].imgPath);
+  vsP1Img.alt = `${CHAR_CONFIG[p1Char].name} portrait`;
+  vsP2Img.alt = `${CHAR_CONFIG[p2Char].name} portrait`;
+  vsP1Img.style.objectPosition = CHARACTER_PORTRAIT_POSITIONS[p1Char] || "center 38%";
+  vsP2Img.style.objectPosition = CHARACTER_PORTRAIT_POSITIONS[p2Char] || "center 38%";
   vsIntroOverlay.classList.remove("hidden");
 
   initGameState(p1Char, p2Char);
@@ -1855,6 +1886,10 @@ function updateScriptedBarrageCounter(counterKey, fistsKey, dt) {
   while (counter.punchTimer <= 0 && counter.punchesSpawned < counter.totalPunches) {
     const angle = baseAngle + (Math.random() - 0.5) * 0.9;
     const offset = 16 + Math.random() * 42;
+    target.hitFlash = Math.max(target.hitFlash, 0.05);
+    if (counter.punchesSpawned % 4 === 0) {
+      spawnParticles(target.x, target.y, counter.color, 3, 95);
+    }
     if (counter.charId === "diavolo") {
       playBarragePunchImpact(counter.punchesSpawned === counter.totalPunches - 1 ? 1.45 : 1);
     }
@@ -1888,6 +1923,9 @@ function updateScriptedBarrageCounter(counterKey, fistsKey, dt) {
   state[counterKey] = null;
   state[fistsKey].length = 0;
   target.stunTimer = 0;
+  state.screenShake = Math.max(state.screenShake, 8);
+  spawnParticles(target.x, target.y, counter.color, 22, 300);
+  spawnFloatingText(target.x, target.y - target.radius - 24, "FINISH!", counter.color, 24);
   applyAttackDamage(counter.casterSlot, target, counter.damage, counter.color, true);
 }
 
@@ -1928,6 +1966,17 @@ function castTheHandPull(caster, opponent, cfg) {
       opponent.y = pullY;
     }
     applyAttackDamage(caster.slot, opponent, cfg.damage || 10, "#38bdf8", false);
+    opponent.stunTimer = Math.max(opponent.stunTimer, cfg.stunDuration || 0);
+    opponent.barrageStunSlot = null;
+    opponent.isGuarding = false;
+    opponent.vx = 0;
+    opponent.vy = 0;
+    opponent.dashTimer = 0;
+    opponent.knockbackTimer = 0;
+    if (opponent.barrageQueue) {
+      fadeOutAndStopAudio(opponent.barrageQueue.audioEntry);
+      opponent.barrageQueue = null;
+    }
     spawnParticles(opponent.x, opponent.y, "#38bdf8", 16, 220);
     spawnFloatingText(opponent.x, opponent.y - 72, "KÉO LẠI!", "#38bdf8", 20);
   }
@@ -2114,6 +2163,7 @@ function castJolyneStringFinger(caster, opponent, cfg) {
     maxLife: cfg.life || 0.38,
     damage: cfg.damage || 10,
     stunDuration: cfg.stunDuration || 0.5,
+    phase: "extend",
     hitDone: false,
   });
   spawnFloatingText(caster.x, caster.y - 84, cfg.callout, "#22d3ee", 22);
@@ -2436,23 +2486,16 @@ function updateFighterPhysics(f, dt) {
     if (f.biteTheDustCharge <= 0) {
       f.biteTheDustCharge = 0;
       const btdCfg = CHAR_CONFIG.kira.skills.q;
-      const blastRadius = btdCfg.blastRadius || 310;
-      playSound("kiraExploded");
-      spawnBombExplosion(f.x, f.y, blastRadius, "pink", 11);
-
-      const missingRatio = 1 - f.hp / f.maxHp;
-      const btdDmg = Math.round((btdCfg.minDmg || 50) + missingRatio * (btdCfg.maxBonusDmg || 20));
       const healPct = btdCfg.healPct || 0.2;
       const healAmount = f.maxHp * healPct;
       f.hp = Math.min(f.maxHp, f.hp + healAmount);
+      f.biteTheDustChargeDuration = 0;
+      playSound(btdCfg.soundKey);
+      spawnParticles(f.x, f.y, "#4ade80", 24, 230);
+      spawnParticles(f.x, f.y, "#f472b6", 12, 150);
       spawnFloatingText(f.x, f.y - f.radius - 20, `+${Math.round(healPct * 100)}% HP!`, "#4ade80", 28);
+      state.screenShake = Math.max(state.screenShake, 3);
       updateHpUI();
-
-      const opp = getOpponent(f.slot);
-      const dist = Math.hypot(opp.x - f.x, opp.y - f.y);
-      if (!opp.hidden && dist <= blastRadius + opp.radius * 0.5) {
-        applyAttackDamage(f.slot, opp, btdDmg, "#ec4899", true);
-      }
     }
     return;
   }
@@ -2662,11 +2705,7 @@ function applyAiSteering(ai, dt) {
     ? state.starFingerBeams.find((b) => b.casterSlot === "p1")
     : null;
 
-  if (player.biteTheDustCharge > 0 && dist < 345 && diff.id !== "easy") {
-    // Retreat outside Bite The Dust 310px radius
-    steerX = -rawNx;
-    steerY = -rawNy;
-  } else if (
+  if (
     (diff.id === "super" || diff.id === "hard") &&
     state.roadRoller.active &&
     state.roadRoller.casterSlot === "p1" &&
@@ -3198,13 +3237,7 @@ function checkAiReflexes(ai, player, cds, dist) {
     }
   }
 
-  // 3. Instant Bite The Dust escape dash
-  if (player.biteTheDustCharge > 0 && dist < 332 && cds.dash <= 0) {
-    triggerDash(ai, ai.x - player.x, ai.y - player.y);
-    return true;
-  }
-
-  // 4. Smart Barrage defense: guard briefly then dash out BEFORE shield breaks!
+  // 3. Smart Barrage defense: guard briefly then dash out BEFORE shield breaks!
   if (player.barrageQueue && dist < 175) {
     if (ai.guardBrokenTimer <= 0 && ai.guardPool > 7) {
       state.aiGuardTimer = 0.22;
@@ -3545,7 +3578,7 @@ function updateAI(dt) {
     checkAiReflexes(ai, player, cds, dist)
   ) {
     state.aiReflexTimer = diff.id === "easy" ? 0.75 : diff.id === "medium" ? 0.5 : diff.id === "hard" ? 0.32 : 0.2;
-    if (player.biteTheDustCharge > 0 || (state.roadRoller.active && state.roadRoller.casterSlot === "p1")) {
+    if (state.roadRoller.active && state.roadRoller.casterSlot === "p1") {
       state.aiCombo = null;
     }
     return;
@@ -3576,10 +3609,6 @@ function updateAI(dt) {
 
   // Dash logic scaled by difficulty
   if (cds.dash <= 0 && Math.random() < diff.dashChance) {
-    if (player.biteTheDustCharge > 0 && dist < 320 && diff.id !== "easy") {
-      triggerDash(ai, ai.x - player.x, ai.y - player.y);
-      return;
-    }
     if (
       state.roadRoller.active &&
       state.roadRoller.casterSlot === "p1" &&
@@ -3997,6 +4026,66 @@ function updateNewCharacterSkills(dt) {
     if (isFrozen(sf.casterSlot)) continue;
     const caster = getFighter(sf.casterSlot);
     const opp = getOpponent(sf.casterSlot);
+    if (sf.phase === "spin" || sf.phase === "slam") {
+      if (!caster || !opp || opp.hidden) {
+        state.stringFingers.splice(i, 1);
+        continue;
+      }
+      sf.x1 = caster.x;
+      sf.y1 = caster.y;
+      sf.phaseTimer = Math.max(0, sf.phaseTimer - dt);
+      if (sf.phase === "spin") {
+        const progress = 1 - sf.phaseTimer / sf.spinDuration;
+        const angle = sf.spinStartAngle + progress * Math.PI * 2;
+        opp.x = clampArenaX(caster.x + Math.cos(angle) * sf.orbitRadius, opp.radius);
+        opp.y = clampArenaY(caster.y + Math.sin(angle) * sf.orbitRadius, opp.radius);
+        if (sf.phaseTimer <= 0) {
+          sf.phase = "slam";
+          sf.phaseTimer = sf.slamDuration;
+          sf.slamStartX = opp.x;
+          sf.slamStartY = opp.y;
+        }
+      } else {
+        const progress = 1 - sf.phaseTimer / sf.slamDuration;
+        opp.x = clampArenaX(
+          sf.slamStartX + (sf.originalX - sf.slamStartX) * progress,
+          opp.radius
+        );
+        opp.y = clampArenaY(
+          sf.slamStartY + (sf.originalY - sf.slamStartY) * progress,
+          opp.radius
+        );
+        if (sf.phaseTimer <= 0) {
+          opp.x = sf.originalX;
+          opp.y = sf.originalY;
+          opp.stunTimer = Math.max(opp.stunTimer, 0.5);
+          state.groundCracks.push({
+            x: opp.x,
+            y: opp.y,
+            angle: sf.angle,
+            life: 0.9,
+            maxLife: 0.9,
+          });
+          spawnParticles(opp.x, opp.y, "#22d3ee", 24, 300);
+          spawnParticles(opp.x, opp.y, "#f8fafc", 14, 190);
+          spawnFloatingText(opp.x, opp.y - 78, "ĐẬP ĐẤT!", "#22d3ee", 23);
+          state.screenShake = Math.max(state.screenShake, 9);
+          applyAttackDamage(sf.casterSlot, opp, sf.damage, "#22d3ee", true);
+          state.stringFingers.splice(i, 1);
+          continue;
+        }
+      }
+      sf.angle = Math.atan2(opp.y - sf.y1, opp.x - sf.x1);
+      sf.length = Math.hypot(opp.x - sf.x1, opp.y - sf.y1);
+      opp.stunTimer = Math.max(opp.stunTimer, sf.phaseTimer + 0.18);
+      opp.barrageStunSlot = null;
+      opp.isGuarding = false;
+      opp.vx = 0;
+      opp.vy = 0;
+      opp.dashTimer = 0;
+      opp.knockbackTimer = 0;
+      continue;
+    }
     sf.x1 = caster.x;
     sf.y1 = caster.y;
     sf.life -= dt;
@@ -4007,13 +4096,16 @@ function updateNewCharacterSkills(dt) {
       const endY = sf.y1 + Math.sin(sf.angle) * sf.length;
       if (pointToSegmentDist(opp.x, opp.y, sf.x1, sf.y1, endX, endY) <= opp.radius + 16) {
         sf.hitDone = true;
-        applyAttackDamage(sf.casterSlot, opp, sf.damage, "#22d3ee", false);
-        if (opp.sealedTimer <= 0) {
-          opp.x = clampArenaX(caster.x + Math.cos(sf.angle) * (caster.radius + opp.radius + 18), opp.radius);
-          opp.y = clampArenaY(caster.y + Math.sin(sf.angle) * (caster.radius + opp.radius + 18), opp.radius);
-        }
+        sf.phase = "spin";
+        sf.originalX = opp.x;
+        sf.originalY = opp.y;
+        sf.spinStartAngle = Math.atan2(opp.y - caster.y, opp.x - caster.x);
+        sf.orbitRadius = Math.min(130, Math.max(caster.radius + opp.radius + 12, Math.hypot(opp.x - caster.x, opp.y - caster.y) * 0.55));
+        sf.spinDuration = 0.9;
+        sf.phaseTimer = sf.spinDuration;
+        sf.slamDuration = 0.24;
         spawnParticles(opp.x, opp.y, "#22d3ee", 14, 210);
-        opp.stunTimer = Math.max(opp.stunTimer, sf.stunDuration || 0.5);
+        opp.stunTimer = Math.max(opp.stunTimer, sf.spinDuration + sf.slamDuration + 0.18);
         opp.barrageStunSlot = null;
         opp.isGuarding = false;
         opp.vx = 0;
@@ -4024,10 +4116,10 @@ function updateNewCharacterSkills(dt) {
           fadeOutAndStopAudio(opp.barrageQueue.audioEntry);
           opp.barrageQueue = null;
         }
-        spawnFloatingText(opp.x, opp.y - 72, "TƠ KÉO!", "#22d3ee", 20);
+        spawnFloatingText(opp.x, opp.y - 72, "TRÓI TƠ!", "#22d3ee", 20);
       }
     }
-    if (sf.life <= 0) state.stringFingers.splice(i, 1);
+    if (sf.phase === "extend" && sf.life <= 0) state.stringFingers.splice(i, 1);
   }
   for (let i = state.mobiusWebs.length - 1; i >= 0; i--) {
     const web = state.mobiusWebs[i];
@@ -4476,8 +4568,9 @@ function drawFighter(f) {
   }
 
   if (f.biteTheDustCharge > 0) {
-    const pct = 1 - f.biteTheDustCharge / 2.0;
-    ctx.strokeStyle = "#ec4899";
+    const chargeDuration = f.biteTheDustChargeDuration || CHAR_CONFIG.kira.skills.q.chargeTime;
+    const pct = 1 - f.biteTheDustCharge / chargeDuration;
+    ctx.strokeStyle = "#4ade80";
     ctx.lineWidth = 7;
     ctx.beginPath();
     ctx.arc(0, 0, f.radius + 20, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
@@ -5106,6 +5199,16 @@ function drawStringFinger(sf) {
     ctx.arc(tipX, oy, 4, 0, Math.PI * 2);
     ctx.fill();
   }
+  if (sf.phase === "spin" || sf.phase === "slam") {
+    ctx.strokeStyle = "#cffafe";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(tipX - 2, 0, 10, 15, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(tipX - 8, 0, 7, 11, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -5400,25 +5503,149 @@ function playSceneVideo(video, asset) {
 
 function showMainMenuVideo() {
   const asset = mainMenuVideo?.dataset.src;
-  if (asset && !mainMenuOverlay.classList.contains("hidden")) {
+  if (
+    asset &&
+    !mainMenuOverlay.classList.contains("hidden") &&
+    settingsOverlay.classList.contains("hidden") &&
+    !document.body.classList.contains("portrait-blocked")
+  ) {
     playSceneVideo(mainMenuVideo, asset);
+  } else {
+    mainMenuVideo?.pause();
   }
 }
 
 function showCharacterPreviewVideo(charId) {
-  const asset = CHARACTER_PREVIEW_VIDEOS[charId];
-  if (!asset || !characterPreviewVideo) return;
-  const poster = CHAR_CONFIG[charId]?.imgPath;
-  if (poster) characterPreviewVideo.poster = encodeURI(poster);
-  if (characterPreviewSwitchTimer) clearTimeout(characterPreviewSwitchTimer);
-  if (shouldSkipSceneVideo()) {
+  const imageAsset = CHARACTER_PREVIEW_IMAGES[charId];
+  const videoAsset = CHARACTER_PREVIEW_VIDEOS[charId];
+  if (!imageAsset || !characterPreviewVideo || !characterPreviewImage) return;
+  const encodedImage = encodeURI(imageAsset);
+  if (characterPreviewImage.dataset.activeAsset !== imageAsset) {
+    characterPreviewImage.src = encodedImage;
+    characterPreviewImage.dataset.activeAsset = imageAsset;
+  }
+  const useVideo = graphicsMode === "high" && !shouldSkipSceneVideo();
+  selectOverlay.dataset.previewMode = useVideo ? "video" : "image";
+  if (!useVideo) {
+    if (characterPreviewSwitchTimer) clearTimeout(characterPreviewSwitchTimer);
     releaseSceneVideo(characterPreviewVideo);
     return;
   }
+  if (characterPreviewVideo.dataset.activeAsset !== videoAsset) {
+    characterPreviewVideo.poster = encodedImage;
+  }
+  if (characterPreviewSwitchTimer) clearTimeout(characterPreviewSwitchTimer);
   characterPreviewSwitchTimer = setTimeout(() => {
     if (selectOverlay.classList.contains("hidden") || document.hidden) return;
-    playSceneVideo(characterPreviewVideo, asset);
+    playSceneVideo(characterPreviewVideo, videoAsset);
   }, 140);
+}
+
+function updateDeviceActionStatus(message) {
+  for (const status of document.querySelectorAll(".device-action-status")) {
+    status.textContent = message;
+  }
+}
+
+function updateDeviceActionLabels() {
+  for (const button of document.querySelectorAll('[data-device-action="fullscreen"]')) {
+    const active = Boolean(document.fullscreenElement);
+    button.textContent = button.closest("#hud")
+      ? "⛶"
+      : (active ? "⛶ THOÁT TOÀN MÀN HÌNH" : "⛶ TOÀN MÀN HÌNH");
+    button.title = active ? "Thoát toàn màn hình" : "Bật toàn màn hình";
+  }
+  for (const button of document.querySelectorAll('[data-device-action="orientation"]')) {
+    button.textContent = button.closest("#hud")
+      ? (isLandscapeLocked ? "🔓" : "🔒")
+      : (isLandscapeLocked ? "🔓 MỞ KHÓA XOAY" : "🔒 KHÓA XOAY NGANG");
+    button.title = isLandscapeLocked ? "Mở khóa xoay màn hình" : "Khóa xoay ngang";
+  }
+}
+
+let isLandscapeLocked = false;
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      updateDeviceActionStatus("");
+    } else if (document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+      updateDeviceActionStatus("");
+    } else {
+      updateDeviceActionStatus("Trình duyệt này không hỗ trợ toàn màn hình.");
+    }
+  } catch (error) {
+    updateDeviceActionStatus(`Không thể bật toàn màn hình: ${error.message}`);
+  }
+  updateDeviceActionLabels();
+}
+
+async function toggleLandscapeLock() {
+  if (isLandscapeLocked) {
+    screen.orientation?.unlock();
+    isLandscapeLocked = false;
+    updateDeviceActionStatus("Đã mở khóa xoay màn hình.");
+    updateDeviceActionLabels();
+    return;
+  }
+  if (!screen.orientation?.lock) {
+    updateDeviceActionStatus("Trình duyệt không hỗ trợ khóa xoay; hãy bật toàn màn hình hoặc tự xoay máy.");
+    return;
+  }
+  try {
+    await screen.orientation.lock("landscape");
+    isLandscapeLocked = true;
+    updateDeviceActionStatus("Đã khóa màn hình ngang.");
+    updateDeviceActionLabels();
+  } catch (error) {
+    updateDeviceActionStatus(`Không khóa được màn hình: ${error.message}`);
+  }
+}
+
+document.querySelectorAll("[data-device-action]").forEach((button) => {
+  button.addEventListener("click", () => {
+    if (button.dataset.deviceAction === "fullscreen") {
+      toggleFullscreen();
+    } else if (button.dataset.deviceAction === "orientation") {
+      toggleLandscapeLock();
+    }
+  });
+});
+document.addEventListener("fullscreenchange", updateDeviceActionLabels);
+window.addEventListener("orientationchange", () => {
+  updateDeviceActionStatus("");
+  syncMobileControlsVisibility();
+});
+updateDeviceActionLabels();
+
+function setGraphicsMode(mode, persist = true) {
+  graphicsMode = mode === "high" ? "high" : "normal";
+  selectOverlay.dataset.graphicsMode = graphicsMode;
+  targetFrameInterval = 1000 / (graphicsMode === "high" ? 120 : 60);
+  if (graphicsModeLabel) {
+    graphicsModeLabel.textContent = graphicsMode === "high"
+      ? "CAO · TỐI ĐA 120 FPS"
+      : "BÌNH THƯỜNG · 60 FPS";
+  }
+  document.querySelectorAll("[data-graphics-mode]").forEach((button) => {
+    if (!button.matches("button")) return;
+    const selected = button.dataset.graphicsMode === graphicsMode;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+  if (persist) {
+    try {
+      localStorage.setItem(GRAPHICS_STORAGE_KEY, graphicsMode);
+    } catch (error) {
+      console.warn("Unable to save graphics mode:", error);
+    }
+  }
+  syncArenaSize();
+  if (!selectOverlay.classList.contains("hidden")) {
+    showCharacterPreviewVideo(activeSelectionSide === "p1" ? selectedPlayerChar : selectedAiChar);
+  }
 }
 
 function updateCharacterSelectUI() {
@@ -5504,8 +5731,12 @@ document.querySelectorAll("#ai-diff-bar .diff-btn").forEach((btn) => {
     if (aiDiffDesc) aiDiffDesc.textContent = dCfg.desc;
   });
 });
+document.querySelectorAll(".graphics-option").forEach((button) => {
+  button.addEventListener("click", () => setGraphicsMode(button.dataset.graphicsMode));
+});
 updateCharacterSelectUI();
 updateSkillPreview(selectedPlayerChar);
+setGraphicsMode(graphicsMode, false);
 
 const characterRoster = document.getElementById("player-char-grid");
 const rosterPrevBtn = document.getElementById("roster-prev-btn");
@@ -5661,8 +5892,16 @@ const toggleTouchBtn = document.getElementById("toggle-touch-btn");
 function syncMobileControlsVisibility() {
   const isTouch = isTouchDeviceOrSmallScreen();
   const isPortrait = isTouch && window.innerHeight > window.innerWidth;
-  const needsLandscape = Boolean(state?.running && isPortrait);
+  const needsLandscape = isPortrait;
   document.body.classList.toggle("portrait-blocked", needsLandscape);
+  if (isPortrait) {
+    mainMenuVideo?.pause();
+    characterPreviewVideo?.pause();
+  } else if (!state?.running && mainMenuOverlay && !mainMenuOverlay.classList.contains("hidden")) {
+    showMainMenuVideo();
+  } else if (!selectOverlay.classList.contains("hidden")) {
+    showCharacterPreviewVideo(activeSelectionSide === "p1" ? selectedPlayerChar : selectedAiChar);
+  }
   const show =
     Boolean(state?.running) &&
     !isPortrait &&
@@ -5826,11 +6065,5 @@ for (const gev of ["gesturestart", "gesturechange", "gestureend"]) {
   document.addEventListener(gev, (e) => e.preventDefault(), { passive: false });
 }
 
-function tryLockMobileLandscape() {
-  ensureDesiredBgmPlaying();
-  if (isTouchDeviceOrSmallScreen() && screen.orientation?.lock) {
-    screen.orientation.lock("landscape").catch(() => {});
-  }
-}
-window.addEventListener("pointerdown", tryLockMobileLandscape, { passive: true });
+window.addEventListener("pointerdown", () => ensureDesiredBgmPlaying(), { passive: true });
 window.addEventListener("keydown", () => ensureDesiredBgmPlaying(), { passive: true });

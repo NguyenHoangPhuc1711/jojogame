@@ -17,7 +17,7 @@ window.JOJO_CHARS.diavolo = {
     q: {
       name: "EPITAPH",
       desc: "CD 30s — Màn hình đỏ 3s; chịu sát thương thì áp sát, bất động 3s và đấm 50 DMG",
-      cd: 30,
+      cd: 25,
       duration: 3.0,
       stunDuration: 3.0,
       damage: 50,
@@ -27,9 +27,9 @@ window.JOJO_CHARS.diavolo = {
     e: {
       name: "TIME SKIP",
       desc: "Dịch chuyển; địch sát bên bị đấm và ghim tường (30 DMG, choáng 0.5s)",
-      cd: 8,
-      distance: 235,
-      impactRadius: 35,
+      cd: 7,
+      distance: 265,
+      impactRadius: 42,
       impactDamage: 30,
       wallStunDuration: 0.5,
       soundKey: "diavoloTimeSkip",
