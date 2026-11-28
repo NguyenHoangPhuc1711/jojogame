@@ -26,10 +26,10 @@ window.JOJO_CHARS.diavolo = {
     },
     e: {
       name: "TIME SKIP",
-      desc: "Dịch chuyển; địch sát bên bị đấm và ghim tường (30 DMG, choáng 0.5s)",
+      desc: "Dịch chuyển; địch trong vùng va chạm bị đấm và ghim tường (30 DMG, choáng 0.5s)",
       cd: 7,
       distance: 265,
-      impactRadius: 42,
+      impactRadius: 84,
       impactDamage: 30,
       wallStunDuration: 0.5,
       soundKey: "diavoloTimeSkip",

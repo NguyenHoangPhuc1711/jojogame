@@ -1257,6 +1257,59 @@ body {
   font-size: 0.76rem;
 }
 
+.skill-key-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.skill-key-bind-btn,
+.skill-key-reset-btn {
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid rgba(81, 216, 255, 0.32);
+  border-radius: 8px;
+  background: rgba(14, 116, 144, 0.13);
+  color: #e6faff;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.skill-key-bind-btn:hover,
+.skill-key-bind-btn.is-listening {
+  border-color: #51d8ff;
+  background: rgba(14, 116, 144, 0.32);
+}
+
+.skill-key-bind-btn.is-listening {
+  color: #fde047;
+  box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.25);
+}
+
+.skill-key-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.skill-key-reset-btn {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 4px 9px;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.6rem;
+}
+
+.skill-key-status {
+  min-height: 1em;
+  color: #fde047;
+  font-size: 0.67rem;
+}
+
 .setting-help {
   color: rgba(234, 229, 248, 0.68);
   font-size: 0.68rem;

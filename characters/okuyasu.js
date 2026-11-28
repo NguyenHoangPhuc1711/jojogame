@@ -32,7 +32,7 @@ window.JOJO_CHARS.okuyasu = {
       name: "BRING TO ME",
       desc: "Kéo địch từ xa lại gần, gây 20 DMG và choáng 1s",
       cd: 12,
-      range: 250,
+      range: 300,
       damage: 20,
       stunDuration: 1.0,
       soundKey: "okuyasuSkillE",

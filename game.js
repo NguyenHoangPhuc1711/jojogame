@@ -362,9 +362,9 @@ const SOUNDS = {
   polnareffBarrage: { file: "Polnareff/Sword_barrage.mp3", gain: 1.35 },
   polnareffSkillR: { file: "Polnareff/Sword_fly.mp3", gain: 1.35 },
   polnareffSkillQ: { file: "Polnareff/silver_chariot.mp3", gain: 1.55 },
-  jolyneBarrage: { file: "Jolyne/stone-free-short-ora-barrage_6FevhFF.mp3", gain: 2.7 },
-  jolyneSkillR: { file: "Jolyne/stone free.mp3", gain: 2.7 },
-  jolyneSkillQHit: { file: "Jolyne/jolyne-sfx.mp3", gain: 1.55 },
+  jolyneBarrage: { file: "Jolyne/stone-free-short-ora-barrage_6FevhFF.mp3", gain: 3.4 },
+  jolyneSkillR: { file: "Jolyne/stone free.mp3", gain: 3.4 },
+  jolyneSkillQHit: { file: "Jolyne/jolyne-sfx.mp3", gain: 3.0 },
   jolyneVoice: { file: "Jolyne/tmpnueglj1t.mp3", gain: 1.0 },
   lobbyBgm: { file: "Main game sound.mp3", gain: 1.7, isBgm: true },
   battleBgm: { file: "Sound Battle.mp3", gain: 1.0, isBgm: true },
@@ -984,6 +984,8 @@ const touchInput = { x: 0, y: 0, guarding: false };
 const touchInputP2 = { x: 0, y: 0, guarding: false };
 let touchMode = "auto"; // "auto" | "on" | "off"
 const P2_CONTROL_LAYOUT_STORAGE_KEY = "jojoP2ControlLayout";
+const SKILL_KEY_BINDINGS_STORAGE_KEY = "jojoSkillKeyBindings";
+const SKILL_KEYS = ["q", "e", "r", "t"];
 const P1_KEY_BINDINGS = {
   up: "KeyW",
   down: "KeyS",
@@ -1054,8 +1056,52 @@ try {
   console.warn("Unable to read P2 control layout:", error);
 }
 
+const FIXED_CONTROL_KEY_CODES = new Set([
+  "KeyW",
+  "KeyA",
+  "KeyS",
+  "KeyD",
+  ...["up", "down", "left", "right", "guard", "dash"].map((key) => P1_KEY_BINDINGS[key]),
+  ...Object.values(P2_KEY_LAYOUTS).flatMap((layout) =>
+    ["up", "down", "left", "right", "guard", "dash"].map((key) => layout[key])
+  ),
+]);
+const P2_LAYOUT_SKILL_KEY_CODES = new Set(
+  Object.values(P2_KEY_LAYOUTS).flatMap((layout) => SKILL_KEYS.map((key) => layout[key]))
+);
+const skillKeyOverrides = { p1: {}, p2: {} };
+const activeKeyBindings = { p1: { ...P1_KEY_BINDINGS }, p2: { ...P2_KEY_LAYOUTS[p2ControlLayout] } };
+try {
+  const savedBindings = JSON.parse(localStorage.getItem(SKILL_KEY_BINDINGS_STORAGE_KEY) || "{}");
+  for (const slot of ["p1", "p2"]) {
+    for (const skill of SKILL_KEYS) {
+      const code = savedBindings?.[slot]?.[skill];
+      if (typeof code !== "string" || !/^(Key[A-Z]|Digit[0-9]|Numpad[0-9])$/.test(code)) continue;
+      if (isReservedSkillKeyCode(slot, code)) continue;
+      const isUsed = ["p1", "p2"].some((otherSlot) =>
+        SKILL_KEYS.some(
+          (otherSkill) =>
+            activeKeyBindings[otherSlot][otherSkill] === code &&
+            (otherSlot !== slot || otherSkill !== skill)
+        )
+      );
+      if (!isUsed) {
+        skillKeyOverrides[slot][skill] = code;
+        activeKeyBindings[slot][skill] = code;
+      }
+    }
+  }
+} catch (error) {
+  console.warn("Unable to read skill key bindings:", error);
+}
+
 function getKeyBindings(slot) {
-  return slot === "p2" ? P2_KEY_LAYOUTS[p2ControlLayout] : P1_KEY_BINDINGS;
+  return activeKeyBindings[slot];
+}
+
+function isReservedSkillKeyCode(slot, code) {
+  return FIXED_CONTROL_KEY_CODES.has(code) ||
+    (slot === "p1" && P2_LAYOUT_SKILL_KEY_CODES.has(code));
 }
 
 function getNormalizedKeyCode(event) {
@@ -1215,6 +1261,7 @@ function createFighter(slot, charId, x, y, vx, vy) {
     stunTimer: 0,
     barrageStunSlot: null,
     sealedTimer: 0,
+    angeloStoneTimer: 0,
     epitaphTimer: 0,
     armorOffTimer: 0,
     jolynePoseTimer: 0,
@@ -1669,7 +1716,6 @@ function applyDamage(target, amount, color = "#ff4d4f", isHeavy = false) {
   if (finalDmg > 0 && target.isChargingTimeStop) {
     cancelTimeStopCharge(target, "BỊ NGẮT CHIÊU!", 2.5);
   }
-
   if (finalDmg > 0) {
     const attackerSlot = target.lastAttackerSlot;
     if (state.metrics && (attackerSlot === "p1" || attackerSlot === "p2")) {
@@ -2322,6 +2368,8 @@ function startBarrage(caster, barrageCfg, skillKey = null, cdMax = 0, locked = f
     audioEntry,
     cfg,
     skillKey,
+    angeloStoneState:
+      caster.charId === "josuke" && skillKey === "q" ? { transformed: false } : null,
     cdMax,
     locked,
   };
@@ -2647,9 +2695,24 @@ function castJosukeRock(caster, opponent, cfg) {
   });
 }
 
-function castJosukeAngelo(caster, opponent, cfg) {
+function applyJosukeAngeloStone(target, effectState, duration) {
+  if (!effectState || effectState.transformed || target.hidden) return;
+  effectState.transformed = true;
+  target.sealedTimer = Math.max(target.sealedTimer, duration);
+  target.angeloStoneTimer = Math.max(target.angeloStoneTimer, duration);
+  target.knockbackTimer = 0;
+  target.dashTimer = 0;
+  target.barrageStunSlot = null;
+  target.isGuarding = false;
+  target.vx = 0;
+  target.vy = 0;
+  spawnParticles(target.x, target.y, "#cbd5e1", 22, 260);
+  spawnFloatingText(target.x, target.y - 90, "PHONG ẤN ANGELO!", "#fde047", 24);
+}
+
+function castJosukeAngelo(caster, opponent, cfg, damage, skillKey = "q", effectState = null) {
   const angle = Math.atan2(opponent.y - caster.y, opponent.x - caster.x);
-  spawnFloatingText(caster.x, caster.y - 88, cfg.callout, "#f472b6", 24);
+  playSound(cfg.soundKey);
   state.angeloPunches.push({
     casterSlot: caster.slot,
     x: caster.x + Math.cos(angle) * 40,
@@ -2659,8 +2722,11 @@ function castJosukeAngelo(caster, opponent, cfg) {
     angle,
     speed: 780,
     maxRange: cfg.maxRange || 255,
-    damage: cfg.damage || 35,
+    damage: damage ?? cfg.damage ?? 1,
     sealDuration: cfg.sealDuration || 2.0,
+    effectState,
+    finalKnockback: true,
+    skillKey,
     hit: false,
   });
 }
@@ -2745,8 +2811,8 @@ function triggerCloneSkill(caster, opponent, key) {
         interval: caster.barrageQueue?.interval || 2.15 / barrage.totalPunches,
         cfg: {
           ...barrage,
-          punchDamage: barrage.punchDamage * 0.1,
-          lastPunchDamage: barrage.lastPunchDamage * 0.1,
+          punchDamage: barrage.punchDamage * 0.25,
+          lastPunchDamage: barrage.lastPunchDamage * 0.25,
         },
       };
     } else if (key === "r") {
@@ -2755,7 +2821,7 @@ function triggerCloneSkill(caster, opponent, key) {
         opponent,
         CHAR_CONFIG.polnareff.skills.r,
         false,
-        0.1,
+        0.25,
         true
       );
     }
@@ -2941,6 +3007,22 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
 
   const barrageCfg = overrideCfg || fighter.barrageQueue?.cfg || CHAR_CONFIG[fighter.charId].barrage;
   const punchDmg = isLastPunch ? barrageCfg.lastPunchDamage : barrageCfg.punchDamage;
+  const skillKey = fighter.barrageQueue?.skillKey || state.activeSkillKey?.[fighter.slot] || "barrage";
+  const angeloStoneState =
+    fighter.charId === "josuke" && skillKey === "q"
+      ? fighter.barrageQueue?.angeloStoneState || null
+      : null;
+  if (isLastPunch && barrageCfg.finalProjectile === "angelo-knockback") {
+    castJosukeAngelo(
+      fighter,
+      opponent,
+      CHAR_CONFIG.josuke.skills.q,
+      punchDmg,
+      skillKey,
+      angeloStoneState
+    );
+    return;
+  }
   const isMobile = isTouchDeviceOrSmallScreen();
   const maxBarragePunches = isMobile ? 28 : 44;
   const maxFanPunches = isMobile ? 28 : 48;
@@ -2972,7 +3054,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
           vy: Math.sin(spreadAngle) * speed,
           angle: spreadAngle,
           ownerSlot: fighter.slot,
-          skillKey: fighter.barrageQueue?.skillKey || state.activeSkillKey?.[fighter.slot] || "barrage",
+          skillKey,
           color: barrageCfg.color || CHAR_CONFIG[fighter.charId].color,
           img: CHAR_CONFIG[fighter.charId].armAsset(),
           life: maxLife,
@@ -2982,6 +3064,8 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
           isVisualOnly,
           damage: isVisualOnly ? 0 : punchDmg,
           charId: fighter.charId,
+          angeloStoneState: isVisualOnly ? null : angeloStoneState,
+          angeloStoneDuration: CHAR_CONFIG.josuke.skills.q.sealDuration,
           scale: 1.42 + Math.random() * 0.24,
         });
       }
@@ -3015,7 +3099,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
         vy: Math.sin(spreadAngle) * speed,
         angle: spreadAngle,
         ownerSlot: fighter.slot,
-        skillKey: fighter.barrageQueue?.skillKey || state.activeSkillKey?.[fighter.slot] || "barrage",
+        skillKey,
         color: barrageCfg.color || CHAR_CONFIG[fighter.charId].color,
         img: CHAR_CONFIG[fighter.charId].armAsset(),
         life: maxLife,
@@ -3025,6 +3109,8 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
         isVisualOnly,
         damage: isVisualOnly ? 0 : punchDmg,
         charId: fighter.charId,
+        angeloStoneState: isVisualOnly ? null : angeloStoneState,
+        angeloStoneDuration: CHAR_CONFIG.josuke.skills.q.sealDuration,
         scale: (isVisualOnly ? 1.3 : 1.5) + Math.random() * 0.32,
       });
     }
@@ -3048,6 +3134,9 @@ function updateFighterPhysics(f, dt) {
     f.dashTimer = 0;
     f.vx = 0;
     f.vy = 0;
+  }
+  if (f.angeloStoneTimer > 0) {
+    f.angeloStoneTimer = Math.max(0, f.angeloStoneTimer - dt);
   }
   if (f.epitaphTimer > 0) {
     f.epitaphTimer = Math.max(0, f.epitaphTimer - dt);
@@ -3120,7 +3209,6 @@ function updateFighterPhysics(f, dt) {
       const healAmount = f.maxHp * healPct;
       f.hp = Math.min(f.maxHp, f.hp + healAmount);
       f.biteTheDustChargeDuration = 0;
-      playSound(btdCfg.soundKey);
       spawnParticles(f.x, f.y, "#4ade80", 24, 230);
       spawnParticles(f.x, f.y, "#f472b6", 12, 150);
       spawnFloatingText(f.x, f.y - f.radius - 20, `+${Math.round(healPct * 100)}% HP!`, "#4ade80", 28);
@@ -3630,6 +3718,7 @@ function updatePunches(dt) {
           p.life = Math.max(p.life, 0.09);
           if (!p.isVisualOnly && p.damage > 0) {
             applyAttackDamage(p.ownerSlot, target, p.damage, p.color, false, p.skillKey || "barrage");
+            applyJosukeAngeloStone(target, p.angeloStoneState, p.angeloStoneDuration);
             spawnParticles(p.x, p.y, p.color, 2, 110);
             const attacker = getFighter(p.ownerSlot);
             if (attacker?.barrageQueue && !target.barrageQueue) {
@@ -4560,6 +4649,25 @@ function updateNewCharacterSkills(dt) {
         target.y = clampArenaY(target.y + (pullY / pullDist) * pullStep, target.radius);
       }
 
+      if (
+        target &&
+        !rock.stunApplied &&
+        !target.hidden &&
+        Math.hypot(target.x - caster.x, target.y - caster.y) <=
+          caster.radius + target.radius + 22
+      ) {
+        rock.stunApplied = true;
+        target.stunTimer = Math.max(target.stunTimer, 1);
+        target.barrageStunSlot = null;
+        target.isGuarding = false;
+        target.dashTimer = 0;
+        target.knockbackTimer = 0;
+        target.vx = 0;
+        target.vy = 0;
+        spawnFloatingText(target.x, target.y - target.radius - 32, "CHOÁNG!", "#f472b6", 20);
+        spawnParticles(target.x, target.y, "#f472b6", 12, 210);
+      }
+
       if (toCasterDist <= caster.radius + 32) {
         state.josukeRocks.splice(i, 1);
       }
@@ -4573,13 +4681,13 @@ function updateNewCharacterSkills(dt) {
     ap.y += Math.sin(ap.angle) * ap.speed * dt;
     if (!ap.hit && !opp.hidden && Math.hypot(opp.x - ap.x, opp.y - ap.y) <= opp.radius + 32) {
       ap.hit = true;
-      playSound(CHAR_CONFIG.josuke.skills.q.soundKey);
       applyAttackDamage(ap.casterSlot, opp, ap.damage, "#f472b6", true, ap.skillKey || "q");
-      opp.sealedTimer = Math.max(opp.sealedTimer, ap.sealDuration);
-      opp.knockbackTimer = 0;
-      opp.isGuarding = false;
-      spawnParticles(opp.x, opp.y, "#cbd5e1", 22, 260);
-      spawnFloatingText(opp.x, opp.y - 90, "PHONG ẤN 2s!", "#fde047", 24);
+      applyJosukeAngeloStone(opp, ap.effectState, ap.sealDuration);
+      if (ap.finalKnockback) {
+        opp.sealedTimer = 0;
+        opp.barrageStunSlot = null;
+        applyRadialKnockback(opp, ap.originX, ap.originY, 680, 0.32);
+      }
       state.angeloPunches.splice(i, 1);
       continue;
     }
@@ -4675,7 +4783,7 @@ function updateNewCharacterSkills(dt) {
       sf.phaseTimer = Math.max(0, sf.phaseTimer - dt);
       if (sf.phase === "spin") {
         const progress = 1 - sf.phaseTimer / sf.spinDuration;
-        const angle = sf.spinStartAngle + progress * Math.PI * 2;
+        const angle = sf.spinStartAngle + progress * Math.PI * 2 * (sf.spinRotations || 1);
         opp.x = clampArenaX(caster.x + Math.cos(angle) * sf.orbitRadius, opp.radius);
         opp.y = clampArenaY(caster.y + Math.sin(angle) * sf.orbitRadius, opp.radius);
         if (sf.phaseTimer <= 0) {
@@ -4739,8 +4847,16 @@ function updateNewCharacterSkills(dt) {
         sf.originalX = opp.x;
         sf.originalY = opp.y;
         sf.spinStartAngle = Math.atan2(opp.y - caster.y, opp.x - caster.x);
-        sf.orbitRadius = Math.min(130, Math.max(caster.radius + opp.radius + 12, Math.hypot(opp.x - caster.x, opp.y - caster.y) * 0.55));
-        sf.spinDuration = 0.9;
+        sf.spinDuration = CHAR_CONFIG.jolyne.skills.r.spinDuration || 1.35;
+        sf.spinRotations = CHAR_CONFIG.jolyne.skills.r.spinRotations || 2;
+        sf.orbitRadius = Math.min(
+          CHAR_CONFIG.jolyne.skills.r.orbitRadius || 175,
+          Math.max(
+            caster.radius + opp.radius + 12,
+            Math.hypot(opp.x - caster.x, opp.y - caster.y) *
+              (CHAR_CONFIG.jolyne.skills.r.orbitDistanceMultiplier || 0.7)
+          )
+        );
         sf.phaseTimer = sf.spinDuration;
         sf.slamDuration = 0.24;
         spawnParticles(opp.x, opp.y, "#22d3ee", 14, 210);
@@ -5280,9 +5396,11 @@ function drawFighter(f) {
   // Normalize all characters by consistent visual height (+ per-character spriteScale)
   const scale = CHAR_CONFIG[f.charId].spriteScale || 1;
   const visualScale = getFighterVisualScale();
-  const targetH = f.radius * 2.35 * scale * visualScale;
+  const isAngeloStone = f.sealedTimer > 0 || f.angeloStoneTimer > 0;
+  const sealedScale = isAngeloStone ? 1.14 : 1;
+  const targetH = f.radius * 2.35 * scale * visualScale * sealedScale;
   let activeImg = f.img;
-  if (f.sealedTimer > 0) {
+  if (isAngeloStone) {
     activeImg = ASSETS.josukeAngelo;
   } else if (f.charId === "polnareff" && f.armorOffTimer > 0) {
     activeImg = ASSETS.polnareffArmorOff;
@@ -5296,7 +5414,7 @@ function drawFighter(f) {
     const aspect = sw / sh;
     let h = targetH;
     let w = targetH * aspect;
-    const maxW = f.radius * 2.85 * scale * visualScale;
+    const maxW = f.radius * 2.85 * scale * visualScale * sealedScale;
     if (w > maxW) {
       w = maxW;
       h = maxW / aspect;
@@ -5313,7 +5431,7 @@ function drawFighter(f) {
   ctx.restore();
 
   // Spinning golden stars mark fighters who are stunned, sealed, or barrage-pinned.
-  if (f.stunTimer > 0 || f.sealedTimer > 0 || getActiveBarrageStunner(f)) {
+  if (f.stunTimer > 0 || f.sealedTimer > 0 || f.angeloStoneTimer > 0 || getActiveBarrageStunner(f)) {
     ctx.save();
     ctx.translate(f.x, f.y - f.radius - 26);
     const rot = _frameNow * 0.0085;
@@ -6149,6 +6267,8 @@ for (const ev of ["pointerup", "pointercancel", "pointerleave"]) {
   skillBtns.q.btn.addEventListener(ev, () => {
     if (state?.p1?.isChargingTimeStop) {
       cancelTimeStopCharge(state.p1, "HỦY CHIÊU!");
+    } else if (state?.p1?.barrageQueue?.skillKey === "q") {
+      releaseBarrage(state.p1);
     }
   });
 }
@@ -6196,8 +6316,9 @@ function updateSkillPreview(charId) {
       const detailParts = [skill.desc, `Hồi chiêu: ${skill.cd}s.`];
       const damage = skill.damage ?? skill.impactDamage;
       if (Number.isFinite(damage)) detailParts.push(`Sát thương: ${damage} DMG.`);
-      else if (skill.isBarrage && cfg.barrage) {
-        const total = cfg.barrage.totalPunches * cfg.barrage.punchDamage + cfg.barrage.lastPunchDamage - cfg.barrage.punchDamage;
+      else if (skill.isBarrage && (skill.barrage || cfg.barrage)) {
+        const barrage = skill.barrage || cfg.barrage;
+        const total = barrage.totalPunches * barrage.punchDamage + barrage.lastPunchDamage - barrage.punchDamage;
         detailParts.push(`Barrage khoảng ${Math.round(total)} DMG nếu trúng đủ.`);
       }
       const range = skill.range ?? skill.distance ?? skill.maxLength;
@@ -6416,6 +6537,7 @@ function setP2ControlLayout(layout, persist = true) {
   p2ControlLayout = Object.prototype.hasOwnProperty.call(P2_KEY_LAYOUTS, layout)
     ? layout
     : "numpad";
+  rebuildActiveKeyBindings();
   p2ControlLayoutSelect.value = p2ControlLayout;
   if (persist) {
     try {
@@ -6424,6 +6546,100 @@ function setP2ControlLayout(layout, persist = true) {
       console.warn("Unable to save P2 control layout:", error);
     }
   }
+  updateSkillKeyBindingUI();
+  updateHudSkillKeyLabels();
+}
+
+function rebuildActiveKeyBindings() {
+  activeKeyBindings.p1 = { ...P1_KEY_BINDINGS, ...skillKeyOverrides.p1 };
+  activeKeyBindings.p2 = { ...P2_KEY_LAYOUTS[p2ControlLayout], ...skillKeyOverrides.p2 };
+}
+
+function getSkillKeyLabel(code) {
+  if (code.startsWith("Key")) return code.slice(3);
+  if (code.startsWith("Digit")) return code.slice(5);
+  if (code.startsWith("Numpad")) return `NUM ${code.slice(6)}`;
+  return code;
+}
+
+function updateHudSkillKeyLabels() {
+  const menuSkillHint = document.getElementById("menu-skill-key-hint");
+  if (menuSkillHint) {
+    menuSkillHint.textContent = ["q", "e", "r"]
+      .map((skill) => getSkillKeyLabel(activeKeyBindings.p1[skill]))
+      .join(" ");
+  }
+  for (const skill of SKILL_KEYS) {
+    const badge = skillBtns[skill].btn.querySelector(".key-badge");
+    const label = getSkillKeyLabel(activeKeyBindings.p1[skill]);
+    if (badge) badge.textContent = label;
+    skillBtns[skill].btn.dataset.key = label;
+  }
+}
+
+let pendingSkillKeyBinding = null;
+
+function updateSkillKeyBindingUI(message = "") {
+  document.querySelectorAll("[data-bind-player][data-bind-skill]").forEach((button) => {
+    const slot = button.dataset.bindPlayer;
+    const skill = button.dataset.bindSkill;
+    const isPending = pendingSkillKeyBinding?.slot === slot && pendingSkillKeyBinding.skill === skill;
+    button.textContent = `${slot.toUpperCase()} · ${skill.toUpperCase()}: ${
+      isPending ? "NHẤN PHÍM..." : getSkillKeyLabel(activeKeyBindings[slot][skill])
+    }`;
+    button.classList.toggle("is-listening", isPending);
+    button.setAttribute("aria-pressed", String(isPending));
+  });
+  const status = document.getElementById("skill-key-binding-status");
+  if (status) {
+    status.textContent = message || (pendingSkillKeyBinding
+      ? "Nhấn một phím chữ, số hoặc numpad để gán. Esc để hủy."
+      : "");
+  }
+}
+
+function setSkillKeyBinding(slot, skill, code) {
+  if (
+    !["p1", "p2"].includes(slot) ||
+    !SKILL_KEYS.includes(skill) ||
+    !/^(Key[A-Z]|Digit[0-9]|Numpad[0-9])$/.test(code) ||
+    isReservedSkillKeyCode(slot, code)
+  ) {
+    return false;
+  }
+  const isUsed = ["p1", "p2"].some((otherSlot) =>
+    SKILL_KEYS.some(
+      (otherSkill) =>
+        activeKeyBindings[otherSlot][otherSkill] === code &&
+        (otherSlot !== slot || otherSkill !== skill)
+    )
+  );
+  if (isUsed) return false;
+
+  skillKeyOverrides[slot][skill] = code;
+  rebuildActiveKeyBindings();
+  try {
+    localStorage.setItem(SKILL_KEY_BINDINGS_STORAGE_KEY, JSON.stringify(skillKeyOverrides));
+  } catch (error) {
+    console.warn("Unable to save skill key bindings:", error);
+  }
+  updateSkillKeyBindingUI(`${slot.toUpperCase()} ${skill.toUpperCase()} đã đổi thành ${getSkillKeyLabel(code)}.`);
+  updateHudSkillKeyLabels();
+  return true;
+}
+
+function resetSkillKeyBindings() {
+  skillKeyOverrides.p1 = {};
+  skillKeyOverrides.p2 = {};
+  rebuildActiveKeyBindings();
+  try {
+    localStorage.removeItem(SKILL_KEY_BINDINGS_STORAGE_KEY);
+  } catch (error) {
+    console.warn("Unable to reset skill key bindings:", error);
+  }
+  pendingSkillKeyBinding = null;
+  updateSkillKeyBindingUI("Đã khôi phục phím kỹ năng mặc định.");
+  updateHudSkillKeyLabels();
 }
 
 function setPerformanceHudEnabled(enabled) {
@@ -6551,11 +6767,47 @@ document.querySelectorAll(".graphics-option").forEach((button) => {
 p2ControlLayoutSelect.addEventListener("change", (event) => {
   setP2ControlLayout(event.target.value);
 });
+document.querySelectorAll("[data-bind-player][data-bind-skill]").forEach((button) => {
+  button.addEventListener("click", () => {
+    pendingSkillKeyBinding = {
+      slot: button.dataset.bindPlayer,
+      skill: button.dataset.bindSkill,
+    };
+    updateSkillKeyBindingUI();
+  });
+});
+document.getElementById("reset-skill-key-bindings").addEventListener("click", resetSkillKeyBindings);
+document.addEventListener("keydown", (event) => {
+  if (!pendingSkillKeyBinding) return;
+  if (settingsOverlay.classList.contains("hidden")) {
+    pendingSkillKeyBinding = null;
+    updateSkillKeyBindingUI();
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.key === "Escape") {
+    pendingSkillKeyBinding = null;
+    updateSkillKeyBindingUI("Đã hủy gán phím.");
+    return;
+  }
+  const { slot, skill } = pendingSkillKeyBinding;
+  if (!setSkillKeyBinding(slot, skill, event.code)) {
+    updateSkillKeyBindingUI("Phím này không hợp lệ, đã được dùng hoặc là WASD/phím điều khiển cố định.");
+    return;
+  }
+  pendingSkillKeyBinding = null;
+  updateSkillKeyBindingUI(
+    `${slot.toUpperCase()} ${skill.toUpperCase()} đã đổi thành ${getSkillKeyLabel(event.code)}.`
+  );
+}, true);
 document.getElementById("toggle-performance-hud").addEventListener("click", () => {
   setPerformanceHudEnabled(!performanceHudEnabled);
 });
 updateCharacterSelectUI();
 updateSkillPreview(selectedPlayerChar);
+updateSkillKeyBindingUI();
+updateHudSkillKeyLabels();
 setGameMode(selectedGameMode);
 setGraphicsMode(graphicsMode, false);
 setP2ControlLayout(p2ControlLayout, false);
@@ -6749,6 +7001,8 @@ function openSettings() {
 settingsBtn.addEventListener("click", openSettings);
 document.getElementById("menu-settings-btn").addEventListener("click", openSettings);
 document.getElementById("close-settings-btn").addEventListener("click", () => {
+  pendingSkillKeyBinding = null;
+  updateSkillKeyBindingUI();
   settingsOverlay.classList.add("hidden");
   showMainMenuVideo();
 });
@@ -6801,6 +7055,7 @@ document.getElementById("training-reset-btn").addEventListener("click", () => {
   dummy.vy = 0;
   dummy.stunTimer = 0;
   dummy.sealedTimer = 0;
+  dummy.angeloStoneTimer = 0;
   dummy.knockbackTimer = 0;
   dummy.barrageQueue = null;
   dummy.barrageStunSlot = null;
@@ -6966,6 +7221,8 @@ for (const k of ["q", "e", "r", "t"]) {
       mBtn.addEventListener(ev, () => {
         if (state?.p1?.isChargingTimeStop) {
           cancelTimeStopCharge(state.p1, "HỦY CHIÊU!");
+        } else if (state?.p1?.barrageQueue?.skillKey === "q") {
+          releaseBarrage(state.p1);
         }
       });
     }
@@ -6991,6 +7248,7 @@ for (const button of document.querySelectorAll('#touch-p2-skills-zone [data-skil
     for (const eventName of ["pointerup", "pointercancel"]) {
       button.addEventListener(eventName, () => {
         if (state?.p2?.isChargingTimeStop) cancelTimeStopCharge(state.p2, "HỦY CHIÊU!");
+        else if (state?.p2?.barrageQueue?.skillKey === "q") releaseBarrage(state.p2);
       });
     }
   } else if (skill === "e" || skill === "r") {

@@ -34,9 +34,9 @@ window.JOJO_CHARS.polnareff = {
     },
     r: {
       name: "SWORD SHOT",
-      desc: "Phóng lưỡi kiếm (10 DMG)",
+      desc: "Phóng lưỡi kiếm (15 DMG)",
       cd: 10,
-      damage: 10,
+      damage: 15,
       speed: 480,
       projectileSize: 155,
       soundKey: "polnareffSkillR",

@@ -18,7 +18,7 @@ window.JOJO_CHARS.kira = {
     q: {
       name: "BITE THE DUST",
       desc: "Tụ lực 1.5s — Hồi 30% máu",
-      cd: 55,
+      cd: 45,
       chargeTime: 1.5,
       healPct: 0.3,
       soundKey: "kiraBiteTheDust",
@@ -27,7 +27,7 @@ window.JOJO_CHARS.kira = {
     e: {
       name: "KILLER BARRAGE",
       desc: "Giữ E — 34 đấm × 0.9 DMG (30 DMG)",
-      cd: 10,
+      cd: 7,
       isBarrage: true,
     },
     r: {
@@ -36,8 +36,8 @@ window.JOJO_CHARS.kira = {
       cd: 8,
       bombDuration: 8,
       groundDamage: 30,
-      groundBlastRadius: 160,
-      ohkoBlastRadius: 195,
+      groundBlastRadius: 180,
+      ohkoBlastRadius: 210,
       soundKey: "kiraDetonate",
     },
   },

@@ -18,13 +18,22 @@ window.JOJO_CHARS.josuke = {
   skills: {
     q: {
       name: "ANGELO STONE",
-      desc: "Phong ấn 2s thành đá Angelo (35 DMG)",
-      cd: 20,
-      damage: 35,
+      desc: "Giữ Q — 40 đòn × 1 DMG; trúng đòn biến thành Angelo 2s, cú cuối đẩy lùi",
+      cd: 18,
+      isBarrage: true,
       sealDuration: 2.0,
-      maxRange: 150,
+      maxRange: 255,
       soundKey: "josukeSkillQ",
       callout: "YO, ANGELO!",
+      barrage: {
+        totalPunches: 40,
+        punchDamage: 1,
+        lastPunchDamage: 1,
+        soundKey: "josukeBarrage",
+        callout: "DORARARARA!",
+        color: "#f472b6",
+        finalProjectile: "angelo-knockback",
+      },
     },
     e: {
       name: "DORARA BARRAGE",
@@ -59,7 +68,7 @@ window.JOJO_CHARS.josuke = {
     } else if (key === "r") {
       api.castJosukeRock(caster, opponent, this.skills.r);
     } else if (key === "q") {
-      api.castJosukeAngelo(caster, opponent, this.skills.q);
+      api.startBarrage(caster, this.skills.q.barrage, "q", this.skills.q.cd);
     }
   },
 };
