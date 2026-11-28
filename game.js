@@ -91,6 +91,10 @@ function isTouchDeviceOrSmallScreen() {
   );
 }
 
+function getFighterVisualScale() {
+  return isTouchDeviceOrSmallScreen() ? 1.2 : 1.4;
+}
+
 function getCombatSpriteMipSize() {
   if (!isTouchDeviceOrSmallScreen()) return graphicsMode === "high" ? 640 : 384;
   return graphicsMode === "high" ? 384 : 256;
@@ -850,6 +854,20 @@ const graphicsModeLabel = document.getElementById("graphics-mode-label");
 const p2ControlLayoutSelect = document.getElementById("p2-control-layout");
 const performanceHud = document.getElementById("performance-hud");
 const performanceHudToggle = document.getElementById("toggle-performance-hud");
+const damageCounterElements = {
+  p1: {
+    root: document.getElementById("damage-counter-p1"),
+    owner: document.getElementById("damage-counter-p1-owner"),
+    hits: document.getElementById("damage-counter-p1-hits"),
+    total: document.getElementById("damage-counter-p1-total"),
+  },
+  p2: {
+    root: document.getElementById("damage-counter-p2"),
+    owner: document.getElementById("damage-counter-p2-owner"),
+    hits: document.getElementById("damage-counter-p2-hits"),
+    total: document.getElementById("damage-counter-p2-total"),
+  },
+};
 
 const sfxSlider = document.getElementById("sfx-volume");
 const sfxValEl = document.getElementById("sfx-volume-val");
@@ -1004,6 +1022,28 @@ const P2_KEY_LAYOUTS = {
     dash: "ShiftRight",
   },
 };
+const NUMPAD_KEY_ALIASES = {
+  "0": "Numpad0",
+  "1": "Numpad1",
+  "3": "Numpad3",
+  "4": "Numpad4",
+  "5": "Numpad5",
+  "6": "Numpad6",
+  "7": "Numpad7",
+  "8": "Numpad8",
+  "9": "Numpad9",
+  ArrowUp: "Numpad8",
+  ArrowDown: "Numpad5",
+  ArrowLeft: "Numpad4",
+  ArrowRight: "Numpad6",
+  Home: "Numpad7",
+  PageUp: "Numpad9",
+  End: "Numpad1",
+  PageDown: "Numpad3",
+  Clear: "Numpad5",
+  Insert: "Numpad0",
+  Enter: "NumpadEnter",
+};
 let p2ControlLayout = "numpad";
 try {
   const savedLayout = localStorage.getItem(P2_CONTROL_LAYOUT_STORAGE_KEY);
@@ -1016,6 +1056,13 @@ try {
 
 function getKeyBindings(slot) {
   return slot === "p2" ? P2_KEY_LAYOUTS[p2ControlLayout] : P1_KEY_BINDINGS;
+}
+
+function getNormalizedKeyCode(event) {
+  if (p2ControlLayout !== "numpad") return event.code;
+  const isArrowKey = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key);
+  if (event.location !== 3 && !isArrowKey) return event.code;
+  return NUMPAD_KEY_ALIASES[event.key] || event.code;
 }
 
 function getSkillFromKeyCode(slot, code) {
@@ -1264,18 +1311,20 @@ function startMatchWithIntro() {
     ? diffCfg.label
     : selectedGameMode === "training" ? "MỤC TIÊU" : "PLAYER 2";
   vsP2Name.textContent = `${CHAR_CONFIG[p2Char].name} (${p2Label})`;
+  vsP1Img.alt = `${CHAR_CONFIG[p1Char].name} P1`;
+  vsP2Img.alt = `${CHAR_CONFIG[p2Char].name} P2`;
+
+  initGameState(p1Char, p2Char);
   vsP1Img.src = encodePath(CHARACTER_PORTRAITS[p1Char] || CHAR_CONFIG[p1Char].imgPath);
   vsP2Img.src = encodePath(CHARACTER_PORTRAITS[p2Char] || CHAR_CONFIG[p2Char].imgPath);
-  vsP1Img.alt = `${CHAR_CONFIG[p1Char].name} portrait`;
-  vsP2Img.alt = `${CHAR_CONFIG[p2Char].name} portrait`;
   vsP1Img.style.objectPosition = CHARACTER_PORTRAIT_POSITIONS[p1Char] || "center 38%";
   vsP2Img.style.objectPosition = CHARACTER_PORTRAIT_POSITIONS[p2Char] || "center 38%";
   vsIntroOverlay.classList.remove("hidden");
-
-  initGameState(p1Char, p2Char);
   updateTrainingControlsVisibility();
   state.running = false;
+  updateDamageCounterUI();
   syncMobileControlsVisibility();
+  draw();
 
   vsTimerHandle = setTimeout(() => {
     vsIntroOverlay.classList.add("hidden");
@@ -1382,6 +1431,10 @@ function initGameState(p1Char, p2Char) {
     punches: [],
     particles: [],
     floatingTexts: [],
+    damageCounters: {
+      p1: { damage: 0, hits: 0, life: 0, maxLife: 1.15, targetSlot: null, color: "#38bdf8", isHeavy: false },
+      p2: { damage: 0, hits: 0, life: 0, maxLife: 1.15, targetSlot: null, color: "#fb7185", isHeavy: false },
+    },
     screenShake: 0,
     uiSyncTimer: 0,
     dioTauntTimer: 10 + Math.random() * 5,
@@ -1534,6 +1587,46 @@ function spawnFloatingText(x, y, text, color = "#fde047", size = 22) {
   });
 }
 
+function registerDamageCounter(attackerSlot, target, amount, color, isHeavy) {
+  if (attackerSlot !== "p1" && attackerSlot !== "p2") return;
+  const counter = state.damageCounters[attackerSlot];
+  if (counter.life <= 0 || counter.targetSlot !== target.slot) {
+    counter.damage = 0;
+    counter.hits = 0;
+    counter.isHeavy = false;
+  }
+  counter.damage = Math.round((counter.damage + amount) * 10) / 10;
+  counter.hits += 1;
+  counter.life = counter.maxLife;
+  counter.targetSlot = target.slot;
+  counter.color = color;
+  counter.isHeavy ||= isHeavy;
+}
+
+function updateDamageCounterUI() {
+  for (const slot of ["p1", "p2"]) {
+    const elements = damageCounterElements[slot];
+    const counter = state?.damageCounters?.[slot];
+    const visible = Boolean(state?.running && counter?.hits > 0 && counter.life > 0);
+    elements.root.classList.toggle("hidden", !visible);
+    if (!visible) continue;
+
+    const owner = slot === "p2" && state.mode === "cpu" ? "CPU" : slot.toUpperCase();
+    elements.owner.textContent = `${owner} · COMBO`;
+    elements.hits.textContent = String(counter.hits);
+    elements.total.textContent =
+      Number.isInteger(counter.damage) ? String(counter.damage) : counter.damage.toFixed(1);
+    elements.root.style.setProperty(
+      "--counter-color",
+      counter.isHeavy ? "#facc15" : counter.color
+    );
+    elements.root.style.setProperty(
+      "--counter-progress",
+      `${Math.max(0, (counter.life / counter.maxLife) * 100)}%`
+    );
+  }
+}
+
 function applyAttackDamage(attackerSlot, target, baseAmount, color = "#ff4d4f", isHeavy = false, sourceSkill = null) {
   target.lastAttackerSlot = attackerSlot;
   target.lastAttackSkill = sourceSkill || state.activeSkillKey?.[attackerSlot] || "basic";
@@ -1586,6 +1679,7 @@ function applyDamage(target, amount, color = "#ff4d4f", isHeavy = false) {
       state.metrics.damageBySkill[attackerSlot][sourceSkill] =
         (state.metrics.damageBySkill[attackerSlot][sourceSkill] || 0) + finalDmg;
     }
+    registerDamageCounter(attackerSlot, target, finalDmg, color, isHeavy);
   }
 
   // Diavolo Epitaph counter: triggers when Diavolo takes damage during 3s window!
@@ -1606,15 +1700,6 @@ function applyDamage(target, amount, color = "#ff4d4f", isHeavy = false) {
   target.hp = Math.max(0, Math.round((target.hp - finalDmg) * 10) / 10);
   target.hitFlash = 0.14;
 
-  const pctLoss = ((finalDmg / target.maxHp) * 100).toFixed(1);
-  const dmgLabel = finalDmg >= target.maxHp ? "OHKO!" : `-${pctLoss}%`;
-  spawnFloatingText(
-    target.x + (Math.random() - 0.5) * 38,
-    target.y - target.radius - 12,
-    dmgLabel,
-    color,
-    finalDmg >= 25 ? 26 : 17
-  );
   updateHpUI();
 
   if (target.isPolnareffClone) {
@@ -1679,11 +1764,87 @@ function recordMatchOutcome(winnerSlot) {
 function renderStatsPanel() {
   const stats = getStoredMatchStats();
   const summary = document.getElementById("stats-summary");
-  summary.textContent =
-    `Trận đã lưu: ${stats.matches} · Thắng P1: ${stats.p1Wins} · Thắng P2/AI: ${stats.p2Wins} · ` +
-    `Streak P1: ${stats.p1CurrentStreak} (tốt nhất ${stats.p1BestStreak}) · ` +
-    `Streak P2: ${stats.p2CurrentStreak} (tốt nhất ${stats.p2BestStreak}) · ` +
-    `Lưu tối đa ${MATCH_HISTORY_LIMIT} trận gần nhất để xuất dữ liệu cân bằng.`;
+  const history = document.getElementById("stats-history");
+  const historyCount = document.getElementById("stats-history-count");
+  const metrics = [
+    ["TỔNG TRẬN", stats.matches, "ĐÃ LƯU"],
+    ["CHIẾN THẮNG P1", stats.p1Wins, `Chuỗi hiện tại ${stats.p1CurrentStreak}`],
+    ["CHIẾN THẮNG P2 / AI", stats.p2Wins, `Chuỗi hiện tại ${stats.p2CurrentStreak}`],
+    ["CHUỖI TỐT NHẤT", Math.max(stats.p1BestStreak, stats.p2BestStreak), "TRẬN LIÊN TIẾP"],
+  ];
+
+  summary.replaceChildren();
+  for (const [label, value, detail] of metrics) {
+    const card = document.createElement("article");
+    card.className = "stats-metric";
+    const labelElement = document.createElement("span");
+    labelElement.className = "stats-metric-label";
+    labelElement.textContent = label;
+    const valueElement = document.createElement("strong");
+    valueElement.className = "stats-metric-value";
+    valueElement.textContent = String(value);
+    const detailElement = document.createElement("small");
+    detailElement.className = "stats-metric-detail";
+    detailElement.textContent = detail;
+    card.append(labelElement, valueElement, detailElement);
+    summary.append(card);
+  }
+
+  const recentMatches = stats.history
+    .slice(-5)
+    .reverse()
+    .filter((match) => match && typeof match === "object");
+  historyCount.textContent = `${recentMatches.length} / ${stats.matches}`;
+  history.replaceChildren();
+  if (recentMatches.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "stats-empty";
+    empty.textContent = "Chưa có trận nào được lưu. Hãy bắt đầu một trận để xem thống kê tại đây.";
+    history.append(empty);
+    return;
+  }
+
+  for (const match of recentMatches) {
+    const row = document.createElement("article");
+    row.className = `stats-match-row ${match.winner === "p1" ? "p1-won" : "p2-won"}`;
+    row.setAttribute("role", "listitem");
+
+    const heading = document.createElement("div");
+    heading.className = "stats-match-heading";
+    const matchup = document.createElement("strong");
+    matchup.textContent = `${CHAR_CONFIG[match.p1]?.name || match.p1 || "P1"}  VS  ${CHAR_CONFIG[match.p2]?.name || match.p2 || "P2"}`;
+    const result = document.createElement("span");
+    result.textContent = match.winner === "p1" ? "P1 THẮNG" : "P2 THẮNG";
+    heading.append(matchup, result);
+
+    const details = document.createElement("div");
+    details.className = "stats-match-details";
+    const mode = match.mode === "cpu" ? "ĐẤU AI" : "LOCAL PVP";
+    const duration = Number.isFinite(match.durationSeconds)
+      ? `${Math.max(0, match.durationSeconds).toFixed(1)} giây`
+      : "—";
+    const p1Damage = Number(match.damageDealt?.p1) || 0;
+    const p2Damage = Number(match.damageDealt?.p2) || 0;
+    details.textContent = `${mode} · ${duration} · Sát thương ${p1Damage.toFixed(0)} – ${p2Damage.toFixed(0)}`;
+    row.append(heading, details);
+
+    if (match.playedAt) {
+      const date = new Date(match.playedAt);
+      if (Number.isFinite(date.getTime())) {
+        const dateLabel = document.createElement("time");
+        dateLabel.className = "stats-match-date";
+        dateLabel.dateTime = date.toISOString();
+        dateLabel.textContent = date.toLocaleString("vi-VN", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        row.append(dateLabel);
+      }
+    }
+    history.append(row);
+  }
 }
 
 function openStatsPanel() {
@@ -1799,6 +1960,7 @@ function exportMatchStats() {
 function endGame(winnerSlot) {
   state.gameOver = true;
   state.running = false;
+  updateDamageCounterUI();
   syncMobileControlsVisibility();
   state.epitaphCounter = null;
   state.epitaphFists.length = 0;
@@ -4736,6 +4898,11 @@ function update(dt) {
     if (ft.life <= 0) state.floatingTexts.splice(i, 1);
   }
 
+  for (const slot of ["p1", "p2"]) {
+    const counter = state.damageCounters[slot];
+    if (counter.life > 0) counter.life = Math.max(0, counter.life - dt);
+  }
+
   if (state.screenShake > 0) {
     state.screenShake = Math.max(0, state.screenShake - dt * 32);
   }
@@ -4745,6 +4912,7 @@ function update(dt) {
     state.uiSyncTimer = 0.06; // ~16Hz DOM sync avoids 60fps layout thrashing
     updateHpUI();
     updateSkillBarUI();
+    updateDamageCounterUI();
   }
 }
 
@@ -5111,7 +5279,7 @@ function drawFighter(f) {
 
   // Normalize all characters by consistent visual height (+ per-character spriteScale)
   const scale = CHAR_CONFIG[f.charId].spriteScale || 1;
-  const visualScale = 1.4;
+  const visualScale = getFighterVisualScale();
   const targetH = f.radius * 2.35 * scale * visualScale;
   let activeImg = f.img;
   if (f.sealedTimer > 0) {
@@ -5575,13 +5743,13 @@ function drawPolnareffClone(cl) {
   ctx.translate(cl.x, cl.y);
   ctx.globalAlpha = 0.72;
   const scale = CHAR_CONFIG.polnareff.spriteScale || 1.08;
-  const targetH = cl.radius * 2.35 * scale * 1.4;
+  const targetH = cl.radius * 2.35 * scale * getFighterVisualScale();
   const sw = sprite.width;
   const sh = sprite.height;
   const aspect = sw / sh;
   let h = targetH;
   let w = targetH * aspect;
-  const maxW = cl.radius * 2.85 * scale * 1.4;
+  const maxW = cl.radius * 2.85 * scale * getFighterVisualScale();
   if (w > maxW) {
     w = maxW;
     h = maxW / aspect;
@@ -5611,9 +5779,10 @@ function drawDashAfterimage(afterimage) {
   const sprite = getMipSprite(afterimage.img, getCombatSpriteMipSize());
   if (!sprite) return;
   const scale = CHAR_CONFIG[afterimage.charId].spriteScale || 1;
-  const targetH = afterimage.radius * 2.35 * scale * 1.4;
+  const visualScale = getFighterVisualScale();
+  const targetH = afterimage.radius * 2.35 * scale * visualScale;
   const aspect = sprite.width / sprite.height;
-  const h = Math.min(targetH, (afterimage.radius * 2.85 * scale * 1.4) / aspect);
+  const h = Math.min(targetH, (afterimage.radius * 2.85 * scale * visualScale) / aspect);
   const w = h * aspect;
 
   ctx.save();
@@ -5900,11 +6069,12 @@ function gameLoop(timestamp) {
 }
 
 window.addEventListener("keydown", (e) => {
-  keysPressed.add(e.code);
+  const code = getNormalizedKeyCode(e);
+  keysPressed.add(code);
   if (!state || !state.running) return;
 
   if (
-    e.code === P1_KEY_BINDINGS.dash ||
+    code === P1_KEY_BINDINGS.dash ||
     (state.mode !== "local" && e.key === "Shift")
   ) {
     e.preventDefault();
@@ -5913,26 +6083,27 @@ window.addEventListener("keydown", (e) => {
   }
 
   const p2Bindings = getKeyBindings("p2");
-  if (state.mode === "local" && e.code === p2Bindings.dash) {
+  if (state.mode === "local" && code === p2Bindings.dash) {
     e.preventDefault();
     triggerDash(state.p2);
     return;
   }
-  if (state.mode === "local" && (e.code.startsWith("Arrow") || e.code.startsWith("Numpad"))) {
+  if (state.mode === "local" && Object.values(p2Bindings).includes(code)) {
     e.preventDefault();
   }
   if (e.repeat) return;
-  const p1Skill = getSkillFromKeyCode("p1", e.code);
+  const p1Skill = getSkillFromKeyCode("p1", code);
   if (p1Skill) castSkill("p1", p1Skill);
   else if (state.mode === "local") {
-    const p2Skill = getSkillFromKeyCode("p2", e.code);
+    const p2Skill = getSkillFromKeyCode("p2", code);
     if (p2Skill) castSkill("p2", p2Skill);
   }
 });
 
 window.addEventListener("keyup", (e) => {
-  keysPressed.delete(e.code);
-  const p1Skill = getSkillFromKeyCode("p1", e.code);
+  const code = getNormalizedKeyCode(e);
+  keysPressed.delete(code);
+  const p1Skill = getSkillFromKeyCode("p1", code);
   if (p1Skill === "q" && state?.p1?.isChargingTimeStop) {
     cancelTimeStopCharge(state.p1, "HỦY CHIÊU!");
   }
@@ -5940,7 +6111,7 @@ window.addEventListener("keyup", (e) => {
     releaseBarrage(state.p1);
   }
   if (state?.mode === "local") {
-    const p2Skill = getSkillFromKeyCode("p2", e.code);
+    const p2Skill = getSkillFromKeyCode("p2", code);
     if (p2Skill === "q" && state.p2.isChargingTimeStop) {
       cancelTimeStopCharge(state.p2, "HỦY CHIÊU!");
     }

@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>JOJO Bizarre Arena 2D — Beta v4</title>
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=18" />
 </head>
 <body>
   <div id="game-wrapper">
@@ -130,6 +130,18 @@
         <button id="training-reset-btn" type="button">ĐẶT LẠI MỤC TIÊU</button>
       </section>
       <div id="performance-hud" class="performance-hud hidden" role="status" aria-live="off"></div>
+      <div id="damage-counters" aria-live="off">
+        <div id="damage-counter-p1" class="damage-counter p1 hidden">
+          <span class="damage-counter-owner" id="damage-counter-p1-owner">PLAYER 1 · COMBO</span>
+          <span class="damage-counter-hits"><strong id="damage-counter-p1-hits">1</strong><small>HITS</small></span>
+          <span class="damage-counter-total"><strong id="damage-counter-p1-total">0</strong><small>DMG</small></span>
+        </div>
+        <div id="damage-counter-p2" class="damage-counter p2 hidden">
+          <span class="damage-counter-owner" id="damage-counter-p2-owner">PLAYER 2 · COMBO</span>
+          <span class="damage-counter-hits"><strong id="damage-counter-p2-hits">1</strong><small>HITS</small></span>
+          <span class="damage-counter-total"><strong id="damage-counter-p2-total">0</strong><small>DMG</small></span>
+        </div>
+      </div>
 
       <!-- VS Intro Splash Overlay -->
       <div id="vs-intro-overlay" class="hidden">
@@ -139,15 +151,15 @@
         </div>
         <div class="vs-fighters-stage">
           <div class="vs-fighter-side left">
-            <img id="vs-p1-img" src="Jotaro/Star%20platium.png" alt="P1 portrait" />
-          </div>
-          <div class="vs-bolt-center">
-            <div class="lightning-bolt">⚡</div>
-            <div class="vs-clash-text"><span class="vs-red">V</span><span class="vs-blue">S</span></div>
+            <img id="vs-p1-img" src="Jotaro/Star%20platium.png" alt="P1 fighter" />
           </div>
           <div class="vs-fighter-side right">
-            <img id="vs-p2-img" src="Dio/Dio.png" alt="P2 portrait" />
+            <img id="vs-p2-img" src="Dio/Dio.png" alt="P2 fighter" />
           </div>
+        </div>
+        <div class="vs-bolt-center" aria-hidden="true">
+          <div class="lightning-bolt"></div>
+          <div class="vs-clash-text"><span class="vs-blue">V</span><span class="vs-red">S</span></div>
         </div>
       </div>
 
@@ -485,8 +497,21 @@
     </div>
     <div id="stats-overlay" class="hidden">
       <div class="modal-card stats-card">
-        <h2>THỐNG KÊ TRẬN ĐẤU</h2>
-        <div id="stats-summary" class="stats-summary"></div>
+        <header class="stats-header">
+          <div>
+            <h2>THỐNG KÊ TRẬN ĐẤU</h2>
+            <p>Tổng quan thành tích và các trận gần đây</p>
+          </div>
+          <span class="stats-header-mark" aria-hidden="true">VS</span>
+        </header>
+        <div id="stats-summary" class="stats-summary" aria-live="polite"></div>
+        <section class="stats-history-section" aria-labelledby="stats-history-title">
+          <div class="stats-section-heading">
+            <h3 id="stats-history-title">TRẬN GẦN ĐÂY</h3>
+            <span id="stats-history-count"></span>
+          </div>
+          <div id="stats-history" class="stats-history" role="list"></div>
+        </section>
         <div class="stats-actions">
           <button id="export-stats-btn" type="button" class="secondary-cta">XUẤT DỮ LIỆU CÂN BẰNG</button>
           <button id="close-stats-btn" type="button" class="primary-cta">ĐÓNG</button>
@@ -531,6 +556,6 @@
   <script src="characters/josuke.js?v=8"></script>
   <script src="characters/polnareff.js?v=7"></script>
   <script src="characters/jolyne.js?v=8"></script>
-  <script src="game.js?v=16"></script>
+  <script src="game.js?v=20"></script>
 </body>
 </html>
