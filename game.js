@@ -37,6 +37,7 @@ try {
   console.warn("Unable to read saved graphics mode:", error);
 }
 let targetFrameInterval = 1000 / (graphicsMode === "high" && !isTouchDeviceOrSmallScreen() ? 120 : 60);
+const FRAME_INTERVAL_TOLERANCE_MS = 1;
 let lastRenderTime = 0;
 let performanceHudEnabled = false;
 let performanceSampleTimestamp = 0;
@@ -6158,7 +6159,8 @@ function gameLoop(timestamp) {
     return;
   }
 
-  if (timestamp - lastRenderTime < targetFrameInterval) {
+  // RAF timestamps can jitter slightly below 16.67ms on mobile 60Hz displays.
+  if (timestamp - lastRenderTime + FRAME_INTERVAL_TOLERANCE_MS < targetFrameInterval) {
     requestAnimationFrame(gameLoop);
     return;
   }
