@@ -17,10 +17,12 @@ window.JOJO_CHARS.kira = {
   skills: {
     q: {
       name: "BITE THE DUST",
-      desc: "Tụ lực 1.5s — Hồi 30% máu",
+      desc: "Tụ lực 1.5s — Nổ quanh Kira gây 50 DMG, hồi 25% máu",
       cd: 45,
       chargeTime: 1.5,
-      healPct: 0.3,
+      healPct: 0.25,
+      damage: 50,
+      blastRadius: 180,
       soundKey: "kiraBiteTheDust",
       callout: "BITES ZA DUSTO...",
     },

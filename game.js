@@ -36,7 +36,11 @@ try {
 } catch (error) {
   console.warn("Unable to read saved graphics mode:", error);
 }
-let targetFrameInterval = 1000 / (graphicsMode === "high" && !isTouchDeviceOrSmallScreen() ? 120 : 60);
+let isTouchDeviceCached =
+  "ontouchstart" in window ||
+  navigator.maxTouchPoints > 0 ||
+  window.innerWidth <= 960;
+let targetFrameInterval = 1000 / (graphicsMode === "high" && !isTouchDeviceCached ? 120 : 60);
 const FRAME_INTERVAL_TOLERANCE_MS = 1;
 let lastRenderTime = 0;
 let performanceHudEnabled = false;
@@ -85,6 +89,10 @@ function selectRandomArenaMap() {
 }
 
 function isTouchDeviceOrSmallScreen() {
+  return isTouchDeviceCached;
+}
+
+function detectTouchDeviceOrSmallScreen() {
   return (
     "ontouchstart" in window ||
     navigator.maxTouchPoints > 0 ||
@@ -98,11 +106,12 @@ function getFighterVisualScale() {
 
 function getCombatSpriteMipSize() {
   if (!isTouchDeviceOrSmallScreen()) return graphicsMode === "high" ? 640 : 384;
-  return graphicsMode === "high" ? 384 : 256;
+  return graphicsMode === "high" ? 768 : 640;
 }
 
 function syncArenaSize() {
   if (!arenaContainer) return;
+  isTouchDeviceCached = detectTouchDeviceOrSmallScreen();
   const rect = arenaContainer.getBoundingClientRect();
   let cssW = Math.floor(rect.width);
   let cssH = Math.floor(rect.height);
@@ -126,10 +135,10 @@ function syncArenaSize() {
   }
 
   const dpr = isMobile
-    ? Math.min(window.devicePixelRatio || 1, graphicsMode === "high" ? 1 : 0.9)
+    ? Math.min(window.devicePixelRatio || 1, graphicsMode === "high" ? 1.75 : 1.35)
     : Math.min(window.devicePixelRatio || 1, graphicsMode === "high" ? 1.75 : 1.25);
   const maxCanvasPixels = isMobile
-    ? (graphicsMode === "high" ? 1000000 : 700000)
+    ? (graphicsMode === "high" ? 1400000 : 900000)
     : (graphicsMode === "high" ? 6000000 : 3600000);
   const requestedW = cssW * dpr;
   const requestedH = cssH * dpr;
@@ -1592,8 +1601,9 @@ function spawnParticles(x, y, color, count = 12, speed = 180) {
 function spawnBombExplosion(x, y, radius, theme = "orange", shakeAmount = 10) {
   // Multi-layered realistic anime bomb explosion
   const puffs = [];
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+  const puffCount = isTouchDeviceOrSmallScreen() ? 8 : 12;
+  for (let i = 0; i < puffCount; i++) {
+    const angle = (i / puffCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
     const dist = radius * (0.2 + Math.random() * 0.55);
     puffs.push({
       angle,
@@ -3208,6 +3218,18 @@ function updateFighterPhysics(f, dt) {
       const btdCfg = CHAR_CONFIG.kira.skills.q;
       const healPct = btdCfg.healPct || 0.2;
       const healAmount = f.maxHp * healPct;
+      const blastRadius = btdCfg.blastRadius || 180;
+      const opponent = getOpponent(f.slot);
+      playSound("kiraExploded");
+      spawnBombExplosion(f.x, f.y, blastRadius, "pink", 10);
+      spawnFloatingText(f.x, f.y - f.radius - 48, "BITE THE DUST: EXPLODED!", "#f472b6", 22);
+      if (
+        !opponent.hidden &&
+        Math.hypot(opponent.x - f.x, opponent.y - f.y) <= blastRadius + opponent.radius * 0.55
+      ) {
+        applyAttackDamage(f.slot, opponent, btdCfg.damage || 50, "#f472b6", true, "q");
+        applyRadialKnockback(opponent, f.x, f.y, 560, 0.32);
+      }
       f.hp = Math.min(f.maxHp, f.hp + healAmount);
       f.biteTheDustChargeDuration = 0;
       spawnParticles(f.x, f.y, "#4ade80", 24, 230);
@@ -5633,7 +5655,7 @@ function drawPunch(p) {
     ctx.stroke();
   }
 
-  const armSprite = getMipSprite(p.img, isTouchDeviceOrSmallScreen() ? 112 : 148);
+  const armSprite = getMipSprite(p.img, isTouchDeviceOrSmallScreen() ? 256 : 148);
   if (armSprite) {
     ctx.drawImage(armSprite, -w / 2, -h / 2, w, h);
   } else {
@@ -5913,7 +5935,7 @@ function drawDashAfterimage(afterimage) {
 }
 
 function drawSpriteProjectile(img, x, y, drawSize, angle) {
-  const sprite = getMipSprite(img, 180);
+  const sprite = getMipSprite(img, isTouchDeviceOrSmallScreen() ? 512 : 180);
   if (!sprite) return;
   ctx.save();
   ctx.translate(x, y);
