@@ -91,6 +91,11 @@ function isTouchDeviceOrSmallScreen() {
   );
 }
 
+function getCombatSpriteMipSize() {
+  if (!isTouchDeviceOrSmallScreen()) return graphicsMode === "high" ? 640 : 384;
+  return graphicsMode === "high" ? 384 : 256;
+}
+
 function syncArenaSize() {
   if (!arenaContainer) return;
   const rect = arenaContainer.getBoundingClientRect();
@@ -116,10 +121,10 @@ function syncArenaSize() {
   }
 
   const dpr = isMobile
-    ? Math.min(window.devicePixelRatio || 1, graphicsMode === "high" ? 1.35 : 1)
+    ? Math.min(window.devicePixelRatio || 1, graphicsMode === "high" ? 1 : 0.9)
     : Math.min(window.devicePixelRatio || 1, graphicsMode === "high" ? 1.75 : 1.25);
   const maxCanvasPixels = isMobile
-    ? (graphicsMode === "high" ? 1800000 : 1200000)
+    ? (graphicsMode === "high" ? 1000000 : 700000)
     : (graphicsMode === "high" ? 6000000 : 3600000);
   const requestedW = cssW * dpr;
   const requestedH = cssH * dpr;
@@ -374,6 +379,7 @@ const activeVoices = new Set();
 let diavoloImpactNoiseBuffer = null;
 let activeBgm = null;
 let _okuyasuBarrageSoundIndex = 0;
+let lastBarragePunchImpactAt = -Infinity;
 
 function ensureAudioContext() {
   if (!audioCtx) {
@@ -467,6 +473,10 @@ function playBarragePunchImpact(intensity = 1) {
   if (!audioCtx) return;
 
   const now = audioCtx.currentTime;
+  if (isTouchDeviceOrSmallScreen()) {
+    if (now - lastBarragePunchImpactAt < 0.1) return;
+    lastBarragePunchImpactAt = now;
+  }
   const impactGain = audioCtx.createGain();
   impactGain.gain.setValueAtTime(Math.min(1, sfxVolume * 2.35 * intensity), now);
   impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
@@ -605,7 +615,13 @@ function getOrCreateBgmEl(kind) {
       _battleBgmEl.loop = true;
       _battleBgmEl.preload = "auto";
       _battleBgmEl.addEventListener("ended", () => {
-        if (_desiredBgmMode === "battle" && !isMuted && !isBgmMuted && bgmVolume > 0.001) {
+        if (
+          !document.hidden &&
+          _desiredBgmMode === "battle" &&
+          !isMuted &&
+          !isBgmMuted &&
+          bgmVolume > 0.001
+        ) {
           _battleBgmEl.currentTime = 0;
           _battleBgmEl.play().catch(() => {});
         }
@@ -676,7 +692,7 @@ function playVictoryBgm() {
 }
 
 function ensureDesiredBgmPlaying() {
-  if (isMuted || isBgmMuted || bgmVolume <= 0.001) return;
+  if (document.hidden || isMuted || isBgmMuted || bgmVolume <= 0.001) return;
   if (_desiredBgmMode === "battle" && state && state.running) {
     const el = getOrCreateBgmEl("battle");
     el.volume = Math.min(1, bgmVolume);
@@ -687,6 +703,9 @@ function ensureDesiredBgmPlaying() {
     el.volume = Math.min(1, bgmVolume * SOUNDS.lobbyBgm.gain);
     if (el.paused) el.play().catch(() => {});
     activeBgm = { type: "html", mode: "lobby", audio: el };
+  } else if (_desiredBgmMode === "victory" && _victoryBgmEl && _victoryBgmEl.paused) {
+    _victoryBgmEl.play().catch(() => {});
+    activeBgm = { type: "html", mode: "victory", audio: _victoryBgmEl };
   }
 }
 
@@ -759,6 +778,29 @@ function stopAllSounds() {
   }
   activeVoices.clear();
   stopAllBgmEls();
+}
+
+function pauseAudioForBackground() {
+  for (const entry of activeVoices) {
+    entry.stopped = true;
+    if (entry.type === "buffer") {
+      try {
+        entry.src.stop();
+      } catch {}
+    } else if (entry.audio) {
+      entry.audio.pause();
+      entry.audio.currentTime = 0;
+    }
+  }
+  activeVoices.clear();
+
+  for (const audio of [_lobbyBgmEl, _battleBgmEl, _victoryBgmEl]) {
+    audio?.pause();
+  }
+  activeBgm = null;
+  if (audioCtx?.state === "running") {
+    audioCtx.suspend().catch((error) => console.warn("Unable to suspend audio while hidden:", error));
+  }
 }
 
 // ── DOM References ──────────────────────────────────────────
@@ -2737,13 +2779,16 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
 
   const barrageCfg = overrideCfg || fighter.barrageQueue?.cfg || CHAR_CONFIG[fighter.charId].barrage;
   const punchDmg = isLastPunch ? barrageCfg.lastPunchDamage : barrageCfg.punchDamage;
+  const isMobile = isTouchDeviceOrSmallScreen();
+  const maxBarragePunches = isMobile ? 28 : 44;
+  const maxFanPunches = isMobile ? 28 : 48;
   if (fighter.charId === "diavolo" || fighter.charId === "okuyasu") {
     playBarragePunchImpact(isLastPunch ? 1.45 : 1);
   }
 
   if (barrageCfg.isFanSword) {
     // Polnareff Silver Chariot: tight horizontal fan (±20px vertical, ±5°) for anime hundred-thrust look
-    const count = state.punches.length > 34 ? 2 : 3;
+    const count = state.punches.length > maxFanPunches - 10 ? 2 : 3;
     for (let n = 0; n < count; n++) {
       const isVisualOnly = n > 0;
       const angleJitter = ((Math.random() - 0.5) * 10 * Math.PI) / 180; // ±5 deg
@@ -2755,7 +2800,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
       const startY = fighter.y + Math.sin(baseAngle) * forwardOffset + Math.sin(perpAngle) * lateralOffset;
       const speed = 520 + Math.random() * 90;
       const maxLife = 0.16;
-      if (state.punches.length < 48) {
+      if (state.punches.length < maxFanPunches) {
         state.punches.push({
           x: startX,
           y: startY,
@@ -2775,7 +2820,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
           isVisualOnly,
           damage: isVisualOnly ? 0 : punchDmg,
           charId: fighter.charId,
-          scale: 1.05 + Math.random() * 0.2,
+          scale: 1.42 + Math.random() * 0.24,
         });
       }
     }
@@ -2783,7 +2828,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
   }
 
   // Spawn 1 real damaging punch + 1 visual-only punch for a dense, smooth 60fps rush
-  const punchCount = state.punches.length > 36 ? 1 : 2;
+  const punchCount = state.punches.length > maxBarragePunches - 8 ? 1 : 2;
   for (let n = 0; n < punchCount; n++) {
     const isVisualOnly = n > 0;
     const spreadAngle = baseAngle + (Math.random() - 0.5) * 0.85;
@@ -2798,7 +2843,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
 
     const speed = 460 + Math.random() * 90;
     const maxLife = 0.17; // True short melee range!
-    if (state.punches.length < 44) {
+    if (state.punches.length < maxBarragePunches) {
       state.punches.push({
         x: startX,
         y: startY,
@@ -2818,7 +2863,7 @@ function spawnBarragePunch(fighter, opponent, isLastPunch, overrideCfg = null) {
         isVisualOnly,
         damage: isVisualOnly ? 0 : punchDmg,
         charId: fighter.charId,
-        scale: (isVisualOnly ? 1.0 : 1.2) + Math.random() * 0.28,
+        scale: (isVisualOnly ? 1.3 : 1.5) + Math.random() * 0.32,
       });
     }
   }
@@ -3017,11 +3062,11 @@ function updateFighterPhysics(f, dt) {
       const input = getInputVector(f.slot);
       const maxSpeed = (f.isGuarding ? 165 : 250) * speedMult;
       if (Math.abs(input.x) + Math.abs(input.y) > 0.08) {
-        const response = 1 - Math.exp(-11 * dt);
+        const response = 1 - Math.exp(-(isTouchDeviceOrSmallScreen() ? 20 : 11) * dt);
         f.vx += (input.x * maxSpeed - f.vx) * response;
         f.vy += (input.y * maxSpeed - f.vy) * response;
       } else {
-        const drag = Math.exp(-8.5 * dt);
+        const drag = Math.exp(-(isTouchDeviceOrSmallScreen() ? 13 : 8.5) * dt);
         f.vx *= drag;
         f.vy *= drag;
         if (Math.hypot(f.vx, f.vy) < 3) f.vx = f.vy = 0;
@@ -5007,9 +5052,9 @@ function drawFighter(f) {
     const auraColor = CHAR_CONFIG[f.charId].guardAura;
     ctx.strokeStyle = auraColor;
     ctx.fillStyle = `${auraColor}33`;
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.arc(0, 0, f.radius + 14, 0, Math.PI * 2);
+    ctx.arc(0, 0, f.radius + 22, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
@@ -5076,7 +5121,7 @@ function drawFighter(f) {
   } else if (f.charId === "jolyne" && f.jolynePoseTimer > 0) {
     activeImg = ASSETS.jolyneSkillQ;
   }
-  const sprite = getMipSprite(activeImg, graphicsMode === "high" ? 640 : 384);
+  const sprite = getMipSprite(activeImg, getCombatSpriteMipSize());
   if (sprite) {
     const sw = sprite.width || activeImg.naturalWidth;
     const sh = sprite.height || activeImg.naturalHeight;
@@ -5301,7 +5346,7 @@ function drawPunch(p) {
     ctx.stroke();
   }
 
-  const armSprite = getMipSprite(p.img, 148);
+  const armSprite = getMipSprite(p.img, isTouchDeviceOrSmallScreen() ? 112 : 148);
   if (armSprite) {
     ctx.drawImage(armSprite, -w / 2, -h / 2, w, h);
   } else {
@@ -5524,7 +5569,7 @@ function drawPolnareffClone(cl) {
   if (cl.hidden) return;
   const owner = getFighter(cl.ownerSlot);
   const activeImg = owner.armorOffTimer > 0 ? ASSETS.polnareffArmorOff : owner.img;
-  const sprite = getMipSprite(activeImg, graphicsMode === "high" ? 640 : 384);
+  const sprite = getMipSprite(activeImg, getCombatSpriteMipSize());
   if (!sprite) return;
   ctx.save();
   ctx.translate(cl.x, cl.y);
@@ -5563,7 +5608,7 @@ function drawPolnareffClone(cl) {
 }
 
 function drawDashAfterimage(afterimage) {
-  const sprite = getMipSprite(afterimage.img, graphicsMode === "high" ? 640 : 384);
+  const sprite = getMipSprite(afterimage.img, getCombatSpriteMipSize());
   if (!sprite) return;
   const scale = CHAR_CONFIG[afterimage.charId].spriteScale || 1;
   const targetH = afterimage.radius * 2.35 * scale * 1.4;
@@ -5907,6 +5952,14 @@ window.addEventListener("keyup", (e) => {
 
 window.addEventListener("blur", () => {
   keysPressed.clear();
+  touchInput.x = 0;
+  touchInput.y = 0;
+  touchInput.guarding = false;
+  touchInputP2.x = 0;
+  touchInputP2.y = 0;
+  touchInputP2.guarding = false;
+  if (typeof resetJoystick === "function") resetJoystick();
+  if (typeof resetP2Joystick === "function") resetP2Joystick();
   if (state?.p1?.isChargingTimeStop) {
     cancelTimeStopCharge(state.p1, "HỦY CHIÊU!");
   }
@@ -6403,12 +6456,26 @@ document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     mainMenuVideo?.pause();
     characterPreviewVideo?.pause();
+    pauseAudioForBackground();
     return;
   }
+  if (audioCtx?.state === "suspended") {
+    audioCtx.resume().catch((error) => console.warn("Unable to resume game audio:", error));
+  }
+  ensureDesiredBgmPlaying();
   if (!mainMenuOverlay.classList.contains("hidden")) {
     showMainMenuVideo();
   } else if (!selectOverlay.classList.contains("hidden")) {
     showCharacterPreviewVideo(activeSelectionSide === "p1" ? selectedPlayerChar : selectedAiChar);
+  }
+});
+window.addEventListener("pagehide", pauseAudioForBackground);
+window.addEventListener("pageshow", () => {
+  if (!document.hidden) {
+    if (audioCtx?.state === "suspended") {
+      audioCtx.resume().catch((error) => console.warn("Unable to resume game audio:", error));
+    }
+    ensureDesiredBgmPlaying();
   }
 });
 
@@ -6690,6 +6757,9 @@ joystickZoneEl.addEventListener("pointerup", (e) => {
 joystickZoneEl.addEventListener("pointercancel", (e) => {
   if (e.pointerId === joystickPointerId) resetJoystick();
 });
+joystickZoneEl.addEventListener("lostpointercapture", (e) => {
+  if (e.pointerId === joystickPointerId) resetJoystick();
+});
 
 joystickP2ZoneEl.addEventListener("pointerdown", (e) => {
   e.preventDefault();
@@ -6708,6 +6778,9 @@ for (const eventName of ["pointerup", "pointercancel"]) {
     if (e.pointerId === joystickP2PointerId) resetP2Joystick();
   });
 }
+joystickP2ZoneEl.addEventListener("lostpointercapture", (e) => {
+  if (e.pointerId === joystickP2PointerId) resetP2Joystick();
+});
 
 for (const k of ["q", "e", "r", "t"]) {
   const mBtn = document.getElementById(`m-btn-${k}`);
@@ -6768,6 +6841,7 @@ if (mDashBtn) {
 
 document.getElementById("m-p2-btn-dash").addEventListener("pointerdown", (e) => {
   e.preventDefault();
+  e.currentTarget.setPointerCapture(e.pointerId);
   if (state?.mode === "local") triggerDash(state.p2);
 });
 
@@ -6784,6 +6858,9 @@ if (mGuardBtn) {
   mGuardBtn.addEventListener("pointercancel", () => {
     touchInput.guarding = false;
   });
+  mGuardBtn.addEventListener("lostpointercapture", () => {
+    touchInput.guarding = false;
+  });
 }
 
 const mP2GuardBtn = document.getElementById("m-p2-btn-f");
@@ -6794,6 +6871,7 @@ mP2GuardBtn.addEventListener("pointerdown", (e) => {
 });
 mP2GuardBtn.addEventListener("pointerup", () => { touchInputP2.guarding = false; });
 mP2GuardBtn.addEventListener("pointercancel", () => { touchInputP2.guarding = false; });
+mP2GuardBtn.addEventListener("lostpointercapture", () => { touchInputP2.guarding = false; });
 
 showMainMenuVideo();
 draw();
